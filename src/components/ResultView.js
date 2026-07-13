@@ -108,6 +108,27 @@ export default function ResultView({ data, onReset }) {
       {/* Feedback */}
       <FeedbackBox />
 
+      {/* Google Form feedback */}
+      {/* ⬇️ BYT UT LÄNKEN HÄR när du har din riktiga Google Forms-länk */}
+      <div className="bg-terracotta/8 border border-terracotta/20 rounded-3xl p-6 text-center animate-slide-up-delay-3">
+        <h3 className="font-display text-xl font-semibold text-brown mb-2">
+          Hjälp oss förbättra appen ❤️
+        </h3>
+        <p className="text-sm text-brown-light mb-5 leading-relaxed">
+          Det tar mindre än en minut att svara. Din feedback hjälper oss bygga en bättre tjänst.
+        </p>
+        <a
+          href="https://docs.google.com/forms/d/e/1FAIpQLSfJjzwZhIffaLbiJh9krbbLpILmgIMln3G5IOsyiVH-OhBL9w/viewform?usp=dialog"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-block bg-terracotta hover:bg-terracotta-dark text-white font-semibold
+                     py-3.5 px-8 rounded-2xl text-base
+                     transition-all duration-200 active:scale-[0.98] shadow-warm-md hover:shadow-warm-lg"
+        >
+          Lämna feedback
+        </a>
+      </div>
+
       {/* Reset */}
       <div className="text-center pb-4 animate-slide-up-delay-3">
         <button
