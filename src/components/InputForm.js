@@ -12,6 +12,13 @@ const FOOD_TYPES = [
 
 const DURATIONS = ['1 vecka', '2 veckor', '1 månad']
 
+// Vilka antal rätter som är rimliga per period
+const DISHES_BY_DURATION = {
+  '1 vecka':  [5, 7],
+  '2 veckor': [5, 7, 10],
+  '1 månad':  [7, 10, 14],
+}
+
 function StepperField({ label, value, onChange, min = 0 }) {
   return (
     <div>
@@ -43,21 +50,55 @@ export default function InputForm({ onSubmit, loading }) {
   const [adults, setAdults] = useState(2)
   const [children, setChildren] = useState(1)
   const [duration, setDuration] = useState('2 veckor')
-  const [budget, setBudget] = useState(1500)
+  const [budgetRaw, setBudgetRaw] = useState('1500')
   const [foodTypes, setFoodTypes] = useState([])
   const [pantry, setPantry] = useState('')
+  const [numberOfDishes, setNumberOfDishes] = useState(5)
+
+  const availableDishes = DISHES_BY_DURATION[duration] || [5, 7]
+
+  const handleDurationChange = (d) => {
+    setDuration(d)
+    // Återställ antal rätter till lägsta tillgängliga för ny period
+    const options = DISHES_BY_DURATION[d] || [5]
+    if (!options.includes(numberOfDishes)) {
+      setNumberOfDishes(options[0])
+    }
+  }
 
   const toggleFoodType = (id) => {
     setFoodTypes((prev) => {
       if (prev.includes(id)) return prev.filter((f) => f !== id)
-      if (prev.length >= 2) return [prev[1], id] // keep max 2, swap oldest
+      if (prev.length >= 2) return [prev[1], id]
       return [...prev, id]
     })
   }
 
-  const handleSubmit = () => {
-    onSubmit({ adults, children, duration, budget, foodTypes, pantry })
+  // Budgetfält: visa tom sträng eller positiva heltal, inga ledande nollor
+  const handleBudgetChange = (e) => {
+    const val = e.target.value.replace(/\D/g, '') // bara siffror
+    if (val === '' || val === '0') {
+      setBudgetRaw('')
+    } else {
+      setBudgetRaw(String(parseInt(val, 10))) // tar bort ledande nollor
+    }
   }
+
+  const budgetValue = parseInt(budgetRaw, 10) || 0
+
+  const handleSubmit = () => {
+    onSubmit({
+      adults,
+      children,
+      duration,
+      budget: budgetValue,
+      foodTypes,
+      pantry,
+      numberOfDishes,
+    })
+  }
+
+  const isValid = budgetValue >= 100
 
   return (
     <div className="w-full max-w-2xl mx-auto">
@@ -94,7 +135,7 @@ export default function InputForm({ onSubmit, loading }) {
               <button
                 key={d}
                 type="button"
-                onClick={() => setDuration(d)}
+                onClick={() => handleDurationChange(d)}
                 className={`py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
                   duration === d
                     ? 'bg-terracotta text-white shadow-warm-sm'
@@ -112,12 +153,12 @@ export default function InputForm({ onSubmit, loading }) {
           <label className="block text-sm font-medium text-brown mb-2">Budget</label>
           <div className="relative">
             <input
-              type="number"
-              value={budget}
-              onChange={(e) => setBudget(Number(e.target.value))}
-              min={0}
-              step={50}
-              className="w-full rounded-2xl border-2 border-stone-warm bg-cream text-brown
+              type="text"
+              inputMode="numeric"
+              value={budgetRaw}
+              onChange={handleBudgetChange}
+              placeholder="1500"
+              className="w-full rounded-2xl border-2 border-stone-warm bg-cream text-brown placeholder-stone-mid
                          p-4 pr-14 text-lg font-semibold
                          focus:outline-none focus:border-terracotta focus:bg-white
                          transition-all duration-200"
@@ -126,6 +167,9 @@ export default function InputForm({ onSubmit, loading }) {
               kr
             </span>
           </div>
+          {budgetRaw !== '' && budgetValue < 100 && (
+            <p className="text-xs text-terracotta mt-1.5 ml-1">Ange minst 100 kr</p>
+          )}
         </div>
 
         {/* Food types */}
@@ -155,6 +199,29 @@ export default function InputForm({ onSubmit, loading }) {
           </div>
         </div>
 
+        {/* Number of dishes */}
+        <div>
+          <label className="block text-sm font-medium text-brown mb-2">
+            Hur många olika rätter vill du ha?
+          </label>
+          <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${availableDishes.length}, 1fr)` }}>
+            {availableDishes.map((n) => (
+              <button
+                key={n}
+                type="button"
+                onClick={() => setNumberOfDishes(n)}
+                className={`py-3 rounded-xl text-sm font-medium transition-all duration-150 ${
+                  numberOfDishes === n
+                    ? 'bg-terracotta text-white shadow-warm-sm'
+                    : 'bg-stone-warm text-brown-light hover:bg-stone-mid/30'
+                }`}
+              >
+                {n} rätter
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Pantry (optional) */}
         <div>
           <label className="block text-sm font-medium text-brown mb-2">
@@ -163,7 +230,7 @@ export default function InputForm({ onSubmit, loading }) {
           <input
             type="text"
             value={pantry}
-            onChange={(e) => setPantry(e.target.value)}
+            onChange={(e) => setPantry(e.target.value.slice(0, 500))}
             placeholder="Exempel: ris, pasta, kryddor, olja"
             className="w-full rounded-2xl border-2 border-stone-warm bg-cream text-brown placeholder-stone-mid
                        p-4 text-base
@@ -175,7 +242,7 @@ export default function InputForm({ onSubmit, loading }) {
         {/* Submit */}
         <button
           onClick={handleSubmit}
-          disabled={loading}
+          disabled={loading || !isValid}
           className="w-full bg-terracotta hover:bg-terracotta-dark text-white font-semibold 
                      py-4 px-8 rounded-2xl text-lg
                      disabled:opacity-40 disabled:cursor-not-allowed
@@ -185,7 +252,7 @@ export default function InputForm({ onSubmit, loading }) {
           {loading ? (
             <>
               <span className="loading-spinner inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
-              Skapar din matplan...
+              Vi skapar din matplan…
             </>
           ) : (
             <>
@@ -196,7 +263,7 @@ export default function InputForm({ onSubmit, loading }) {
         </button>
 
         <p className="text-center text-xs text-stone-mid">
-          Tar ca 10 sekunder · Gratis · Ingen inloggning
+          Tar ca 20–40 sekunder · Gratis · Ingen inloggning
         </p>
       </div>
 

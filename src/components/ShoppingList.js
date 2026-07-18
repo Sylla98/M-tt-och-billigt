@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import { formatIngredientString } from '@/utils/formatQuantity'
 
 function ShoppingCategory({ category }) {
   const [checked, setChecked] = useState([])
@@ -31,7 +32,7 @@ function ShoppingCategory({ category }) {
                 {done && <span className="text-white text-xs">✓</span>}
               </span>
               <span className={`leading-snug transition-all duration-150 ${done ? 'line-through text-stone-mid' : 'text-brown-light'}`}>
-                {item}
+                {formatIngredientString(item)}
               </span>
             </li>
           )
@@ -41,8 +42,8 @@ function ShoppingCategory({ category }) {
   )
 }
 
-export default function ShoppingList({ shoppingList, freshItems }) {
-  const categories = Object.values(shoppingList)
+export default function ShoppingList({ shoppingList, freshItemsTips = [] }) {
+  const categories = Object.values(shoppingList || {})
 
   return (
     <div className="space-y-5 animate-slide-up-delay-2">
@@ -64,19 +65,21 @@ export default function ShoppingList({ shoppingList, freshItems }) {
       </div>
 
       {/* Fresh items tips */}
-      <div className="bg-ochre-light/25 rounded-3xl p-6 border border-ochre-light/50">
-        <h3 className="font-semibold text-brown mb-3 flex items-center gap-2">
-          🥬 Tips för färskvaror
-        </h3>
-        <ul className="space-y-2">
-          {freshItems.map((tip, i) => (
-            <li key={i} className="flex items-start gap-2 text-sm text-brown-light">
-              <span className="text-ochre mt-0.5 flex-shrink-0">→</span>
-              {tip}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {freshItemsTips.length > 0 && (
+        <div className="bg-ochre-light/25 rounded-3xl p-6 border border-ochre-light/50">
+          <h3 className="font-semibold text-brown mb-3 flex items-center gap-2">
+            🥬 Tips för färskvaror
+          </h3>
+          <ul className="space-y-2">
+            {freshItemsTips.map((tip, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-brown-light">
+                <span className="text-ochre mt-0.5 flex-shrink-0">→</span>
+                {tip}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
