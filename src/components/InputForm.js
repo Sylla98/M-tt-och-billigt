@@ -263,7 +263,7 @@ export default function InputForm({ onSubmit, loading }) {
         </button>
 
         <p className="text-center text-xs text-stone-mid">
-          Tar ca 20–40 sekunder · Gratis · Ingen inloggning
+          Din matplan skapas. Det kan ta 1–2 minuter.
         </p>
       </div>
 

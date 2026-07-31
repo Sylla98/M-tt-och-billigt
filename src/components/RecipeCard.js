@@ -1,8 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { formatQuantity } from '@/utils/formatQuantity'
+import { getRecipeImage, FALLBACK_IMAGE } from '@/utils/getRecipeImage'
 
-// Gradients roterar baserat på index
+// Gradienter används som visuell reservlösning om en bildfil saknas/inte
+// kan laddas – ingen trasig bildikon ska någonsin visas.
 const GRADIENTS = [
   'from-terracotta to-ochre',
   'from-ochre to-sage',
@@ -13,33 +15,64 @@ const GRADIENTS = [
   'from-ochre to-terracotta-light',
 ]
 
-// Emojis roterar baserat på index
-const EMOJIS = ['🍝', '🍗', '🫘', '🥘', '🧀', '🥗', '🍲', '🌮', '🥩', '🍜', '🫕', '🥙']
+// Svenska kategorietiketter för alt-texten, härledda ur bildens filnamn.
+// Ren presentationslogik – själva bildvalet (getRecipeImage) är oförändrat.
+const IMAGE_CATEGORY_LABELS = {
+  'pasta.jpg': 'pasta',
+  'soup.jpg': 'soppa',
+  'stew.jpg': 'gryta',
+  'curry.jpg': 'curry',
+  'rice.jpg': 'risrätt',
+  'salad.jpg': 'sallad',
+  'vegetarian.jpg': 'vegetarisk rätt',
+  'chicken.jpg': 'kycklingrätt',
+  'minced-meat.jpg': 'köttfärsrätt',
+  'fish.jpg': 'fiskrätt',
+  'pancakes.jpg': 'pannkakor',
+  'breakfast.jpg': 'frukost',
+  'oven-dish.jpg': 'ugnsrätt',
+  'beans-lentils.jpg': 'baljväxträtt',
+  'fallback.jpg': 'matlagning',
+}
+
+function imageCategoryLabel(imageSrc) {
+  const filename = (imageSrc || '').split('/').pop()
+  return IMAGE_CATEGORY_LABELS[filename] || 'matlagning'
+}
 
 export default function RecipeCard({ recipe, index }) {
   const [open, setOpen] = useState(false)
+  // imgState: 'primary' → försöker vald bild, 'fallback' → fallback.jpg,
+  // 'none' → även fallback misslyckades, visa gradient
+  const [imgState, setImgState] = useState('primary')
   const delay = `animate-slide-up-delay-${Math.min(index + 1, 5)}`
 
-  // Stöd båda dataformat: från AI (title) och från mock (name)
   const title = recipe.title || recipe.name || 'Recept'
   const servings = recipe.servings || recipe.portions || 0
   const time = recipe.cookingTimeMinutes ? `${recipe.cookingTimeMinutes} min` : (recipe.time || '')
   const freezable = recipe.freezerFriendly ?? recipe.freezable ?? false
   const servedWith = recipe.servedWith || ''
-  const gradient = recipe.gradient || GRADIENTS[index % GRADIENTS.length]
-  const emoji = recipe.emoji || EMOJIS[index % EMOJIS.length]
+  const gradient = GRADIENTS[index % GRADIENTS.length]
 
-  // Ingredienser: stöd både {name, quantity, unit} och strängar
+  const primaryImage = getRecipeImage(recipe)
+  const imageSrc = imgState === 'primary' ? primaryImage : FALLBACK_IMAGE
+
+  const handleImageError = () => {
+    if (imgState === 'primary' && primaryImage !== FALLBACK_IMAGE) {
+      setImgState('fallback')
+    } else {
+      setImgState('none')
+    }
+  }
+
   const ingredients = (recipe.ingredients || []).map(ing => {
     if (typeof ing === 'string') return ing
     const formatted = formatQuantity(ing.quantity, ing.unit || '')
     return formatted ? `${formatted} ${ing.name}`.trim() : ing.name
   })
 
-  // Instruktioner: stöd array av strängar
   const instructions = recipe.instructions || recipe.steps || []
 
-  // Hållbarhet
   const storage = recipe.storage ||
     [recipe.fridgeStorage && `Kyl: ${recipe.fridgeStorage}`,
      recipe.freezerStorage && `Frys: ${recipe.freezerStorage}`]
@@ -47,12 +80,23 @@ export default function RecipeCard({ recipe, index }) {
 
   return (
     <div className={`bg-white rounded-3xl shadow-warm-md overflow-hidden ${delay}`}>
-      {/* Image area */}
-      <div className={`relative h-40 bg-gradient-to-br ${gradient} flex items-center justify-center overflow-hidden`}>
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: 'radial-gradient(circle at 20% 20%, white 0%, transparent 50%)',
-        }} />
-        <span className="text-6xl drop-shadow-md">{emoji}</span>
+      {/* Image area – medvetet nedtonad: bilderna är generella kategori-
+          bilder ("inspirationsbilder"), inte foton av den exakta rätten */}
+      <div className="relative h-28 md:h-32 overflow-hidden">
+        {imgState !== 'none' ? (
+          <img
+            src={imageSrc}
+            alt={`Inspirationsbild för recepttypen ${imageCategoryLabel(imageSrc)}`}
+            loading="lazy"
+            onError={handleImageError}
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className={`w-full h-full bg-gradient-to-br ${gradient}`} />
+        )}
+        <span className="absolute bottom-2 left-3 bg-black/35 text-white/90 text-[10px] font-medium px-2 py-0.5 rounded-full backdrop-blur-sm">
+          Inspirationsbild
+        </span>
         {freezable && (
           <span className="absolute top-3 right-3 bg-white/90 text-blue-500 text-xs font-medium px-2.5 py-1 rounded-full shadow-sm">
             ❄️ Kan frysas

@@ -41,13 +41,11 @@ export default function ResultView({ data, onReset }) {
     shoppingList = {},
     freshItemsTips = [],
     totalServings = 0,
-    estimatedCost = 0,
     numberOfDays = 14,
     childFriendly = false,
     planSummary = '',
+    pricing = null,
   } = data
-
-  const budgetOk = estimatedCost > 0
 
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
@@ -88,16 +86,22 @@ export default function ResultView({ data, onReset }) {
           <div className="text-2xl font-display font-bold text-brown">{totalServings}</div>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-warm-md p-5">
-          <div className="text-xs text-stone-mid mb-1">Beräknad kostnad</div>
-          <div className="text-2xl font-display font-bold text-brown">
-            {estimatedCost.toLocaleString('sv-SE')} kr
+        {pricing && (
+          <div className="bg-white rounded-3xl shadow-warm-md p-5">
+            <div className="text-xs text-stone-mid mb-1">Uppskattad inköpskostnad</div>
+            <div className="text-2xl font-display font-bold text-brown">
+              cirka {Math.round(pricing.estimatedTotalCost).toLocaleString('sv-SE')} kr
+            </div>
           </div>
-        </div>
+        )}
 
-        {budgetOk && (
-          <div className="bg-sage-light/20 rounded-3xl p-4 col-span-2 flex items-center justify-center gap-2 text-sage font-medium text-sm">
-            ✅ Håller budget
+        {pricing && (
+          <div className={`rounded-3xl p-4 col-span-2 flex items-center justify-center gap-2 font-medium text-sm text-center ${
+            pricing.isWithinBudget ? 'bg-sage-light/20 text-sage' : 'bg-terracotta/10 text-terracotta-dark'
+          }`}>
+            {pricing.isWithinBudget
+              ? `✅ Planen ligger cirka ${Math.round(Math.abs(pricing.budgetDifference)).toLocaleString('sv-SE')} kr under din budget.`
+              : `⚠️ Planen uppskattas överstiga din budget med cirka ${Math.round(Math.abs(pricing.budgetDifference)).toLocaleString('sv-SE')} kr.`}
           </div>
         )}
       </div>

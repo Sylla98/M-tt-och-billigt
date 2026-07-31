@@ -1,13 +1,48 @@
 'use client'
 import { useState } from 'react'
-import { formatIngredientString } from '@/utils/formatQuantity'
+import { formatQuantity } from '@/utils/formatQuantity'
+
+function formatSEK(value) {
+  if (value == null || isNaN(value)) return null
+  return `Cirka ${Math.round(value).toLocaleString('sv-SE')} kr`
+}
+
+function formatPackageLabel(item) {
+  if (item.packageAmount != null && item.packageUnit) {
+    if (item.packageUnit === 'st' && item.packageAmount > 1) return `${item.packageAmount}-pack`
+    return formatQuantity(item.packageAmount, item.packageUnit)
+  }
+  return ''
+}
+
+/**
+ * Bygger huvudraden ("vad ska köpas") och en eventuell hjälprad
+ * ("hur mycket används i recepten"). De hålls medvetet isär så att
+ * receptmängd aldrig ser ut att vara varan som köps.
+ */
+function buildDisplay(item) {
+  if (item.isWeightBased) {
+    const qty = formatQuantity(item.purchaseQuantity, item.purchaseUnit)
+    return { main: `${item.displayName} – cirka ${qty}`, helper: null }
+  }
+
+  const packageText = formatPackageLabel(item)
+  const purchaseText = item.packagesRequired != null && packageText
+    ? `${item.packagesRequired} × ${packageText}`
+    : packageText
+
+  return {
+    main: purchaseText ? `${item.displayName} – ${purchaseText}` : item.displayName,
+    helper: `${formatQuantity(item.requiredQuantity, item.requiredUnit)} används i recepten.`,
+  }
+}
 
 function ShoppingCategory({ category }) {
   const [checked, setChecked] = useState([])
 
-  const toggle = (item) => {
-    setChecked(prev =>
-      prev.includes(item) ? prev.filter(i => i !== item) : [...prev, item]
+  const toggle = (key) => {
+    setChecked((prev) =>
+      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
     )
   }
 
@@ -19,20 +54,31 @@ function ShoppingCategory({ category }) {
       </h4>
       <ul className="space-y-1.5">
         {category.items.map((item) => {
-          const done = checked.includes(item)
+          const key = item.displayName
+          const done = checked.includes(key)
+          const { main, helper } = buildDisplay(item)
+
           return (
             <li
-              key={item}
-              onClick={() => toggle(item)}
-              className={`flex items-center gap-3 cursor-pointer group text-sm rounded-xl px-3 py-2 transition-all duration-150
+              key={key}
+              onClick={() => toggle(key)}
+              className={`flex items-start gap-3 cursor-pointer group text-sm rounded-xl px-3 py-2 transition-all duration-150
                 ${done ? 'bg-sage-light/20' : 'hover:bg-stone-warm/50'}`}
             >
-              <span className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-150
+              <span className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-150 mt-0.5
                 ${done ? 'bg-sage border-sage' : 'border-stone-mid group-hover:border-terracotta'}`}>
                 {done && <span className="text-white text-xs">✓</span>}
               </span>
-              <span className={`leading-snug transition-all duration-150 ${done ? 'line-through text-stone-mid' : 'text-brown-light'}`}>
-                {formatIngredientString(item)}
+              <span className="flex-1 min-w-0">
+                <span className={`block leading-snug transition-all duration-150 ${done ? 'line-through text-stone-mid' : 'text-brown-light'}`}>
+                  {main}
+                </span>
+                {helper && (
+                  <span className="block text-xs text-stone-mid mt-0.5">{helper}</span>
+                )}
+              </span>
+              <span className="text-xs font-medium flex-shrink-0 mt-0.5 text-stone-mid">
+                {formatSEK(item.lineCost)}
               </span>
             </li>
           )
@@ -80,6 +126,11 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [] }) {
           </ul>
         </div>
       )}
+
+      {/* Prisreservation */}
+      <p className="text-xs text-stone-mid text-center px-2">
+        Prisuppskattningen bygger på generella svenska matpriser och kan variera mellan butiker.
+      </p>
     </div>
   )
 }
