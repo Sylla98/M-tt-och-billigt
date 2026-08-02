@@ -1,39 +1,6 @@
 'use client'
-import { useState } from 'react'
 import RecipeCard from './RecipeCard'
 import ShoppingList from './ShoppingList'
-
-function FeedbackBox() {
-  const [picked, setPicked] = useState(null)
-  const options = [
-    { id: 'good', emoji: '👍', label: 'Bra' },
-    { id: 'bad', emoji: '👎', label: 'Inte bra' },
-    { id: 'missing', emoji: '💬', label: 'Saknar något' },
-  ]
-  return (
-    <div className="bg-white rounded-3xl shadow-warm-md p-6 text-center animate-slide-up-delay-3">
-      <h3 className="font-semibold text-brown mb-4">Vad tyckte du om matplanen?</h3>
-      <div className="flex justify-center gap-3">
-        {options.map((opt) => (
-          <button
-            key={opt.id}
-            onClick={() => setPicked(opt.id)}
-            className={`flex flex-col items-center gap-1.5 px-5 py-3 rounded-2xl text-sm font-medium transition-all duration-150
-              ${picked === opt.id
-                ? 'bg-terracotta text-white shadow-warm-sm scale-105'
-                : 'bg-stone-warm text-brown-light hover:bg-stone-mid/30'}`}
-          >
-            <span className="text-2xl">{opt.emoji}</span>
-            {opt.label}
-          </button>
-        ))}
-      </div>
-      {picked && (
-        <p className="text-xs text-stone-mid mt-4">Tack för din feedback! 💛</p>
-      )}
-    </div>
-  )
-}
 
 export default function ResultView({ data, onReset }) {
   const {
@@ -129,11 +96,7 @@ export default function ResultView({ data, onReset }) {
       {/* Shopping list */}
       <ShoppingList shoppingList={shoppingList} freshItemsTips={freshItemsTips} />
 
-      {/* Feedback */}
-      <FeedbackBox />
-
       {/* Google Form feedback */}
-      {/* ⬇️ BYT UT LÄNKEN HÄR när du har din riktiga Google Forms-länk */}
       <div className="bg-terracotta/8 border border-terracotta/20 rounded-3xl p-6 text-center animate-slide-up-delay-3">
         <h3 className="font-display text-xl font-semibold text-brown mb-2">
           Hjälp oss förbättra appen ❤️
@@ -142,7 +105,7 @@ export default function ResultView({ data, onReset }) {
           Det tar mindre än en minut att svara. Din feedback hjälper oss bygga en bättre tjänst.
         </p>
         <a
-          href="https://forms.gle/ERSATT_MED_MIN_LANK"
+          href="https://forms.gle/M5PvhoAFESmbyxZh7"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-block bg-terracotta hover:bg-terracotta-dark text-white font-semibold
