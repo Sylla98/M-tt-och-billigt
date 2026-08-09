@@ -10,7 +10,7 @@
 // (@vercel/firewall) eller Upstash Redis läggas till senare.
 
 const WINDOW_MS = 10 * 60 * 1000 // 10 minuter
-const MAX_REQUESTS = 3            // max 3 genereringar per fönster
+const MAX_REQUESTS = 50           // generös säkerhetsgräns (lokalt bibliotek, inga externa AI-kostnader)
 
 const requestLog = new Map() // identifierare → array av tidsstämplar (ms)
 

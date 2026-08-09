@@ -1,40 +1,52 @@
 'use client'
 import { useState } from 'react'
 import { formatQuantity } from '@/utils/formatQuantity'
+import { formatCountableIngredient } from '@/utils/ingredientRules'
 
 function formatSEK(value) {
   if (value == null || isNaN(value)) return null
   return `Cirka ${Math.round(value).toLocaleString('sv-SE')} kr`
 }
 
-function formatPackageLabel(item) {
-  if (item.packageAmount != null && item.packageUnit) {
-    if (item.packageUnit === 'st' && item.packageAmount > 1) return `${item.packageAmount}-pack`
-    return formatQuantity(item.packageAmount, item.packageUnit)
+// Volym under 1 liter visas i dl i inköpslistan (t.ex. 800 ml → 8 dl).
+// formatQuantity.js rörs inte – den delen är en delad funktion som även
+// receptvyn använder, så dl-omvandlingen hålls lokal här istället.
+function formatShoppingTotal(quantity, unit) {
+  const u = (unit || '').toLowerCase()
+  if (u === 'ml' && quantity < 1000) {
+    return formatQuantity(quantity / 100, 'dl')
   }
-  return ''
+  return formatQuantity(quantity, unit)
 }
 
 /**
- * Bygger huvudraden ("vad ska köpas") och en eventuell hjälprad
- * ("hur mycket används i recepten"). De hålls medvetet isär så att
- * receptmängd aldrig ser ut att vara varan som köps.
+ * Bygger huvudraden för en inköpslistrad: enbart den totala mängd som
+ * behöver köpas, inte antal förpackningar. Prisberäkningen (packagesRequired,
+ * packageAmount, isWeightBased m.m.) fortsätter beräknas exakt som förut –
+ * det är bara PRESENTATIONEN som förenklas här.
  */
 function buildDisplay(item) {
+  // Räknebara varor (lök, vitlök, ägg, citron, buljong ...): visa alltid
+  // det naturliga antalet, oavsett om prisberäkningen internt räknat om
+  // det till vikt eller förpackningar.
+  if (item.requiredUnit === 'st') {
+    return { main: formatCountableIngredient(item.displayName, item.requiredQuantity) }
+  }
+
+  // Lösviktsvaror: redan en sammanlagd mängd utan förpackningsantal.
   if (item.isWeightBased) {
     const qty = formatQuantity(item.purchaseQuantity, item.purchaseUnit)
-    return { main: `${item.displayName} – cirka ${qty}`, helper: null }
+    return { main: `${item.displayName} – cirka ${qty}` }
   }
 
-  const packageText = formatPackageLabel(item)
-  const purchaseText = item.packagesRequired != null && packageText
-    ? `${item.packagesRequired} × ${packageText}`
-    : packageText
-
-  return {
-    main: purchaseText ? `${item.displayName} – ${purchaseText}` : item.displayName,
-    helper: `${formatQuantity(item.requiredQuantity, item.requiredUnit)} används i recepten.`,
+  // Paketbaserade varor: total köpt mängd = antal förpackningar × storlek,
+  // visad som EN sammanlagd mängd istället för "N × storlek".
+  if (item.packagesRequired != null && item.packageAmount != null && item.packageUnit) {
+    const totalQuantity = item.packagesRequired * item.packageAmount
+    return { main: `${item.displayName} – ${formatShoppingTotal(totalQuantity, item.packageUnit)}` }
   }
+
+  return { main: item.displayName }
 }
 
 function ShoppingCategory({ category }) {
@@ -56,7 +68,7 @@ function ShoppingCategory({ category }) {
         {category.items.map((item) => {
           const key = item.displayName
           const done = checked.includes(key)
-          const { main, helper } = buildDisplay(item)
+          const { main } = buildDisplay(item)
 
           return (
             <li
@@ -73,9 +85,6 @@ function ShoppingCategory({ category }) {
                 <span className={`block leading-snug transition-all duration-150 ${done ? 'line-through text-stone-mid' : 'text-brown-light'}`}>
                   {main}
                 </span>
-                {helper && (
-                  <span className="block text-xs text-stone-mid mt-0.5">{helper}</span>
-                )}
               </span>
               <span className="text-xs font-medium flex-shrink-0 mt-0.5 text-stone-mid">
                 {formatSEK(item.lineCost)}

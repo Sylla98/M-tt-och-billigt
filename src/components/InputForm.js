@@ -252,7 +252,7 @@ export default function InputForm({ onSubmit, loading }) {
           {loading ? (
             <>
               <span className="loading-spinner inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full" />
-              Vi skapar din matplan…
+              Vi matchar recept efter dina val…
             </>
           ) : (
             <>
@@ -263,7 +263,7 @@ export default function InputForm({ onSubmit, loading }) {
         </button>
 
         <p className="text-center text-xs text-stone-mid">
-          Din matplan skapas. Det kan ta 1–2 minuter.
+          Gratis · Ingen inloggning
         </p>
       </div>
 

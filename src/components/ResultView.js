@@ -14,6 +14,37 @@ export default function ResultView({ data, onReset }) {
     pricing = null,
   } = data
 
+  // Ett recept kan förekomma flera gånger som separata tillagningstillfällen
+  // (se route.js batchlogik) – då får senare tillfällen ett id på formen
+  // "receptid-tillfalle-2". Central hjälpfunktion för att hitta det
+  // ursprungliga receptid:t, återanvänd nedan istället för att upprepa
+  // samma regex på flera ställen.
+  const getBaseRecipeId = (id) => (id || '').replace(/-tillfalle-\d+$/, '')
+
+  // Slår ihop alla tillagningstillfällen av samma recept till ETT kort.
+  // Ingrediens-/instruktionsinnehållet i kortet kommer från det FÖRSTA
+  // tillfället (portionsmängderna kan skilja sig mellan tillfällena om
+  // batchstorlekarna varierar) – portionsbadgen nedan visar dock tydligt
+  // om receptet lagas flera gånger och med vilket intervall. Inköpslistan
+  // är opåverkad och räknar fortfarande alla tillfällen (se ShoppingList).
+  const uniqueRecipes = (() => {
+    const order = []
+    const map = new Map()
+    for (const r of recipes) {
+      const baseId = getBaseRecipeId(r.id)
+      if (!map.has(baseId)) {
+        map.set(baseId, { ...r, id: baseId, servingsList: [r.servings] })
+        order.push(baseId)
+      } else {
+        map.get(baseId).servingsList.push(r.servings)
+      }
+    }
+    return order.map((id) => {
+      const entry = map.get(id)
+      return { ...entry, occurrenceCount: entry.servingsList.length }
+    })
+  })()
+
   return (
     <div className="w-full max-w-2xl mx-auto space-y-6">
       {/* Success banner */}
@@ -23,7 +54,7 @@ export default function ResultView({ data, onReset }) {
           Din matplan är klar!
         </h2>
         <p className="text-terracotta-light/90 text-sm">
-          {recipes.length} recept · Komplett inköpslista · Portionskontroll
+          {uniqueRecipes.length} recept · Komplett inköpslista
         </p>
       </div>
 
@@ -87,8 +118,8 @@ export default function ResultView({ data, onReset }) {
         </h3>
         <p className="text-sm text-stone-mid mb-4 px-1">Tryck på "Visa recept" för ingredienser och steg</p>
         <div className="space-y-3">
-          {recipes.map((recipe, i) => (
-            <RecipeCard key={recipe.id || i} recipe={recipe} index={i} />
+          {uniqueRecipes.map((recipe, i) => (
+            <RecipeCard key={recipe.id || i} recipe={recipe} index={i} showFamilyFriendlyBadge={childFriendly} />
           ))}
         </div>
       </div>

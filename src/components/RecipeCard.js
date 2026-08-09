@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { formatQuantity } from '@/utils/formatQuantity'
+import { getIngredientRule, formatCountableIngredient, toRecipeViewLiquid } from '@/utils/ingredientRules'
 import { getRecipeImage, FALLBACK_IMAGE } from '@/utils/getRecipeImage'
 
 // Gradienter används som visuell reservlösning om en bildfil saknas/inte
@@ -40,7 +41,7 @@ function imageCategoryLabel(imageSrc) {
   return IMAGE_CATEGORY_LABELS[filename] || 'matlagning'
 }
 
-export default function RecipeCard({ recipe, index }) {
+export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = false }) {
   const [open, setOpen] = useState(false)
   // imgState: 'primary' → försöker vald bild, 'fallback' → fallback.jpg,
   // 'none' → även fallback misslyckades, visa gradient
@@ -54,7 +55,24 @@ export default function RecipeCard({ recipe, index }) {
   const servedWith = recipe.servedWith || ''
   const gradient = GRADIENTS[index % GRADIENTS.length]
 
-  const primaryImage = getRecipeImage(recipe)
+  // Om samma recept lagas flera gånger under perioden (se ResultView.js
+  // deduplicering) visar badgen tydligt att det är flera tillagningar
+  // istället för att bara visa portionerna från EN av dem, vilket annars
+  // skulle kunna se missvisande lågt ut för hela periodens matbehov.
+  const occurrenceCount = recipe.occurrenceCount || 1
+  const servingsList = recipe.servingsList || [servings]
+  const minServings = Math.min(...servingsList)
+  const maxServings = Math.max(...servingsList)
+  const portionsText =
+    occurrenceCount <= 1
+      ? `${servings} portioner`
+      : minServings === maxServings
+      ? `${minServings} portioner per tillagning · laga ${occurrenceCount} gånger`
+      : `${minServings}–${maxServings} portioner per tillagning · laga ${occurrenceCount} gånger`
+
+  // Biblioteksrecept har ett eget image-fält – använd det i första hand.
+  // Annars kategoribild via getRecipeImage. Fallback-kedjan är oförändrad.
+  const primaryImage = recipe.image || getRecipeImage(recipe)
   const imageSrc = imgState === 'primary' ? primaryImage : FALLBACK_IMAGE
 
   const handleImageError = () => {
@@ -65,9 +83,21 @@ export default function RecipeCard({ recipe, index }) {
     }
   }
 
+  // Receptvyn ska kännas naturlig – annan presentation än inköpslistan
+  // (se ingredientRules.js för resonemanget bakom varje regel):
+  //  - räknebara varor ("2 gula lökar", "1 vitlöksklyfta") istället för gram
+  //  - vätskor som normalt mäts i dl ("2,5 dl grädde") istället för ml
+  //  - allt annat visas som tidigare via formatQuantity
   const ingredients = (recipe.ingredients || []).map(ing => {
     if (typeof ing === 'string') return ing
-    const formatted = formatQuantity(ing.quantity, ing.unit || '')
+
+    const rule = getIngredientRule(ing.name, ing.unit)
+    if (rule.isCountable) {
+      return formatCountableIngredient(ing.name, ing.quantity)
+    }
+
+    const { quantity, unit } = toRecipeViewLiquid(ing.name, ing.quantity, ing.unit)
+    const formatted = formatQuantity(quantity, unit || '')
     return formatted ? `${formatted} ${ing.name}`.trim() : ing.name
   })
 
@@ -119,7 +149,7 @@ export default function RecipeCard({ recipe, index }) {
         <div className="flex flex-wrap gap-2 mb-4">
           {servings > 0 && (
             <span className="inline-flex items-center gap-1 bg-sage-light/30 text-sage px-2.5 py-0.5 rounded-full text-xs font-medium">
-              🍽 {servings} portioner
+              🍽 {portionsText}
             </span>
           )}
           {time && (
@@ -127,7 +157,7 @@ export default function RecipeCard({ recipe, index }) {
               ⏱ {time}
             </span>
           )}
-          {(recipe.childFriendly) && (
+          {(recipe.childFriendly && showFamilyFriendlyBadge) && (
             <span className="inline-flex items-center gap-1 bg-sage-light/30 text-sage px-2.5 py-0.5 rounded-full text-xs font-medium">
               👧 Barnvänligt
             </span>
