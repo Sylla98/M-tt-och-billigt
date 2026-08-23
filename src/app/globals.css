@@ -5,11 +5,22 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
   }
-  
+
   body {
-    background-color: #FDF8F0;
-    color: #3D2B1F;
+    background-color: #FBF8F4;
+    color: #2E211A;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Synlig tangentbordsfokus på alla interaktiva element.
+     :focus-visible gör att fokusringen bara syns vid tangentbords-
+     navigering, inte vid musklick. */
+  :focus-visible {
+    outline: 2px solid #BE5A3E;
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 }
 
@@ -17,33 +28,38 @@
   .text-balance {
     text-wrap: balance;
   }
-  
+
+  /* Hårfin avdelare mellan formulärsektioner – ersätter separata kort */
+  .divide-hairline > * + * {
+    border-top: 1px solid #E4DACE;
+  }
+
   .animate-fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
+    animation: fadeIn 0.4s ease-out forwards;
   }
-  
+
   .animate-slide-up {
-    animation: slideUp 0.5s ease-out forwards;
+    animation: slideUp 0.4s ease-out forwards;
   }
-  
+
   .animate-slide-up-delay-1 {
-    animation: slideUp 0.5s ease-out 0.1s both;
+    animation: slideUp 0.4s ease-out 0.06s both;
   }
-  
+
   .animate-slide-up-delay-2 {
-    animation: slideUp 0.5s ease-out 0.2s both;
+    animation: slideUp 0.4s ease-out 0.12s both;
   }
-  
+
   .animate-slide-up-delay-3 {
-    animation: slideUp 0.5s ease-out 0.3s both;
+    animation: slideUp 0.4s ease-out 0.18s both;
   }
-  
+
   .animate-slide-up-delay-4 {
-    animation: slideUp 0.5s ease-out 0.4s both;
+    animation: slideUp 0.4s ease-out 0.24s both;
   }
-  
+
   .animate-slide-up-delay-5 {
-    animation: slideUp 0.5s ease-out 0.5s both;
+    animation: slideUp 0.4s ease-out 0.3s both;
   }
 }
 
@@ -55,7 +71,7 @@
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(24px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -70,4 +86,71 @@
 
 .loading-spinner {
   animation: spin 0.8s linear infinite;
+}
+
+/* ── Budgetreglage ──────────────────────────────────────────────────────
+   Egen styling av <input type="range"> så reglaget följer terrakotta-
+   designsystemet. Ingen extern dependency – bara CSS. */
+.budget-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px; /* generös touchyta, spåret ritas centrerat i den */
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Spår */
+.budget-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #EFE8DE;
+}
+.budget-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 999px;
+  background: #EFE8DE;
+}
+
+/* Handtag */
+.budget-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 26px;
+  height: 26px;
+  margin-top: -10px; /* centrera mot det 6px höga spåret */
+  border-radius: 50%;
+  background: #BE5A3E;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 1px 3px rgba(46, 33, 26, 0.25);
+}
+.budget-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #BE5A3E;
+  border: 3px solid #FFFFFF;
+  box-shadow: 0 1px 3px rgba(46, 33, 26, 0.25);
+}
+
+/* Tydlig tangentbordsfokus på handtaget */
+.budget-slider:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid #BE5A3E;
+  outline-offset: 2px;
+}
+.budget-slider:focus-visible::-moz-range-thumb {
+  outline: 2px solid #BE5A3E;
+  outline-offset: 2px;
+}
+
+/* Respektera användarens systeminställning för minskad rörelse */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

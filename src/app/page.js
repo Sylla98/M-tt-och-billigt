@@ -48,47 +48,41 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen">
-      {/* Background decoration */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-terracotta/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-sage/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-ochre/3 rounded-full blur-3xl" />
-      </div>
-
-      {/* Top bar */}
-      <header className="relative z-10 px-6 py-5 flex items-center justify-between max-w-2xl mx-auto">
-        <div className="flex items-center gap-2.5">
-          <span className="text-2xl">🥘</span>
-          <span className="font-display font-bold text-brown text-xl">Mätt & Billigt</span>
+    <main className="min-h-screen flex flex-col">
+      {/* Topprad – hårfin avdelare istället för dekorativ bakgrund */}
+      <header className="border-b border-line bg-cream/90 backdrop-blur-sm sticky top-0 z-20">
+        <div className={`${state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} mx-auto px-4 py-3.5 flex items-center justify-between transition-[max-width] duration-200`}>
+          <span className="font-display font-bold text-brown text-[1.0625rem] tracking-tight">
+            Mätt &amp; Billigt
+          </span>
+          {(state === 'done' || state === 'error') && (
+            <button
+              onClick={handleReset}
+              className="text-sm text-brown-light hover:text-terracotta transition-colors py-1.5 px-2"
+            >
+              Ny plan
+            </button>
+          )}
         </div>
-        {(state === 'done' || state === 'error') && (
-          <button
-            onClick={handleReset}
-            className="text-sm text-brown-light hover:text-terracotta transition-colors bg-white/70 px-3 py-1.5 rounded-xl shadow-warm-sm"
-          >
-            Ny plan
-          </button>
-        )}
       </header>
 
-      {/* Main content */}
-      <div className="relative z-10 px-4 pb-16 pt-4">
+      {/* Innehåll */}
+      <div className="flex-1 px-4 pt-6 pb-12">
         {state === 'idle' || state === 'loading' ? (
           <InputForm onSubmit={handleSubmit} loading={state === 'loading'} />
         ) : state === 'error' ? (
-          <div className="w-full max-w-2xl mx-auto">
-            <div className="bg-white rounded-3xl shadow-warm-lg p-8 text-center">
-              <div className="text-4xl mb-4">😕</div>
-              <h2 className="text-xl font-display font-semibold text-brown mb-2">
-                Det gick inte den här gången
-              </h2>
-              <p className="text-brown-light text-sm mb-6 leading-relaxed">
+          <div className="w-full max-w-[660px] mx-auto">
+            <div className="bg-white rounded-xl border border-line p-6">
+              <h1 className="text-lg font-semibold text-brown mb-2">
+                Matplanen kunde inte skapas
+              </h1>
+              <p className="text-brown-light text-sm mb-5 leading-relaxed">
                 {errorMessage}
               </p>
               <button
                 onClick={handleReset}
-                className="bg-terracotta hover:bg-terracotta-dark text-white font-semibold py-3 px-8 rounded-2xl transition-all duration-200"
+                className="bg-terracotta hover:bg-terracotta-dark text-white font-semibold
+                           py-3 px-6 rounded-lg text-sm min-h-[44px] transition-colors duration-150"
               >
                 Försök igen
               </button>
@@ -100,8 +94,10 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="relative z-10 text-center text-xs text-stone-mid pb-8 px-4">
-        Mätt & Billigt · Hjälper svenska familjer äta gott för mindre
+      <footer className="border-t border-line">
+        <p className={`${state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} mx-auto px-4 py-5 text-xs text-stone-mid`}>
+          Mätt &amp; Billigt · Hjälper svenska familjer äta gott för mindre
+        </p>
       </footer>
     </main>
   )

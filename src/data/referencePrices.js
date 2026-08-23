@@ -48,6 +48,7 @@ export const REFERENCE_PRICES = [
   { key: 'rodlok',         displayName: 'Rödlök',      aliases: ['rödlök', 'rodlok'],                                estimatedPricePerUnit: 30, priceUnit: 'kg', purchaseType: 'weight' },
   { key: 'vitlok',         displayName: 'Vitlök',      aliases: ['vitlök', 'vitlok', 'vitlöksklyfta', 'vitlöksklyftor'], packageQuantity: 8, packageUnit: 'st', estimatedPackagePrice: 10, purchaseType: 'package' },
   { key: 'morotter',       displayName: 'Morötter',    aliases: ['morötter', 'morot', 'morotter'],                   estimatedPricePerUnit: 15, priceUnit: 'kg', purchaseType: 'weight' },
+  { key: 'rodbetor',       displayName: 'Rödbetor',    aliases: ['rödbetor', 'rodbetor', 'beta'],                    estimatedPricePerUnit: 25, priceUnit: 'kg', purchaseType: 'weight' },
   { key: 'paprika',        displayName: 'Paprika',     aliases: ['paprika', 'röd paprika', 'gul paprika', 'grön paprika'], packageQuantity: 1, packageUnit: 'st', estimatedPackagePrice: 15, purchaseType: 'package' },
   { key: 'tomat',          displayName: 'Tomater',     aliases: ['tomat', 'tomater', 'körsbärstomater', 'cocktailtomater'], estimatedPricePerUnit: 35, priceUnit: 'kg', purchaseType: 'weight' },
   { key: 'gurka',          displayName: 'Gurka',       aliases: ['gurka'],                                           packageQuantity: 1, packageUnit: 'st', estimatedPackagePrice: 18, purchaseType: 'package' },

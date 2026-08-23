@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import RecipeCard from './RecipeCard'
 import ShoppingList from './ShoppingList'
 
@@ -10,7 +11,6 @@ export default function ResultView({ data, onReset }) {
     totalServings = 0,
     numberOfDays = 14,
     childFriendly = false,
-    planSummary = '',
     pricing = null,
   } = data
 
@@ -22,11 +22,7 @@ export default function ResultView({ data, onReset }) {
   const getBaseRecipeId = (id) => (id || '').replace(/-tillfalle-\d+$/, '')
 
   // Slår ihop alla tillagningstillfällen av samma recept till ETT kort.
-  // Ingrediens-/instruktionsinnehållet i kortet kommer från det FÖRSTA
-  // tillfället (portionsmängderna kan skilja sig mellan tillfällena om
-  // batchstorlekarna varierar) – portionsbadgen nedan visar dock tydligt
-  // om receptet lagas flera gånger och med vilket intervall. Inköpslistan
-  // är opåverkad och räknar fortfarande alla tillfällen (se ShoppingList).
+  // Inköpslistan är opåverkad och räknar fortfarande alla tillfällen.
   const uniqueRecipes = (() => {
     const order = []
     const map = new Map()
@@ -45,115 +41,153 @@ export default function ResultView({ data, onReset }) {
     })
   })()
 
+  const cost = pricing ? Math.round(pricing.estimatedTotalCost) : null
+  const diff = pricing ? Math.round(Math.abs(pricing.budgetDifference)) : null
+  const withinBudget = pricing?.isWithinBudget
+
+  // Vilka receptkort som är öppna hålls här (inte inne i RecipeCard) så att
+  // ResultView kan avgöra hur RADEN de tillhör ska layoutas – se
+  // openRecipeIds-resonemanget vid receptgriden nedan.
+  const [openRecipeIds, setOpenRecipeIds] = useState(() => new Set())
+  const toggleRecipe = (id) => {
+    setOpenRecipeIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  // Grupperar recepten i rader om två – samma ordning som tidigare 2-kolumns-
+  // griden gav, men nu kan varje rad själv välja layout (se nedan).
+  const recipeRows = []
+  for (let i = 0; i < uniqueRecipes.length; i += 2) {
+    recipeRows.push(uniqueRecipes.slice(i, i + 2))
+  }
+
+  const summaryParts = [
+    `${numberOfDays} dagar`,
+    `${uniqueRecipes.length} recept`,
+    cost != null ? `ca ${cost.toLocaleString('sv-SE')} kr` : null,
+  ].filter(Boolean)
+
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6">
-      {/* Success banner */}
-      <div className="bg-terracotta rounded-3xl p-6 text-white text-center animate-slide-up shadow-warm-lg">
-        <div className="text-3xl mb-2">🎉</div>
-        <h2 className="text-2xl font-display font-semibold mb-1">
-          Din matplan är klar!
-        </h2>
-        <p className="text-terracotta-light/90 text-sm">
-          {uniqueRecipes.length} recept · Komplett inköpslista
-        </p>
-      </div>
+    // Resultatsidan är bredare än onboardingen: upp till 1100 px på desktop,
+    // en kolumn på mobil.
+    <div className="w-full max-w-[1100px] mx-auto">
+      {/* Sammanfattning – smalare läsbredd än receptgriden för bättre balans */}
+      <div className="max-w-[660px] mb-8 md:mb-10">
+        <header className="mb-4 animate-slide-up">
+          <h1 className="font-display text-[1.75rem] md:text-3xl text-brown leading-tight mb-1.5">
+            Din matplan
+          </h1>
+          <p className="text-brown-light text-[0.9375rem]">
+            {summaryParts.join(' · ')}
+          </p>
+          {childFriendly && (
+            <p className="text-meta text-sage font-medium mt-1">Familjevänliga recept</p>
+          )}
+        </header>
 
-      {/* Child-friendly banner */}
-      {childFriendly && (
-        <div className="bg-sage-light/25 rounded-3xl p-5 flex items-center gap-4 border border-sage-light/50 animate-slide-up">
-          <span className="text-3xl">👨‍👩‍👧</span>
-          <div>
-            <div className="font-semibold text-brown">Alla recept är anpassade för barn.</div>
-            <div className="text-xs text-brown-light mt-0.5">Milda smaker som hela familjen kan äta tillsammans.</div>
-          </div>
-        </div>
-      )}
-
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3 animate-slide-up-delay-1">
-        <div className="bg-white rounded-3xl shadow-warm-md p-5 col-span-2 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">📅</span>
-            <span className="font-semibold text-brown">Räcker i {numberOfDays} dagar</span>
-          </div>
-          <span className="text-sage text-xl">✅</span>
-        </div>
-
-        <div className="bg-white rounded-3xl shadow-warm-md p-5">
-          <div className="text-xs text-stone-mid mb-1">Portioner planerade</div>
-          <div className="text-2xl font-display font-bold text-brown">{totalServings}</div>
-        </div>
-
+        {/* Budget – produktens kärnlöfte och sidans tyngdpunkt */}
         {pricing && (
-          <div className="bg-white rounded-3xl shadow-warm-md p-5">
-            <div className="text-xs text-stone-mid mb-1">Uppskattad inköpskostnad</div>
-            <div className="text-2xl font-display font-bold text-brown">
-              cirka {Math.round(pricing.estimatedTotalCost).toLocaleString('sv-SE')} kr
+          <div
+            className={`rounded-xl border px-4 py-4 md:px-5 animate-slide-up-delay-1
+              ${withinBudget ? 'border-sage/30 bg-sage/[0.06]' : 'border-ochre/30 bg-ochre/[0.06]'}`}
+          >
+            <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+              <div>
+                <div className="text-xs text-brown-light mb-0.5">Uppskattad inköpskostnad</div>
+                <div className="text-2xl font-semibold text-brown tabular-nums">
+                  ca {cost.toLocaleString('sv-SE')} kr
+                </div>
+              </div>
+              <div className={`text-sm font-semibold ${withinBudget ? 'text-sage' : 'text-ochre'}`}>
+                {withinBudget
+                  ? `${diff.toLocaleString('sv-SE')} kr under budget`
+                  : `${diff.toLocaleString('sv-SE')} kr över budget`}
+              </div>
             </div>
-          </div>
-        )}
-
-        {pricing && (
-          <div className={`rounded-3xl p-4 col-span-2 flex items-center justify-center gap-2 font-medium text-sm text-center ${
-            pricing.isWithinBudget ? 'bg-sage-light/20 text-sage' : 'bg-terracotta/10 text-terracotta-dark'
-          }`}>
-            {pricing.isWithinBudget
-              ? `✅ Planen ligger cirka ${Math.round(Math.abs(pricing.budgetDifference)).toLocaleString('sv-SE')} kr under din budget.`
-              : `⚠️ Planen uppskattas överstiga din budget med cirka ${Math.round(Math.abs(pricing.budgetDifference)).toLocaleString('sv-SE')} kr.`}
+            <p className="text-xs text-stone-mid mt-2.5 pt-2.5 border-t border-line">
+              {totalServings} portioner planerade · uppskattning utifrån generella svenska matpriser
+            </p>
           </div>
         )}
       </div>
 
-      {/* Plan summary */}
-      {planSummary && (
-        <div className="bg-warm rounded-3xl p-5 animate-slide-up-delay-1">
-          <p className="text-sm text-brown-light leading-relaxed">{planSummary}</p>
+      {/* Recept – en kolumn på mobil, två på desktop.
+          Recepten grupperas i rader om två. Så länge INGET kort i en rad är
+          öppet ligger raden i en vanlig 2-kolumnsgrid. Så snart ETT kort i
+          raden öppnas (oavsett vänster eller höger) växlar just den raden
+          till en enkel vertikal stapel – annars försöker CSS Grids
+          auto-placering trycka in det spännande kortet på en NY rad när det
+          inte får plats i den nuvarande, vilket lämnar ett tomt hål där
+          kortet låg och känns trasigt. Med den här uppdelningen stannar
+          expansionen kvar på sin egen plats och övriga rader påverkas inte
+          alls. */}
+      <section className="animate-slide-up-delay-2">
+        <h2 className="text-lg font-semibold text-brown mb-4">Dina recept</h2>
+        <div className="space-y-4 md:space-y-5">
+          {recipeRows.map((row, rowIndex) => {
+            const rowHasOpenCard = row.some((r) => openRecipeIds.has(r.id))
+            const rowClass = rowHasOpenCard
+              ? 'flex flex-col gap-4 md:gap-5'
+              : 'grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-5 items-start'
+
+            return (
+              <div key={row[0]?.id || rowIndex} className={rowClass}>
+                {row.map((recipe, i) => (
+                  <RecipeCard
+                    key={recipe.id || i}
+                    recipe={recipe}
+                    index={rowIndex * 2 + i}
+                    showFamilyFriendlyBadge={childFriendly}
+                    open={openRecipeIds.has(recipe.id)}
+                    onToggle={() => toggleRecipe(recipe.id)}
+                  />
+                ))}
+              </div>
+            )
+          })}
         </div>
-      )}
+      </section>
 
-      {/* Recipes */}
-      <div className="animate-slide-up-delay-2">
-        <h3 className="text-xl font-display text-brown font-semibold mb-3 px-1">
-          👨‍🍳 Dina recept
-        </h3>
-        <p className="text-sm text-stone-mid mb-4 px-1">Tryck på "Visa recept" för ingredienser och steg</p>
-        <div className="space-y-3">
-          {uniqueRecipes.map((recipe, i) => (
-            <RecipeCard key={recipe.id || i} recipe={recipe} index={i} showFamilyFriendlyBadge={childFriendly} />
-          ))}
+      {/* Inköpslista */}
+      <section className="mt-12 md:mt-14 pt-8 border-t border-line">
+        <ShoppingList
+          shoppingList={shoppingList}
+          freshItemsTips={freshItemsTips}
+          totalCost={pricing?.estimatedTotalCost ?? null}
+        />
+      </section>
+
+      {/* Feedback – enbart knappen, ingen extra rubrik/text. Terrakotta som
+          fyllnadsfärg (vanlig CTA, inte status/varning) men måttlig storlek
+          så den inte konkurrerar med "Generera matplan". */}
+      <section className="mt-12 pt-8 border-t border-line">
+        <div className="max-w-[660px] text-center">
+          <a
+            href="https://forms.gle/M5PvhoAFESmbyxZh7"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center bg-terracotta
+                       hover:bg-terracotta-dark text-white font-semibold
+                       py-2.5 px-6 rounded-lg text-sm min-h-[44px]
+                       transition-colors duration-150"
+          >
+            Lämna feedback
+          </a>
         </div>
-      </div>
+      </section>
 
-      {/* Shopping list */}
-      <ShoppingList shoppingList={shoppingList} freshItemsTips={freshItemsTips} />
-
-      {/* Google Form feedback */}
-      <div className="bg-terracotta/8 border border-terracotta/20 rounded-3xl p-6 text-center animate-slide-up-delay-3">
-        <h3 className="font-display text-xl font-semibold text-brown mb-2">
-          Hjälp oss förbättra appen ❤️
-        </h3>
-        <p className="text-sm text-brown-light mb-5 leading-relaxed">
-          Det tar mindre än en minut att svara. Din feedback hjälper oss bygga en bättre tjänst.
-        </p>
-        <a
-          href="https://forms.gle/M5PvhoAFESmbyxZh7"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-block bg-terracotta hover:bg-terracotta-dark text-white font-semibold
-                     py-3.5 px-8 rounded-2xl text-base
-                     transition-all duration-200 active:scale-[0.98] shadow-warm-md hover:shadow-warm-lg"
-        >
-          Lämna feedback
-        </a>
-      </div>
-
-      {/* Reset */}
-      <div className="text-center pb-4 animate-slide-up-delay-3">
+      {/* Ny plan */}
+      <div className="mt-8 pb-4">
         <button
           onClick={onReset}
-          className="text-brown-light hover:text-terracotta transition-colors text-sm underline underline-offset-2"
+          className="text-brown-light hover:text-terracotta transition-colors text-sm
+                     underline underline-offset-4 py-2"
         >
-          ← Skapa en ny matplan
+          Skapa en ny matplan
         </button>
       </div>
     </div>

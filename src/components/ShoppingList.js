@@ -5,7 +5,7 @@ import { formatCountableIngredient } from '@/utils/ingredientRules'
 
 function formatSEK(value) {
   if (value == null || isNaN(value)) return null
-  return `Cirka ${Math.round(value).toLocaleString('sv-SE')} kr`
+  return `ca ${Math.round(value).toLocaleString('sv-SE')} kr`
 }
 
 // Volym under 1 liter visas i dl i inköpslistan (t.ex. 800 ml → 8 dl).
@@ -20,36 +20,101 @@ function formatShoppingTotal(quantity, unit) {
 }
 
 /**
- * Bygger huvudraden för en inköpslistrad: enbart den totala mängd som
- * behöver köpas, inte antal förpackningar. Prisberäkningen (packagesRequired,
- * packageAmount, isWeightBased m.m.) fortsätter beräknas exakt som förut –
- * det är bara PRESENTATIONEN som förenklas här.
+ * Delar upp raden i namn och mängd så de kan visas på var sin rad i butik.
+ * Prisberäkningen (packagesRequired, packageAmount, isWeightBased m.m.)
+ * fortsätter beräknas exakt som förut – det är bara PRESENTATIONEN här.
  */
 function buildDisplay(item) {
   // Räknebara varor (lök, vitlök, ägg, citron, buljong ...): visa alltid
-  // det naturliga antalet, oavsett om prisberäkningen internt räknat om
-  // det till vikt eller förpackningar.
+  // det naturliga antalet, oavsett hur priset räknats internt.
   if (item.requiredUnit === 'st') {
-    return { main: formatCountableIngredient(item.displayName, item.requiredQuantity) }
+    return { name: formatCountableIngredient(item.displayName, item.requiredQuantity), amount: null }
   }
 
   // Lösviktsvaror: redan en sammanlagd mängd utan förpackningsantal.
   if (item.isWeightBased) {
-    const qty = formatQuantity(item.purchaseQuantity, item.purchaseUnit)
-    return { main: `${item.displayName} – cirka ${qty}` }
+    return {
+      name: item.displayName,
+      amount: `cirka ${formatQuantity(item.purchaseQuantity, item.purchaseUnit)}`,
+    }
   }
 
   // Paketbaserade varor: total köpt mängd = antal förpackningar × storlek,
   // visad som EN sammanlagd mängd istället för "N × storlek".
   if (item.packagesRequired != null && item.packageAmount != null && item.packageUnit) {
     const totalQuantity = item.packagesRequired * item.packageAmount
-    return { main: `${item.displayName} – ${formatShoppingTotal(totalQuantity, item.packageUnit)}` }
+    return {
+      name: item.displayName,
+      amount: formatShoppingTotal(totalQuantity, item.packageUnit),
+    }
   }
 
-  return { main: item.displayName }
+  return { name: item.displayName, amount: null }
 }
 
-function ShoppingCategory({ category }) {
+function ShoppingCategory({ category, checked, onToggle }) {
+  return (
+    <section className="break-inside-avoid mb-6">
+      <h3 className="text-label font-semibold text-brown pb-2 mb-1 border-b border-line">
+        {category.label}
+      </h3>
+      <ul>
+        {category.items.map((item) => {
+          const key = `${category.label}::${item.displayName}`
+          const done = checked.includes(key)
+          const { name, amount } = buildDisplay(item)
+
+          return (
+            <li key={key} className="border-b border-line/60 last:border-b-0">
+              <button
+                type="button"
+                onClick={() => onToggle(key)}
+                aria-pressed={done}
+                className="w-full flex items-center gap-3 py-2.5 text-left min-h-[48px]
+                           hover:bg-warm/60 -mx-2 px-2 rounded transition-colors"
+              >
+                {/* Checkbox – tydligt läge via både form, bock och genomstrykning */}
+                <span
+                  aria-hidden="true"
+                  className={`w-[22px] h-[22px] rounded border-2 flex-shrink-0
+                              flex items-center justify-center text-xs transition-colors
+                    ${done
+                      ? 'bg-sage border-sage text-white'
+                      : 'border-stone-mid bg-white'}`}
+                >
+                  {done && '✓'}
+                </span>
+
+                <span className="flex-1 min-w-0">
+                  <span className={`block text-sm leading-snug transition-colors
+                    ${done ? 'line-through text-stone-mid' : 'text-brown font-medium'}`}>
+                    {name}
+                  </span>
+                  {amount && (
+                    <span className={`block text-meta transition-colors
+                      ${done ? 'text-stone-mid' : 'text-brown-light'}`}>
+                      {amount}
+                    </span>
+                  )}
+                </span>
+
+                <span className={`text-sm tabular-nums flex-shrink-0 transition-colors
+                  ${done ? 'text-stone-mid' : 'text-brown-light'}`}>
+                  {formatSEK(item.lineCost)}
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </section>
+  )
+}
+
+export default function ShoppingList({ shoppingList, freshItemsTips = [], totalCost = null }) {
+  const categories = Object.values(shoppingList || {})
+  // Avbockningen delas mellan kategorierna så state inte nollställs när
+  // layouten går från en till två kolumner.
   const [checked, setChecked] = useState([])
 
   const toggle = (key) => {
@@ -58,77 +123,39 @@ function ShoppingCategory({ category }) {
     )
   }
 
-  return (
-    <div className="mb-6 last:mb-0">
-      <h4 className="font-semibold text-brown mb-2 flex items-center gap-2 text-sm">
-        <span>{category.emoji}</span>
-        {category.label}
-      </h4>
-      <ul className="space-y-1.5">
-        {category.items.map((item) => {
-          const key = item.displayName
-          const done = checked.includes(key)
-          const { main } = buildDisplay(item)
-
-          return (
-            <li
-              key={key}
-              onClick={() => toggle(key)}
-              className={`flex items-start gap-3 cursor-pointer group text-sm rounded-xl px-3 py-2 transition-all duration-150
-                ${done ? 'bg-sage-light/20' : 'hover:bg-stone-warm/50'}`}
-            >
-              <span className={`w-5 h-5 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all duration-150 mt-0.5
-                ${done ? 'bg-sage border-sage' : 'border-stone-mid group-hover:border-terracotta'}`}>
-                {done && <span className="text-white text-xs">✓</span>}
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className={`block leading-snug transition-all duration-150 ${done ? 'line-through text-stone-mid' : 'text-brown-light'}`}>
-                  {main}
-                </span>
-              </span>
-              <span className="text-xs font-medium flex-shrink-0 mt-0.5 text-stone-mid">
-                {formatSEK(item.lineCost)}
-              </span>
-            </li>
-          )
-        })}
-      </ul>
-    </div>
-  )
-}
-
-export default function ShoppingList({ shoppingList, freshItemsTips = [] }) {
-  const categories = Object.values(shoppingList || {})
+  const totalItems = categories.reduce((sum, c) => sum + (c.items?.length || 0), 0)
 
   return (
-    <div className="space-y-5 animate-slide-up-delay-2">
-      {/* Main list */}
-      <div className="bg-white rounded-3xl shadow-warm-md p-6">
-        <h3 className="text-xl font-display text-brown font-semibold mb-1">
-          🛒 Inköpslista
-        </h3>
-        <p className="text-sm text-stone-mid mb-5">
-          Tryck för att bocka av – spara till butiken
-        </p>
-        <div className="divide-y divide-stone-warm">
-          {categories.map((cat) => (
-            <div key={cat.label} className="py-4 first:pt-0 last:pb-0">
-              <ShoppingCategory category={cat} />
+    <div>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 mb-1">
+        <h2 className="text-lg font-semibold text-brown">Inköpslista</h2>
+        {totalCost != null && (
+          <div className="text-right">
+            <div className="text-xs text-brown-light">Uppskattad totalsumma</div>
+            <div className="text-xl font-semibold text-brown tabular-nums">
+              {Math.round(totalCost).toLocaleString('sv-SE')} kr
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+      </div>
+      <p className="text-meta text-stone-mid mb-5">
+        {checked.length} av {totalItems} avbockade · tryck för att bocka av
+      </p>
+
+      {/* Desktop: två kolumner via CSS-kolumner, så kategorierna flödar
+          naturligt utan att någon kategori blir onödigt kort. */}
+      <div className="lg:columns-2 lg:gap-10">
+        {categories.map((cat) => (
+          <ShoppingCategory key={cat.label} category={cat} checked={checked} onToggle={toggle} />
+        ))}
       </div>
 
-      {/* Fresh items tips */}
       {freshItemsTips.length > 0 && (
-        <div className="bg-ochre-light/25 rounded-3xl p-6 border border-ochre-light/50">
-          <h3 className="font-semibold text-brown mb-3 flex items-center gap-2">
-            🥬 Tips för färskvaror
-          </h3>
-          <ul className="space-y-2">
+        <div className="mt-2 pt-5 border-t border-line">
+          <h3 className="text-label font-semibold text-brown mb-2">Tips för färskvaror</h3>
+          <ul className="space-y-1.5">
             {freshItemsTips.map((tip, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-brown-light">
-                <span className="text-ochre mt-0.5 flex-shrink-0">→</span>
+              <li key={i} className="text-sm text-brown-light leading-relaxed">
                 {tip}
               </li>
             ))}
@@ -136,8 +163,7 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [] }) {
         </div>
       )}
 
-      {/* Prisreservation */}
-      <p className="text-xs text-stone-mid text-center px-2">
+      <p className="text-xs text-stone-mid mt-5">
         Prisuppskattningen bygger på generella svenska matpriser och kan variera mellan butiker.
       </p>
     </div>
