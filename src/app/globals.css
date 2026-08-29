@@ -38,6 +38,13 @@
     animation: fadeIn 0.4s ease-out forwards;
   }
 
+  /* Snabbare variant för "Byt rätt" – ett nytt kort (annan React-nyckel)
+     ska tona in diskret på ~200ms, inte det längre 400ms-fadet som
+     används på övrigt innehåll. Återanvänder samma keyframe. */
+  .animate-fade-in-fast {
+    animation: fadeIn 0.2s ease-out forwards;
+  }
+
   .animate-slide-up {
     animation: slideUp 0.4s ease-out forwards;
   }

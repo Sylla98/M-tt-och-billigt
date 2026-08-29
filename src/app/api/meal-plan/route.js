@@ -17,6 +17,9 @@ import {
   scaleRecipe,
   buildShoppingItems,
   parsePantryTerms,
+  groupItemsByCategory,
+  buildFreshTips,
+  buildRecipeOccurrences,
 } from '@/utils/selectRecipes'
 
 // ─── Portionsberäkning ────────────────────────────────────────────────────────
@@ -68,32 +71,6 @@ function validateInput(body) {
   return errors
 }
 
-// ─── Kategorier för inköpslistan ──────────────────────────────────────────────
-const CATEGORY_DEFS = {
-  meat:       { label: 'Kött & chark',          emoji: '🥩' },
-  dairy:      { label: 'Mejeri & ägg',          emoji: '🧀' },
-  vegetables: { label: 'Grönsaker & frukt',     emoji: '🧅' },
-  canned:     { label: 'Konserver & torrvaror', emoji: '🥫' },
-  pasta:      { label: 'Pasta, ris & bröd',     emoji: '🍚' },
-  pantry:     { label: 'Skafferi',              emoji: '🫙' },
-}
-
-function groupItemsByCategory(flatItems) {
-  const grouped = {}
-  for (const key of Object.keys(CATEGORY_DEFS)) {
-    grouped[key] = { label: CATEGORY_DEFS[key].label, emoji: CATEGORY_DEFS[key].emoji, items: [] }
-  }
-  for (const item of flatItems) {
-    const key = CATEGORY_DEFS[item.category] ? item.category : 'pantry'
-    grouped[key].items.push(item)
-  }
-  // ta bort tomma kategorier för renare visning
-  for (const key of Object.keys(grouped)) {
-    if (grouped[key].items.length === 0) delete grouped[key]
-  }
-  return grouped
-}
-
 // ─── Plansammanfattning (lokalt genererad) ────────────────────────────────────
 function buildPlanSummary(recipes, days, foodTypes) {
   const proteinTypes = [...new Set(recipes.map((r) => r.proteinType))]
@@ -106,16 +83,6 @@ function buildPlanSummary(recipes, days, foodTypes) {
     `(${proteinTypes.join(', ')}).${styleText} Recepten är valda för att vara enkla, ` +
     `prisvärda och fungera bra som matlådor.`
   )
-}
-
-function buildFreshTips(recipes) {
-  const tips = []
-  const usesOnion = recipes.some((r) => r.ingredients.some((i) => i.name.toLowerCase().includes('lök')))
-  const freezables = recipes.filter((r) => r.freezerFriendly).length
-  if (usesOnion) tips.push('Lök och vitlök håller länge i rumstemperatur – köp allt på en gång.')
-  if (freezables > 0) tips.push(`${freezables} av rätterna går bra att frysa in – laga dubbel sats och spara.`)
-  tips.push('Färskvaror som grädde och crème fraiche håller längst om de köps nyligen datummärkta.')
-  return tips
 }
 
 // ─── Huvud-handler ────────────────────────────────────────────────────────────
@@ -208,31 +175,14 @@ export async function POST(request) {
       pantryItemsUsed,
       freshItemsTips: buildFreshTips(scaled),
       childFriendly: (foodTypes || []).includes('familjevanligt'),
-      recipes: (() => {
-        const occurrenceCount = {}
-        return scaled.map((r) => {
-          occurrenceCount[r.id] = (occurrenceCount[r.id] || 0) + 1
-          const n = occurrenceCount[r.id]
-          // Om ett recept återkommer får senare tillfällen ett unikt id
-          // (för React-nycklar i receptvyn) – själva receptet är oförändrat.
-          const id = n > 1 ? `${r.id}-tillfalle-${n}` : r.id
-          return {
-            id,
-            title: r.name,
-            description: r.description,
-            servings: r.servings,
-            cookingTimeMinutes: r.totalTimeMinutes,
-            childFriendly: r.familyFriendly,
-            freezerFriendly: r.freezerFriendly,
-            servedWith: r.servedWith,
-            fridgeStorage: r.fridgeStorage,
-            freezerStorage: r.freezerStorage,
-            ingredients: r.ingredients.map((ing) => ({ name: ing.name, quantity: ing.quantity, unit: ing.unit })),
-            instructions: r.instructions,
-            image: r.image,
-          }
-        })
-      })(),
+      // Tillagda för "Byt rätt" (se selectRecipes.js: selectSwapAlternatives/
+      // rebuildPlanData) – klienten behöver känna till samma kostval och
+      // skafferitext som användes vid genereringen för att kunna föreslå
+      // och skala ersättningsrecept med exakt samma regler. Påverkar inte
+      // befintlig funktionalitet, bara två extra fält i svaret.
+      foodTypes: foodTypes || [],
+      pantry: pantry || '',
+      recipes: buildRecipeOccurrences(scaled),
       shoppingList: priced.shoppingList,
       pricing: {
         budget,

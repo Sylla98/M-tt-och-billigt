@@ -4,7 +4,7 @@
 // inköpslistan. Ingen AI används i detta flöde.
 
 import { RECIPES } from '@/data/recipes'
-import { findReferenceProduct, normalizeIngredientName } from '@/utils/referencePricing'
+import { findReferenceProduct, normalizeIngredientName, priceShoppingListWithReference } from '@/utils/referencePricing'
 import { scaleIngredient } from '@/utils/portionScaling'
 
 // ── Kostnadsuppskattning per recept ─────────────────────────────────────────
@@ -50,7 +50,7 @@ export function estimateRecipeCostPerServing(recipe) {
 }
 
 // ── Filtrering ───────────────────────────────────────────────────────────────
-function filterByDiet(recipes, foodTypes) {
+export function filterByDiet(recipes, foodTypes) {
   // Vegetariskt är ett hårt filter – kött/fisk får ALDRIG slinka igenom
   if (foodTypes.includes('vegetariskt')) {
     return recipes.filter((r) => r.dietTypes.includes('vegetarisk'))
@@ -64,7 +64,7 @@ function filterByDiet(recipes, foodTypes) {
 }
 
 // ── Poängsättning ────────────────────────────────────────────────────────────
-function scoreRecipe(recipe, { foodTypes, pantryTerms, budgetPerServing }) {
+export function scoreRecipe(recipe, { foodTypes, pantryTerms, budgetPerServing }) {
   let score = 50
 
   const wantsFamilyFriendly = foodTypes.includes('familjevanligt')
@@ -301,4 +301,148 @@ export function swapForBudget(selected, remaining, maxAttempts = 3) {
   }
 
   return swaps
+}
+
+// ── Inköpslistekategorier ───────────────────────────────────────────────────
+// Flyttad hit (oförändrad) från route.js så att både den vanliga
+// genereringen OCH "Byt rätt"-funktionen använder EXAKT samma kategorisering
+// – en enda source of truth istället för två kopior som kan glida isär.
+const CATEGORY_DEFS = {
+  meat:       { label: 'Kött & chark',          emoji: '🥩' },
+  dairy:      { label: 'Mejeri & ägg',          emoji: '🧀' },
+  vegetables: { label: 'Grönsaker & frukt',     emoji: '🧅' },
+  canned:     { label: 'Konserver & torrvaror', emoji: '🥫' },
+  pasta:      { label: 'Pasta, ris & bröd',     emoji: '🍚' },
+  pantry:     { label: 'Skafferi',              emoji: '🫙' },
+}
+
+export function groupItemsByCategory(flatItems) {
+  const grouped = {}
+  for (const key of Object.keys(CATEGORY_DEFS)) {
+    grouped[key] = { label: CATEGORY_DEFS[key].label, emoji: CATEGORY_DEFS[key].emoji, items: [] }
+  }
+  for (const item of flatItems) {
+    const key = CATEGORY_DEFS[item.category] ? item.category : 'pantry'
+    grouped[key].items.push(item)
+  }
+  for (const key of Object.keys(grouped)) {
+    if (grouped[key].items.length === 0) delete grouped[key]
+  }
+  return grouped
+}
+
+// ── Färskvarutips ────────────────────────────────────────────────────────────
+// Också flyttad hit oförändrad, av samma skäl som ovan.
+export function buildFreshTips(recipes) {
+  const tips = []
+  const usesOnion = recipes.some((r) => r.ingredients.some((i) => i.name.toLowerCase().includes('lök')))
+  const freezables = recipes.filter((r) => r.freezerFriendly).length
+  if (usesOnion) tips.push('Lök och vitlök håller länge i rumstemperatur – köp allt på en gång.')
+  if (freezables > 0) tips.push(`${freezables} av rätterna går bra att frysa in – laga dubbel sats och spara.`)
+  tips.push('Färskvaror som grädde och crème fraiche håller längst om de köps nyligen datummärkta.')
+  return tips
+}
+
+// ── Skalade recept -> API-/frontend-format ──────────────────────────────────
+// Flyttad hit oförändrad från route.js:s tidigare inline-IIFE. Ger varje
+// tillagningstillfälle rätt id (receptid, eller receptid-tillfalle-N för
+// upprepningar) i den ordning recepten faktiskt förekommer i planen.
+export function buildRecipeOccurrences(scaledRecipes) {
+  const occurrenceCount = {}
+  return scaledRecipes.map((r) => {
+    occurrenceCount[r.id] = (occurrenceCount[r.id] || 0) + 1
+    const n = occurrenceCount[r.id]
+    const id = n > 1 ? `${r.id}-tillfalle-${n}` : r.id
+    return {
+      id,
+      title: r.name,
+      description: r.description,
+      servings: r.servings,
+      cookingTimeMinutes: r.totalTimeMinutes,
+      childFriendly: r.familyFriendly,
+      freezerFriendly: r.freezerFriendly,
+      servedWith: r.servedWith,
+      fridgeStorage: r.fridgeStorage,
+      freezerStorage: r.freezerStorage,
+      ingredients: r.ingredients.map((ing) => ({ name: ing.name, quantity: ing.quantity, unit: ing.unit })),
+      instructions: r.instructions,
+      image: r.image,
+    }
+  })
+}
+
+// ─── "Byt rätt" ─────────────────────────────────────────────────────────────
+// Två funktioner för att byta ut EN receptplats i en redan genererad plan,
+// utan att skapa en ny plan. Återanvänder filterByDiet/scoreRecipe/
+// scaleRecipe/buildShoppingItems/groupItemsByCategory/buildFreshTips ovan –
+// ingen logik dupliceras, bara en tunn koppling specifik för bytesflödet.
+
+/**
+ * Väljer alternativa recept för en receptplats som ska bytas ut. Samma
+ * kosttyp-/familjevänligt-filter som den vanliga planeringen (hårt filter),
+ * men rangordnar ALLA giltiga kandidater (istället för att bara plocka ut
+ * några) så att anroparen kan "bläddra" vidare i en stabil, redan beräknad
+ * lista – se RecipeSwapSheet.js för hur "Visa andra förslag" använder
+ * detta utan att redan visade förslag kan komma tillbaka.
+ *
+ * Pris och tid är MEDVETET sekundära signaler (litet, begränsat avdrag) –
+ * kostval/familjevänligt/skafferi väger betydligt tyngre via scoreRecipe.
+ */
+export function selectSwapAlternatives({ foodTypes, excludeIds = [], budgetPerServing = null, pantryTerms = [], referenceRecipe = null }) {
+  let pool = filterByDiet(RECIPES, foodTypes || [])
+
+  if ((foodTypes || []).includes('familjevanligt')) {
+    const familyFriendlyPool = pool.filter((r) => r.familyFriendly)
+    if (familyFriendlyPool.length > 0) pool = familyFriendlyPool
+  }
+
+  pool = pool.filter((r) => !excludeIds.includes(r.id))
+
+  const scored = pool.map((recipe) => {
+    let score = scoreRecipe(recipe, { foodTypes: foodTypes || [], pantryTerms, budgetPerServing })
+
+    if (referenceRecipe) {
+      const costDiff = Math.abs(estimateRecipeCostPerServing(recipe) - estimateRecipeCostPerServing(referenceRecipe))
+      const timeDiff = Math.abs((recipe.totalTimeMinutes || 0) - (referenceRecipe.totalTimeMinutes || 0))
+      score -= Math.min(8, costDiff * 0.4)
+      score -= Math.min(6, timeDiff * 0.15)
+    }
+
+    return { recipe, score, costPerServing: estimateRecipeCostPerServing(recipe) }
+  })
+
+  scored.sort((a, b) => b.score - a.score)
+  return scored.map((s) => ({ recipe: s.recipe, costPerServing: s.costPerServing }))
+}
+
+/**
+ * Bygger om den skalade receptlistan, inköpslistan och priserna för HELA
+ * planen utifrån en lista av (baseId, servings)-par – det enda en
+ * receptplats behöver beskrivas av. Samma pipeline som route.js använder
+ * vid generering (scaleRecipe -> buildShoppingItems -> groupItemsByCategory
+ * -> priceShoppingListWithReference), så resultatet blir identiskt
+ * strukturerat.
+ */
+export function rebuildPlanData(occurrenceSpecs, pantryText, budget) {
+  const scaled = occurrenceSpecs.map(({ baseId, servings }) => {
+    const recipe = RECIPES.find((r) => r.id === baseId)
+    return scaleRecipe(recipe, servings)
+  })
+
+  const items = buildShoppingItems(scaled, pantryText)
+  const grouped = groupItemsByCategory(items)
+  const priced = priceShoppingListWithReference(grouped)
+
+  const totalServings = scaled.reduce((sum, r) => sum + r.servings, 0)
+  const estimatedTotalCost = priced.estimatedTotalCost
+  const budgetDifference = estimatedTotalCost - budget
+  const isWithinBudget = estimatedTotalCost <= budget
+
+  return {
+    recipes: buildRecipeOccurrences(scaled),
+    shoppingList: priced.shoppingList,
+    freshItemsTips: buildFreshTips(scaled),
+    totalServings,
+    pricing: { budget, estimatedTotalCost, budgetDifference, isWithinBudget },
+  }
 }

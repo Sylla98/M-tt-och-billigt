@@ -2,8 +2,11 @@
 import { useState } from 'react'
 import RecipeCard from './RecipeCard'
 import ShoppingList from './ShoppingList'
+import RecipeSwapSheet from './RecipeSwapSheet'
+import { RECIPES } from '@/data/recipes'
+import { rebuildPlanData } from '@/utils/selectRecipes'
 
-export default function ResultView({ data, onReset }) {
+export default function ResultView({ data, onReset, onUpdateResult }) {
   const {
     recipes = [],
     shoppingList = {},
@@ -12,6 +15,9 @@ export default function ResultView({ data, onReset }) {
     numberOfDays = 14,
     childFriendly = false,
     pricing = null,
+    foodTypes = [],
+    pantry = '',
+    pantryItemsUsed = [],
   } = data
 
   // Ett recept kan förekomma flera gånger som separata tillagningstillfällen
@@ -63,6 +69,31 @@ export default function ResultView({ data, onReset }) {
   const recipeRows = []
   for (let i = 0; i < uniqueRecipes.length; i += 2) {
     recipeRows.push(uniqueRecipes.slice(i, i + 2))
+  }
+
+  // ── "Byt rätt" ────────────────────────────────────────────────────────────
+  // swapTarget = den unika receptplats (från uniqueRecipes) som användaren
+  // för närvarande försöker byta ut, eller null om dialogen är stängd.
+  const [swapTarget, setSwapTarget] = useState(null)
+
+  const planRecipeIds = uniqueRecipes.map((r) => r.id)
+  const budgetPerServing = pricing && totalServings > 0 ? pricing.budget / totalServings : null
+  const swapReferenceRecipe = swapTarget ? RECIPES.find((r) => r.id === swapTarget.id) : null
+
+  const handleSwapSelect = (newRecipeId) => {
+    if (!swapTarget || !pricing) return
+
+    // Planen beskrivs helt av (baseId, servings) per tillagningstillfälle –
+    // byt bara ut de tillfällen som tillhörde den gamla receptplatsen,
+    // behåll ALLA andra exakt som de är (inklusive deras portionsantal).
+    const occurrenceSpecs = recipes.map((r) => {
+      const baseId = getBaseRecipeId(r.id)
+      return { baseId: baseId === swapTarget.id ? newRecipeId : baseId, servings: r.servings }
+    })
+
+    const rebuilt = rebuildPlanData(occurrenceSpecs, pantry, pricing.budget)
+    onUpdateResult(rebuilt)
+    setSwapTarget(null)
   }
 
   const summaryParts = [
@@ -144,6 +175,7 @@ export default function ResultView({ data, onReset }) {
                     showFamilyFriendlyBadge={childFriendly}
                     open={openRecipeIds.has(recipe.id)}
                     onToggle={() => toggleRecipe(recipe.id)}
+                    onSwapRequest={() => setSwapTarget(recipe)}
                   />
                 ))}
               </div>
@@ -190,6 +222,18 @@ export default function ResultView({ data, onReset }) {
           Skapa en ny matplan
         </button>
       </div>
+
+      <RecipeSwapSheet
+        open={!!swapTarget}
+        onClose={() => setSwapTarget(null)}
+        currentRecipe={swapTarget}
+        foodTypes={foodTypes}
+        excludeIds={planRecipeIds}
+        pantryTerms={pantryItemsUsed}
+        budgetPerServing={budgetPerServing}
+        referenceRecipe={swapReferenceRecipe}
+        onSelect={handleSwapSelect}
+      />
     </div>
   )
 }

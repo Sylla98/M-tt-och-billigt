@@ -29,7 +29,7 @@ function imageCategoryLabel(imageSrc) {
   return IMAGE_CATEGORY_LABELS[filename] || 'matlagning'
 }
 
-export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = false, open = false, onToggle }) {
+export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = false, open = false, onToggle, onSwapRequest }) {
   // imgState: 'primary' → försöker vald bild, 'fallback' → fallback.jpg,
   // 'none' → även fallback misslyckades, visa neutral platshållare
   const [imgState, setImgState] = useState('primary')
@@ -159,7 +159,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
       ref={articleRef}
       className="bg-white rounded-xl border border-line overflow-hidden
                  transition-shadow duration-150 hover:shadow-warm-md w-full
-                 scroll-mt-20"
+                 scroll-mt-20 animate-fade-in-fast"
     >
       {/* Bild – dominerar kortets övre del, konsekvent 4:3 */}
       {/* Bild – 4:3 i stängt kort (oförändrat). I öppnat recept används
@@ -239,6 +239,20 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
               ↓
             </span>
           </button>
+
+          {/* Diskret, sekundär – ska aldrig konkurrera med receptnamnet
+              eller "Visa recept". ml-auto ger tydlig visuell separation. */}
+          {onSwapRequest && (
+            <button
+              onClick={onSwapRequest}
+              className="ml-auto inline-flex items-center gap-1 text-xs text-stone-mid
+                         hover:underline underline-offset-4
+                         min-h-[44px] px-1 transition-colors
+                         [-webkit-tap-highlight-color:transparent]"
+            >
+              Byt rätt
+            </button>
+          )}
         </div>
       </div>
 

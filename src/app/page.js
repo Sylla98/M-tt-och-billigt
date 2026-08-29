@@ -47,6 +47,13 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
+  // Används av "Byt rätt" – slår ihop det ombyggda receptet/inköpslistan/
+  // priset i den BEFINTLIGA planen istället för att generera en ny. Övriga
+  // fält (numberOfDays, foodTypes, pantry, childFriendly, ...) rörs inte.
+  const handleUpdateResult = (updatedFields) => {
+    setResult((prev) => (prev ? { ...prev, ...updatedFields } : prev))
+  }
+
   return (
     <main className="min-h-screen flex flex-col">
       {/* Topprad – hårfin avdelare istället för dekorativ bakgrund */}
@@ -89,7 +96,7 @@ export default function Home() {
             </div>
           </div>
         ) : (
-          <ResultView data={result} onReset={handleReset} />
+          <ResultView data={result} onReset={handleReset} onUpdateResult={handleUpdateResult} />
         )}
       </div>
 
