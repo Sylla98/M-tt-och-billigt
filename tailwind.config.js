@@ -8,60 +8,68 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // Serif används MEDVETET sparsamt: bara logotyp och hero-rubrik.
-        // All funktionell UI-text (formulär, knappar, siffror, metadata)
-        // sätts i sans för att appen ska kännas som ett verktyg, inte en blogg.
-        display: ['Georgia', 'Cambria', 'serif'],
-        body: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
-        sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        // Boska ger sidans STORA rubrik (startsidans hero, InputForms
+        // "Slipp tänka på maten", ResultViews "Din matplan") och receptens
+        // namn karaktär och värme – "editorial" i praktiken.
+        // Satoshi bär allt funktionellt UI: navigation, formulär, knappar,
+        // stegtitlar, metadata, produktinformation. Tydlig, konsekvent
+        // regel istället för att blanda friare – ger den typografiska
+        // kontrast som Koncept A 2.0 efterfrågar.
+        display: ['Boska', 'Georgia', 'serif'],
+        body: ['Satoshi', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Satoshi', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
       colors: {
-        // Bakgrunder – varm off-white, mindre gul än tidigare
-        cream: '#FBF8F4',
-        warm: '#F5EFE7',
+        // Bakgrund och rena ytor
+        cream: '#FAF8F3',
+        surface: '#FFFDF9',
 
-        // Terrakotta – något djupare än förut för att klara AA-kontrast
-        // mot vitt i knappar och som textfärg
-        terracotta: '#BE5A3E',
-        'terracotta-light': '#D9795C',
-        'terracotta-dark': '#9C4630',
+        // Text – mörk grafit
+        ink: '#302D29',
+        'ink-light': '#6B6862',
 
-        // Dämpad grön – används ENDAST för positiv budgetstatus.
-        // Mörkad så den fungerar som läsbar text, inte bara som yta.
-        sage: '#4F7A52',
-        'sage-light': '#A8C5AB',
+        // Varumärke – skogsgrön. Nu appens PRIMÄRA interaktionsfärg (CTA:er,
+        // valda tillstånd, progress, fokus) OCH identitet – till skillnad
+        // från Koncept C där en separat kobolt bar interaktionen. Se till
+        // att inte falla tillbaka i "allt är grönt" (Koncept A 1.0:s
+        // problem): apricot/butter/sky ska bära lika mycket verklig yta.
+        forest: '#244735',
+        'forest-dark': '#1A3327',
+        'forest-light': '#E4EAE5',
 
-        // Lugn bärnsten för "över budget" – varning utan aggressivt rött
-        ochre: '#9A6A2F',
-        'ochre-light': '#E8D5AE',
+        // Varm kontrastfärg – bränd terrakotta/orange. Bytt från en tidigare,
+        // för rosa/aprikosa ton (#F2B493) som gjorde designen väl "snäll".
+        // ACCENT, inte en fjärde huvudyta: används sparsamt (en knapp, en
+        // dekorativ hero-form, ljusa tinter i funktionssektionen) – den
+        // huvudsakliga identiteten bärs fortsatt av cream/grafit/skogsgrönt/
+        // smör/himmelsblått.
+        terracotta: '#D9855B',
+        'terracotta-light': '#F5E7DC',
+        butter: '#F7DC90',
+        'butter-light': '#FCF3D9',
+        sky: '#D7E7EB',
+        'sky-dark': '#4A7C89',
 
-        // Text – mörk choklad. Betydligt högre kontrast än tidigare
-        // (#2E211A mot #5C3D2E) enligt tillgänglighetskravet.
-        brown: '#2E211A',
-        'brown-light': '#6B5749',
+        // Funktionell varning – ENDAST "över budget". Egen, från de tre
+        // identitetsfärgerna fristående nyans så de aldrig läses som en
+        // varning i andra sammanhang.
+        rust: '#C1502E',
+        'rust-light': '#F5DEDA',
 
-        // Linjer och ytor
-        'stone-warm': '#EFE8DE',
-        'stone-mid': '#8A7767',
-        line: '#E4DACE',
+        // Linjer – varm ton härledd ur cream, inte grå
+        line: '#E8E0D2',
+        'line-strong': '#DDD2BD',
       },
       borderRadius: {
-        // Behålls oförändrade så att receptkort och inköpslista (som inte
-        // ingår i etapp 1) ser exakt likadana ut. Den nya, mer kompakta
-        // designen använder istället Tailwinds mindre standardradier.
         '2xl': '1rem',
-        '3xl': '1.5rem',
-        '4xl': '2rem',
+        '3xl': '1.25rem',
       },
       boxShadow: {
-        // Kraftigt nedtonade – den nya designen bär på hårfina linjer
-        // istället för stora skuggor.
-        'warm-sm': '0 1px 2px rgba(46, 33, 26, 0.04)',
-        'warm-md': '0 1px 3px rgba(46, 33, 26, 0.06)',
-        'warm-lg': '0 2px 8px rgba(46, 33, 26, 0.07)',
+        'sm': '0 1px 2px rgba(48, 45, 41, 0.05)',
+        'md': '0 1px 3px rgba(48, 45, 41, 0.07)',
+        'lg': '0 4px 16px rgba(48, 45, 41, 0.08)',
       },
       fontSize: {
-        // Tydlig typografisk skala
         'label': ['0.8125rem', { lineHeight: '1.2', letterSpacing: '0.01em' }],
         'meta': ['0.8125rem', { lineHeight: '1.45' }],
       },
@@ -69,3 +77,5 @@ module.exports = {
   },
   plugins: [],
 }
+
+

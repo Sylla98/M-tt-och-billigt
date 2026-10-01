@@ -1,108 +1,161 @@
-'use client'
-import { useState, useRef } from 'react'
-import InputForm from '@/components/InputForm'
-import ResultView from '@/components/ResultView'
+import Link from 'next/link'
+import TrackedLink from '@/components/TrackedLink'
 
-export default function Home() {
-  const [state, setState] = useState('idle') // idle | loading | done | error
-  const [result, setResult] = useState(null)
-  const [errorMessage, setErrorMessage] = useState('')
-  const isSubmittingRef = useRef(false) // synkron spärr mot dubbelklick
+// Fyra riktiga, korta receptnamn ur biblioteket – ren variation (kyckling/
+// vegetariskt/kött/fisk), ingen påhittad data. Används bara som exempel på
+// bredden i receptbiblioteket, inte som en påstådd "din vecka"-plan.
+const PLANNING_EXAMPLES = ['Butter chicken', 'Kikärtscurry', 'Ungersk gulasch', 'Skagen-räkpasta']
 
-  const handleSubmit = async (formData) => {
-    if (isSubmittingRef.current) return // redan ett anrop på gång – ignorera
-    isSubmittingRef.current = true
-
-    setState('loading')
-    setErrorMessage('')
-
-    try {
-      const res = await fetch('/api/meal-plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Något gick fel. Försök igen.')
-      }
-
-      setResult(data)
-      setState('done')
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    } catch (err) {
-      setErrorMessage(err.message || 'Kunde inte hämta matplanen. Kontrollera din anslutning.')
-      setState('error')
-    } finally {
-      isSubmittingRef.current = false
-    }
-  }
-
-  const handleReset = () => {
-    setResult(null)
-    setState('idle')
-    setErrorMessage('')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
-  // Används av "Byt rätt" – slår ihop det ombyggda receptet/inköpslistan/
-  // priset i den BEFINTLIGA planen istället för att generera en ny. Övriga
-  // fält (numberOfDays, foodTypes, pantry, childFriendly, ...) rörs inte.
-  const handleUpdateResult = (updatedFields) => {
-    setResult((prev) => (prev ? { ...prev, ...updatedFields } : prev))
-  }
-
+export default function HomePage() {
   return (
     <main className="min-h-screen flex flex-col">
-      {/* Topprad – hårfin avdelare istället för dekorativ bakgrund */}
-      <header className="border-b border-line bg-cream/90 backdrop-blur-sm sticky top-0 z-20">
-        <div className={`${state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} mx-auto px-4 py-3.5 flex items-center justify-between transition-[max-width] duration-200`}>
-          <span className="font-display font-bold text-brown text-[1.0625rem] tracking-tight">
+      <header className="border-b border-line">
+        <div className="max-w-[1100px] mx-auto px-4 py-4 flex items-center justify-between">
+          <span className="font-display font-semibold text-ink text-[1.0625rem] tracking-tight">
             Mätt &amp; Billigt
           </span>
-          {(state === 'done' || state === 'error') && (
-            <button
-              onClick={handleReset}
-              className="text-sm text-brown-light hover:text-terracotta transition-colors py-1.5 px-2"
-            >
-              Ny plan
-            </button>
-          )}
+          <Link
+            href="/planera"
+            className="text-sm font-bold text-white bg-forest hover:bg-forest-dark
+                       transition-colors py-2 px-4 rounded-lg"
+          >
+            Planera veckan
+          </Link>
         </div>
       </header>
 
-      {/* Innehåll */}
-      <div className="flex-1 px-4 pt-6 pb-12">
-        {state === 'idle' || state === 'loading' ? (
-          <InputForm onSubmit={handleSubmit} loading={state === 'loading'} />
-        ) : state === 'error' ? (
-          <div className="w-full max-w-[660px] mx-auto">
-            <div className="bg-white rounded-xl border border-line p-6">
-              <h1 className="text-lg font-semibold text-brown mb-2">
-                Matplanen kunde inte skapas
-              </h1>
-              <p className="text-brown-light text-sm mb-5 leading-relaxed">
-                {errorMessage}
-              </p>
-              <button
-                onClick={handleReset}
-                className="bg-terracotta hover:bg-terracotta-dark text-white font-semibold
-                           py-3 px-6 rounded-lg text-sm min-h-[44px] transition-colors duration-150"
-              >
-                Försök igen
-              </button>
-            </div>
-          </div>
-        ) : (
-          <ResultView data={result} onReset={handleReset} onUpdateResult={handleUpdateResult} />
-        )}
-      </div>
+      {/* ── Hero ──────────────────────────────────────────────────────────
+          Editorial komposition: rubriken tar täten, mjuka färgade former
+          i terrakotta/smör/himmelsblått ger sidan karaktär bakom texten –
+          rent grafiskt, ingen produktrepresentation (den kommer i nästa
+          sektion, tydligt separat).
+          Cirklarna hålls MEDVETET helt innanför sektionens egen box (inga
+          negativa right-värden) – tidigare stack den största cirkeln ut
+          60px till höger om sektionens overflow-hidden-gräns och blev
+          därför hårt avskuren exakt vid den gränsen, vilket såg ut som ett
+          layoutfel snarare än en avsiktlig komposition. */}
+      <section className="relative max-w-[1100px] w-full mx-auto px-4 pt-16 pb-20 md:pt-24 md:pb-28 overflow-hidden">
+        <div
+          aria-hidden="true"
+          className="absolute top-8 right-4 w-64 h-64 rounded-full bg-terracotta/50 -z-10 hidden md:block"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute top-64 right-32 w-36 h-36 rounded-full bg-sky -z-10 hidden md:block"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute top-0 right-64 w-24 h-24 rounded-full bg-butter -z-10 hidden lg:block"
+        />
 
-      {/* Footer */}
-      <footer className="border-t border-line">
-        <p className={`${state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} mx-auto px-4 py-5 text-xs text-stone-mid`}>
+        <div className="max-w-2xl">
+          <h1 className="font-display font-semibold text-ink text-[2.75rem] leading-[1.05] md:text-[4rem] md:leading-[1.02] text-balance mb-6">
+            Veckans mat.
+            <br />
+            Smartare planerad.
+          </h1>
+          <p className="text-ink-light text-lg leading-relaxed max-w-md mb-8">
+            Planera god vardagsmat utifrån din budget, få en färdig
+            inköpslista och byt enkelt ut ett recept om något inte känns
+            rätt.
+          </p>
+          <TrackedLink
+            href="/planera"
+            eventName="landing_cta_clicked"
+            className="inline-flex items-center justify-center bg-forest hover:bg-forest-dark
+                       text-white font-bold py-4 px-7 rounded-lg text-base
+                       transition-colors duration-150"
+          >
+            Skapa min matplan
+          </TrackedLink>
+          <p className="text-sm text-ink-light/70 mt-3">Gratis · Ingen inloggning</p>
+        </div>
+      </section>
+
+      {/* ── Tre produktmoment ─────────────────────────────────────────────
+          Ersätter den tidigare exempelrutan, som gav intrycket av en
+          komplett genererad plan trots att den bara visade två recept.
+          Detta är medvetet INTE en plan: tre fristående, olika utformade
+          representationer av tre separata funktioner, var och en i sin
+          egen temafärg. Inga påhittade besparingar eller användardata. */}
+      <section className="border-t border-line">
+        <div className="max-w-[1100px] mx-auto px-4 py-16 md:py-20">
+          <div className="grid md:grid-cols-3 gap-5 md:gap-6">
+
+            {/* Planering – aprikos. Receptnamnen visas som lösa, lätt
+                vinklade etiketter för att signalera bredd/variation,
+                aldrig som "din vecka". */}
+            <div className="rounded-2xl bg-terracotta-light border border-terracotta p-6 flex flex-col">
+              <h2 className="font-display font-semibold text-xl text-ink mb-2">
+                Recept för varje vardag
+              </h2>
+              <p className="text-sm text-ink-light leading-relaxed mb-6">
+                Ett brett receptbibliotek – ange budget och preferenser, få
+                förslag som passar just ert hushåll.
+              </p>
+              <div className="mt-auto flex flex-wrap gap-2">
+                {PLANNING_EXAMPLES.map((name, i) => (
+                  <span
+                    key={name}
+                    className="inline-block bg-surface text-ink text-xs font-medium
+                               px-3 py-1.5 rounded-full border border-terracotta/60"
+                    style={{ transform: `rotate(${i % 2 === 0 ? '-1.5deg' : '1.5deg'})` }}
+                  >
+                    {name}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Budget – smör. Samma visuella språk som det riktiga
+                budgetreglaget i formuläret, men rent illustrativt. */}
+            <div className="rounded-2xl bg-butter-light border border-butter p-6 flex flex-col">
+              <h2 className="font-display font-semibold text-xl text-ink mb-2">
+                Håller sig till din budget
+              </h2>
+              <p className="text-sm text-ink-light leading-relaxed mb-6">
+                Ange vad ni vill lägga på maten – planen räknar ut vad
+                perioden kostar och håller sig därinom.
+              </p>
+              <div className="mt-auto">
+                <div className="flex items-baseline justify-between text-xs text-ink-light mb-1.5">
+                  <span>500 kr</span>
+                  <span>5 000 kr</span>
+                </div>
+                <div aria-hidden="true" className="relative h-1.5 rounded-full bg-butter">
+                  <div className="absolute inset-y-0 left-0 w-[45%] rounded-full bg-forest" />
+                  <div className="absolute top-1/2 left-[45%] -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-surface border-2 border-forest" />
+                </div>
+              </div>
+            </div>
+
+            {/* Flexibilitet / Byt rätt – himmelsblått. En enkel
+                bytesvisualisering istället för en tredje identisk ikonruta. */}
+            <div className="rounded-2xl bg-sky border border-sky-dark/25 p-6 flex flex-col">
+              <h2 className="font-display font-semibold text-xl text-ink mb-2">
+                Byt ut det du inte gillar
+              </h2>
+              <p className="text-sm text-ink-light leading-relaxed mb-6">
+                Gillar du inte ett recept i planen? Byt ut det – resten av
+                planen och inköpslistan uppdateras automatiskt.
+              </p>
+              <div className="mt-auto flex items-center justify-center gap-3">
+                <span className="bg-surface text-ink-light text-xs font-medium px-3 py-2 rounded-lg border border-sky-dark/25 line-through decoration-sky-dark/50">
+                  Fiskgratäng
+                </span>
+                <span className="text-sky-dark font-bold" aria-hidden="true">→</span>
+                <span className="bg-forest text-white text-xs font-bold px-3 py-2 rounded-lg">
+                  Butter chicken
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-line mt-auto">
+        <p className="max-w-[1100px] mx-auto px-4 py-5 text-xs text-ink-light/70">
           Mätt &amp; Billigt · Hjälper svenska familjer äta gott för mindre
         </p>
       </footer>

@@ -109,7 +109,7 @@ for (const [i, r] of RECIPES.entries()) {
     if (r.dietTypes?.includes('vegetarisk')) {
       const meatIngredient = r.ingredients.find((ing) => ing.category === 'meat')
       if (meatIngredient) errors.push(`${label}: markerad vegetarisk men innehåller köttvaran "${meatIngredient.name}"`)
-      if (['kyckling', 'köttfärs', 'fisk', 'korv'].includes(r.proteinType))
+      if (['kyckling', 'köttfärs', 'fisk', 'korv', 'nötkött', 'fläsk'].includes(r.proteinType))
         errors.push(`${label}: markerad vegetarisk men proteinType är "${r.proteinType}"`)
     }
   }
@@ -151,15 +151,15 @@ for (const [name, familyMap] of nameToUnits.entries()) {
 }
 
 // ── Antalskontroller ─────────────────────────────────────────────────────────
-const EXPECTED_TOTAL = 40
-const MINIMUM_COUNTS = { vegetarisk: 16, kyckling: 10, 'kött/köttfärs': 7, fisk: 5 }
+const EXPECTED_TOTAL = 60
+const MINIMUM_COUNTS = { vegetarisk: 16, kyckling: 16, 'kött/köttfärs': 13, fisk: 9 }
 
 const total = RECIPES.length
 if (total !== EXPECTED_TOTAL) errors.push(`Fel totalantal recept: ${total} (förväntade ${EXPECTED_TOTAL})`)
 
 const vegCount = RECIPES.filter((r) => r.dietTypes?.includes('vegetarisk')).length
 const chickenCount = RECIPES.filter((r) => r.proteinType === 'kyckling').length
-const meatCount = RECIPES.filter((r) => ['köttfärs', 'korv'].includes(r.proteinType)).length
+const meatCount = RECIPES.filter((r) => ['köttfärs', 'korv', 'nötkött', 'fläsk'].includes(r.proteinType)).length
 const fishCount = RECIPES.filter((r) => r.proteinType === 'fisk').length
 
 if (vegCount < MINIMUM_COUNTS.vegetarisk) errors.push(`För få vegetariska: ${vegCount} (kräver minst ${MINIMUM_COUNTS.vegetarisk})`)

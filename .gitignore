@@ -1,0 +1,13 @@
+# Hemligheter – lägg ALDRIG in dessa i Git
+.env.local
+.env
+
+# Next.js bygge
+.next/
+out/
+
+# Beroenden
+node_modules/
+
+# Mac
+.DS_Store

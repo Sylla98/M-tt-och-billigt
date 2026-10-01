@@ -29,6 +29,18 @@ function imageCategoryLabel(imageSrc) {
   return IMAGE_CATEGORY_LABELS[filename] || 'matlagning'
 }
 
+// Kontrollerad, diskret fallback när ett recept saknar bild – ANVÄNDS
+// bara när både recipe.image och kategoribilden i getRecipeImage.js
+// misslyckas att ladda. Designidentiteten i Koncept A 2.0 ska bäras av
+// riktig receptfotografi, inte av platshållaren, så den här hålls
+// medvetet tillbakadragen: en mjuk, ljus tematon och receptnamnet i
+// vanlig text – inget stort typografiskt statement.
+const PLACEHOLDER_TONES = ['bg-terracotta-light', 'bg-butter-light', 'bg-sky']
+function placeholderTone(title) {
+  const sum = (title || '').split('').reduce((s, c) => s + c.charCodeAt(0), 0)
+  return PLACEHOLDER_TONES[sum % PLACEHOLDER_TONES.length]
+}
+
 export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = false, open = false, onToggle, onSwapRequest }) {
   // imgState: 'primary' → försöker vald bild, 'fallback' → fallback.jpg,
   // 'none' → även fallback misslyckades, visa neutral platshållare
@@ -158,7 +170,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
     <article
       ref={articleRef}
       className="bg-white rounded-xl border border-line overflow-hidden
-                 transition-shadow duration-150 hover:shadow-warm-md w-full
+                 transition-shadow duration-150 hover:shadow-md w-full
                  scroll-mt-20 animate-fade-in-fast"
     >
       {/* Bild – dominerar kortets övre del, konsekvent 4:3 */}
@@ -166,7 +178,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
           istället en fast, responsiv höjd (inte aspect ratio) så bilden
           inte blir orimligt stor på breda desktop-kort: ca 240px på mobil,
           upp mot 340px på desktop. object-cover behåller samma beskärning. */}
-      <div className={`relative bg-warm ${open ? 'h-[200px] md:h-[280px] lg:h-[340px]' : 'h-[200px] md:h-auto md:aspect-[4/3]'}`}>
+      <div className={`relative bg-cream ${open ? 'h-[240px] md:h-[320px] lg:h-[380px]' : 'h-[240px] md:h-auto md:aspect-[4/3]'}`}>
         {imgState !== 'none' ? (
           <img
             src={imageSrc}
@@ -176,9 +188,11 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
             className="w-full h-full object-cover"
           />
         ) : (
-          // Neutral, stilren platshållare – ingen gradient
-          <div className="w-full h-full flex items-center justify-center bg-warm px-6">
-            <span className="font-display text-brown-light/70 text-center leading-snug">
+          // Kontrollerad fallback (se placeholderTone ovan) – mjuk tematon,
+          // receptnamnet i vanlig text. Ingen del av produktens visuella
+          // identitet vilar på detta läge; det ska bara aldrig se trasigt ut.
+          <div className={`w-full h-full flex items-center justify-center px-6 ${placeholderTone(title)}`}>
+            <span className="text-sm font-semibold text-ink/70 text-center leading-snug">
               {title}
             </span>
           </div>
@@ -186,23 +200,23 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
       </div>
 
       <div className="p-4 md:p-5">
-        <h3 className="font-display text-lg md:text-xl text-brown leading-tight mb-1.5">
+        <h3 className="font-display font-semibold text-lg md:text-xl text-ink leading-tight mb-1.5">
           {title}
         </h3>
 
         {recipe.description && (
-          <p className="text-sm text-brown-light leading-relaxed mb-2.5">
+          <p className="text-sm text-ink-light leading-relaxed mb-2.5">
             {recipe.description}
           </p>
         )}
 
         {/* Metadata som ren text – inga färgade pills */}
-        <p className="text-meta text-stone-mid">
+        <p className="text-meta text-ink-light/70">
           {metaParts.join(' · ')}
         </p>
 
         {servedWith && (
-          <p className="text-meta text-stone-mid mt-0.5">{servedWith}</p>
+          <p className="text-meta text-ink-light/70 mt-0.5">{servedWith}</p>
         )}
 
         {/* Action-rad: Barnvänligt + Visa/Dölj recept hör visuellt ihop som
@@ -214,7 +228,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {recipe.childFriendly && showFamilyFriendlyBadge && (
             <p className="inline-flex items-center gap-1 text-xs font-medium
-                          text-sage bg-sage/[0.08] border border-sage/20
+                          text-forest bg-forest-light border border-forest/20
                           rounded px-2 py-0.5">
               <span aria-hidden="true">✓</span> Barnvänligt
             </p>
@@ -227,7 +241,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
             aria-expanded={open}
             aria-controls={panelId}
             className="inline-flex items-center gap-1.5 text-sm font-semibold
-                       text-brown hover:underline underline-offset-4
+                       text-ink hover:underline underline-offset-4
                        min-h-[44px] transition-colors
                        [-webkit-tap-highlight-color:transparent]"
           >
@@ -245,7 +259,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
           {onSwapRequest && (
             <button
               onClick={onSwapRequest}
-              className="ml-auto inline-flex items-center gap-1 text-xs text-stone-mid
+              className="ml-auto inline-flex items-center gap-1 text-xs text-ink-light/70
                          hover:underline underline-offset-4
                          min-h-[44px] px-1 transition-colors
                          [-webkit-tap-highlight-color:transparent]"
@@ -262,12 +276,12 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
           {/* Desktop: 35 % ingredienser / 65 % instruktioner */}
           <div className="grid gap-6 lg:gap-10 lg:grid-cols-12">
             <div className="lg:col-span-4">
-              <h4 className="text-label font-semibold text-brown mb-3 pb-2 border-b border-line">
+              <h4 className="text-label font-semibold text-ink mb-3 pb-2 border-b border-line">
                 Ingredienser
               </h4>
               <ul className="space-y-2">
                 {ingredients.map((ing, i) => (
-                  <li key={i} className="text-sm text-brown-light leading-snug">
+                  <li key={i} className="text-sm text-ink-light leading-snug">
                     {ing}
                   </li>
                 ))}
@@ -275,13 +289,13 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
             </div>
 
             <div className="lg:col-span-8">
-              <h4 className="text-label font-semibold text-brown mb-3 pb-2 border-b border-line">
+              <h4 className="text-label font-semibold text-ink mb-3 pb-2 border-b border-line">
                 Gör så här
               </h4>
               <ol className="space-y-3.5">
                 {instructions.map((step, i) => (
-                  <li key={i} className="flex gap-3 text-sm text-brown-light">
-                    <span className="flex-shrink-0 w-5 text-terracotta font-semibold tabular-nums">
+                  <li key={i} className="flex gap-3 text-sm text-ink-light">
+                    <span className="flex-shrink-0 w-5 text-forest font-semibold tabular-nums">
                       {i + 1}.
                     </span>
                     <span className="leading-relaxed max-w-[60ch]">{step}</span>
@@ -294,8 +308,8 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
           {/* Förvaring – sekundär information sist */}
           {storage && (
             <div className="mt-6 pt-4 border-t border-line">
-              <h4 className="text-label font-semibold text-brown mb-1">Förvaring</h4>
-              <p className="text-sm text-brown-light">{storage}</p>
+              <h4 className="text-label font-semibold text-ink mb-1">Förvaring</h4>
+              <p className="text-sm text-ink-light">{storage}</p>
             </div>
           )}
 
@@ -309,7 +323,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
               aria-controls={panelId}
               aria-label="Dölj recept"
               className="inline-flex items-center gap-1.5 text-sm font-medium
-                         text-brown-light hover:underline underline-offset-4
+                         text-ink-light hover:underline underline-offset-4
                          min-h-[44px] px-3 transition-colors
                          [-webkit-tap-highlight-color:transparent]"
             >

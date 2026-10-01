@@ -6,11 +6,13 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "validate:recipes": "node --experimental-default-type=module scripts/validate-recipes.mjs"
+    "validate:recipes": "node --experimental-default-type=module scripts/validate-recipes.mjs",
+    "test:analytics": "node --experimental-test-module-mocks --test 'tests/**/*.test.mjs'"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",
-    "next": "^15.5.24",
+    "next": "14.2.3",
+    "posthog-js": "^1.434.15",
     "react": "^18",
     "react-dom": "^18"
   },

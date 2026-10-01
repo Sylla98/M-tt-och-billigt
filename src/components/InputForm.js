@@ -44,8 +44,8 @@ const ALL_FOOD_TYPES = [...DIET_TYPES, ...PREFERENCES]
 function FieldLabel({ children, hint }) {
   return (
     <div className="flex items-baseline justify-between gap-3 mb-2.5">
-      <span className="text-label font-semibold text-brown">{children}</span>
-      {hint && <span className="text-xs text-stone-mid font-normal">{hint}</span>}
+      <span className="text-label font-semibold text-ink">{children}</span>
+      {hint && <span className="text-xs text-ink-light/70 font-normal">{hint}</span>}
     </div>
   )
 }
@@ -61,8 +61,8 @@ function ChoiceButton({ selected, onClick, children }) {
       className={`relative py-2.5 px-3 rounded-lg text-sm font-medium text-center
                   border transition-colors duration-150 min-h-[44px]
         ${selected
-          ? 'bg-terracotta text-white border-terracotta'
-          : 'bg-white text-brown border-line hover:border-stone-mid'}`}
+          ? 'bg-forest text-white border-forest'
+          : 'bg-white text-ink border-line hover:border-ink-light/40'}`}
     >
       {selected && <span aria-hidden="true" className="mr-1.5">✓</span>}
       {children}
@@ -80,21 +80,21 @@ function StepperField({ label, value, onChange, min = 0 }) {
           onClick={() => onChange(Math.max(min, value - 1))}
           aria-label={`Minska ${label.toLowerCase()}`}
           disabled={value <= min}
-          className="w-11 h-11 rounded-lg border border-line bg-white text-brown text-lg
-                     hover:border-stone-mid disabled:opacity-35 disabled:cursor-not-allowed
+          className="w-11 h-11 rounded-lg border border-line bg-white text-ink text-lg
+                     hover:border-ink-light/40 disabled:opacity-35 disabled:cursor-not-allowed
                      transition-colors flex items-center justify-center"
         >
           −
         </button>
-        <div className="flex-1 text-center text-lg font-semibold text-brown tabular-nums" aria-live="polite">
+        <div className="flex-1 text-center text-lg font-semibold text-ink tabular-nums" aria-live="polite">
           {value}
         </div>
         <button
           type="button"
           onClick={() => onChange(value + 1)}
           aria-label={`Öka ${label.toLowerCase()}`}
-          className="w-11 h-11 rounded-lg border border-line bg-white text-brown text-lg
-                     hover:border-stone-mid transition-colors flex items-center justify-center"
+          className="w-11 h-11 rounded-lg border border-line bg-white text-ink text-lg
+                     hover:border-ink-light/40 transition-colors flex items-center justify-center"
         >
           +
         </button>
@@ -112,11 +112,11 @@ function StepProgress({ step }) {
           <div
             key={i}
             className={`h-1 flex-1 rounded-full transition-colors duration-200
-              ${i < step ? 'bg-terracotta' : 'bg-stone-warm'}`}
+              ${i < step ? 'bg-forest' : 'bg-line'}`}
           />
         ))}
       </div>
-      <p className="text-xs text-stone-mid" aria-live="polite">
+      <p className="text-xs text-ink-light/70" aria-live="polite">
         Steg {step} av {TOTAL_STEPS}
       </p>
     </div>
@@ -132,7 +132,7 @@ function BackButton({ onClick }) {
       onClick={onClick}
       aria-label="Tillbaka"
       className="w-11 h-11 -ml-2.5 flex items-center justify-center rounded-lg
-                 text-brown-light hover:text-brown hover:bg-stone-warm/60
+                 text-ink-light hover:text-ink hover:bg-line/60
                  transition-colors text-lg leading-none flex-shrink-0"
     >
       <span aria-hidden="true">&#8592;</span>
@@ -145,13 +145,13 @@ function SummaryRow({ label, value, onEdit }) {
   return (
     <div className="flex items-baseline justify-between gap-4 py-2.5">
       <div className="min-w-0">
-        <div className="text-xs text-stone-mid mb-0.5">{label}</div>
-        <div className="text-sm text-brown break-words">{value}</div>
+        <div className="text-xs text-ink-light/70 mb-0.5">{label}</div>
+        <div className="text-sm text-ink break-words">{value}</div>
       </div>
       <button
         type="button"
         onClick={onEdit}
-        className="text-xs text-terracotta hover:text-terracotta-dark underline underline-offset-4
+        className="text-xs text-forest hover:text-forest-dark underline underline-offset-4
                    flex-shrink-0 py-1 px-1 transition-colors"
       >
         Ändra
@@ -160,7 +160,7 @@ function SummaryRow({ label, value, onEdit }) {
   )
 }
 
-export default function InputForm({ onSubmit, loading }) {
+export default function InputForm({ onSubmit, loading, onInteraction }) {
   // All formulärstate ligger kvar i komponenten oavsett vilket steg som
   // visas – stegen byter bara vilken sektion som renderas. Därför bevaras
   // alla val automatiskt när användaren går fram och tillbaka.
@@ -179,11 +179,19 @@ export default function InputForm({ onSubmit, loading }) {
   const [pantry, setPantry] = useState('')
   const [numberOfDishes, setNumberOfDishes] = useState(5)
 
+  // planning_started ska registreras vid den FÖRSTA faktiska interaktionen
+  // med formuläret – inte bara för att /planera laddas. Själva "bara en
+  // gång"-spärren ägs numera av föräldern (planera/page.js) eftersom DEN
+  // komponenten överlever hela sidbesöket, medan InputForm kan monteras om
+  // (t.ex. vid "Försök igen" efter ett fel) – se motivering där.
+  const markPlanningStarted = () => onInteraction?.()
+
   const availableDishes = DISHES_BY_DURATION[duration] || [5, 7]
   const budgetRange = BUDGET_RANGES[duration] || BUDGET_RANGES['2 veckor']
   const budgetValue = budget
 
   const handleDurationChange = (d) => {
+    markPlanningStarted()
     setDuration(d)
     // Återställ antal rätter till lägsta tillgängliga för ny period
     const options = DISHES_BY_DURATION[d] || [5]
@@ -201,6 +209,7 @@ export default function InputForm({ onSubmit, loading }) {
   // Oförändrad logik: max 2 val totalt, äldsta valet byts ut vid nytt val.
   // Gäller fortfarande över BÅDA grupperna tillsammans.
   const toggleFoodType = (id) => {
+    markPlanningStarted()
     setFoodTypes((prev) => {
       if (prev.includes(id)) return prev.filter((f) => f !== id)
       if (prev.length >= MAX_FOOD_TYPES) return [prev[1], id]
@@ -209,6 +218,7 @@ export default function InputForm({ onSubmit, loading }) {
   }
 
   const handleBudgetChange = (e) => {
+    markPlanningStarted()
     setBudget(Number(e.target.value))
     if (error) setError('')
   }
@@ -232,6 +242,7 @@ export default function InputForm({ onSubmit, loading }) {
   const scrollTop = () => window.scrollTo({ top: 0, behavior: 'smooth' })
 
   const goNext = () => {
+    markPlanningStarted()
     const validationError = validateStep(step)
     if (validationError) {
       setError(validationError)
@@ -294,8 +305,8 @@ export default function InputForm({ onSubmit, loading }) {
   }
 
   const inputClass =
-    'w-full rounded-lg border border-line bg-white text-brown placeholder-stone-mid ' +
-    'px-3.5 py-3 text-base focus:outline-none focus:border-terracotta transition-colors'
+    'w-full rounded-lg border border-line bg-white text-ink placeholder-ink-light/60 ' +
+    'px-3.5 py-3 text-base focus:outline-none focus:border-forest transition-colors'
 
   const selectedFoodLabels = foodTypes
     .map((id) => ALL_FOOD_TYPES.find((t) => t.id === id)?.label)
@@ -313,10 +324,10 @@ export default function InputForm({ onSubmit, loading }) {
     <div className="w-full max-w-[660px] mx-auto">
       {/* Hero – ligger kvar på samma plats; endast formulärinnehållet byts */}
       <header className="mb-6 animate-slide-up">
-        <h1 className="font-display text-[1.75rem] leading-[1.15] md:text-4xl text-brown mb-2.5 text-balance">
+        <h1 className="font-display font-semibold text-[1.75rem] leading-[1.15] md:text-4xl text-ink mb-2.5 text-balance">
           Slipp tänka på maten
         </h1>
-        <p className="text-brown-light text-[0.9375rem] md:text-base leading-relaxed max-w-md">
+        <p className="text-ink-light text-[0.9375rem] md:text-base leading-relaxed max-w-md">
           Få en komplett matplan med recept, inköpslista och portioner
           som räcker hela perioden.
         </p>
@@ -333,15 +344,15 @@ export default function InputForm({ onSubmit, loading }) {
         {/* key={step} gör att varje steg tonar in diskret.
             prefers-reduced-motion respekteras globalt i globals.css. */}
         <div key={step} className="animate-fade-in">
-          <h2 className="text-lg md:text-xl font-semibold text-brown mb-4">
+          <h2 className="text-lg md:text-xl font-bold text-ink mb-4">
             {stepTitles[step]}
           </h2>
 
           {/* ── Steg 1: hushåll ───────────────────────────────────── */}
           {step === 1 && (
             <div className="grid grid-cols-2 gap-4">
-              <StepperField label="Vuxna" value={adults} onChange={setAdults} min={0} />
-              <StepperField label="Barn" value={children} onChange={setChildren} min={0} />
+              <StepperField label="Vuxna" value={adults} onChange={(v) => { markPlanningStarted(); setAdults(v) }} min={0} />
+              <StepperField label="Barn" value={children} onChange={(v) => { markPlanningStarted(); setChildren(v) }} min={0} />
             </div>
           )}
 
@@ -357,13 +368,13 @@ export default function InputForm({ onSubmit, loading }) {
               </div>
 
               <div>
-                <label htmlFor="budget-slider" className="block text-label font-semibold text-brown mb-2">
+                <label htmlFor="budget-slider" className="block text-label font-semibold text-ink mb-2">
                   Budget för hela perioden
                 </label>
 
                 {/* Beloppet visas alltid som text – användaren ska aldrig
                     behöva tolka reglagets position för att förstå värdet. */}
-                <div className="text-2xl font-semibold text-brown tabular-nums mb-3" aria-hidden="true">
+                <div className="text-2xl font-semibold text-ink tabular-nums mb-3" aria-hidden="true">
                   {budgetValue.toLocaleString('sv-SE')} kr
                 </div>
 
@@ -380,7 +391,7 @@ export default function InputForm({ onSubmit, loading }) {
                   className="budget-slider w-full"
                 />
 
-                <div className="flex justify-between mt-2 text-xs text-stone-mid tabular-nums">
+                <div className="flex justify-between mt-2 text-xs text-ink-light/70 tabular-nums">
                   <span>{budgetRange.min.toLocaleString('sv-SE')} kr</span>
                   <span>{budgetRange.max.toLocaleString('sv-SE')} kr</span>
                 </div>
@@ -392,8 +403,8 @@ export default function InputForm({ onSubmit, loading }) {
           {step === 3 && (
             <div>
               <div className="flex items-baseline justify-between gap-3 mb-3.5">
-                <span className="text-xs text-brown-light">Välj det som passar er bäst</span>
-                <span className="text-xs text-stone-mid tabular-nums" aria-live="polite">
+                <span className="text-xs text-ink-light">Välj det som passar er bäst</span>
+                <span className="text-xs text-ink-light/70 tabular-nums" aria-live="polite">
                   {foodTypes.length} av {MAX_FOOD_TYPES} valda
                 </span>
               </div>
@@ -410,7 +421,7 @@ export default function InputForm({ onSubmit, loading }) {
                 ))}
               </div>
 
-              <h3 className="text-label font-semibold text-brown mb-2.5">Vad är viktigt för dig?</h3>
+              <h3 className="text-label font-semibold text-ink mb-2.5">Vad är viktigt för dig?</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {PREFERENCES.map((type) => (
                   <ChoiceButton
@@ -444,13 +455,13 @@ export default function InputForm({ onSubmit, loading }) {
                 <input
                   type="text"
                   value={pantry}
-                  onChange={(e) => setPantry(e.target.value.slice(0, 500))}
+                  onChange={(e) => { markPlanningStarted(); setPantry(e.target.value.slice(0, 500)) }}
                   onKeyDown={handleInputKeyDown}
                   placeholder="Ris, pasta, kryddor, olja"
                   aria-label="Varor du redan har hemma"
                   className={inputClass}
                 />
-                <p className="text-xs text-stone-mid mt-2">
+                <p className="text-xs text-ink-light/70 mt-2">
                   Det du har hemma tas bort från inköpslistan.
                 </p>
               </div>
@@ -485,7 +496,7 @@ export default function InputForm({ onSubmit, loading }) {
 
           {/* Inline-fel nära relevant fält, läsbart för hjälpmedel */}
           {error && (
-            <p role="alert" className="text-sm text-terracotta-dark mt-4">
+            <p role="alert" className="text-sm font-medium text-rust mt-4">
               {error}
             </p>
           )}
@@ -497,7 +508,7 @@ export default function InputForm({ onSubmit, loading }) {
             <button
               type="button"
               onClick={goNext}
-              className="w-full bg-terracotta hover:bg-terracotta-dark text-white font-semibold
+              className="w-full bg-forest hover:bg-forest-dark text-white font-bold
                          py-3.5 px-6 rounded-lg text-base min-h-[52px]
                          transition-colors duration-150"
             >
@@ -508,7 +519,7 @@ export default function InputForm({ onSubmit, loading }) {
               type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full bg-terracotta hover:bg-terracotta-dark text-white font-semibold
+              className="w-full bg-forest hover:bg-forest-dark text-white font-bold
                          py-3.5 px-6 rounded-lg text-base min-h-[52px]
                          disabled:opacity-45 disabled:cursor-not-allowed
                          transition-colors duration-150
@@ -527,7 +538,7 @@ export default function InputForm({ onSubmit, loading }) {
         </div>
       </div>
 
-      <p className="text-center text-xs text-stone-mid mt-3">
+      <p className="text-center text-xs text-ink-light/70 mt-3">
         Gratis · Ingen inloggning
       </p>
     </div>

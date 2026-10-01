@@ -13,6 +13,10 @@ export const REFERENCE_PRICES = [
   // ── Protein ────────────────────────────────────────────────────────────
   { key: 'kycklingfile',   displayName: 'Kycklingfilé',   aliases: ['kycklingfilé', 'kycklingfile', 'kyckling', 'kycklinglårfilé', 'kycklinglår', 'kycklingfärs'], packageQuantity: 900,  packageUnit: 'g',  estimatedPackagePrice: 100, purchaseType: 'package' },
   { key: 'kottfars',       displayName: 'Köttfärs',       aliases: ['köttfärs', 'nötfärs', 'blandfärs', 'fläskfärs'],                             packageQuantity: 800,  packageUnit: 'g',  estimatedPackagePrice: 90,  purchaseType: 'package' },
+  { key: 'hogrev',         displayName: 'Högrev',         aliases: ['högrev', 'hogrev', 'grytbitar av nöt', 'grytbitar nöt', 'biff av nöt'],      estimatedPricePerUnit: 140, priceUnit: 'kg', purchaseType: 'weight' },
+  { key: 'flaskytterfile', displayName: 'Fläskytterfilé', aliases: ['fläskytterfilé', 'flaskytterfile', 'fläskfilé', 'ytterfilé av fläsk'],       packageQuantity: 500,  packageUnit: 'g',  estimatedPackagePrice: 55,  purchaseType: 'package' },
+  { key: 'sej',            displayName: 'Sej',            aliases: ['sej', 'sejfilé'],                                                            packageQuantity: 400,  packageUnit: 'g',  estimatedPackagePrice: 55,  purchaseType: 'package' },
+  { key: 'rakor',          displayName: 'Räkor',          aliases: ['räkor', 'rakor', 'handskalade räkor'],                                       packageQuantity: 300,  packageUnit: 'g',  estimatedPackagePrice: 100, purchaseType: 'package' },
   { key: 'falukorv',       displayName: 'Falukorv',       aliases: ['falukorv'],                                                                  packageQuantity: 800,  packageUnit: 'g',  estimatedPackagePrice: 45,  purchaseType: 'package' },
   { key: 'korv',           displayName: 'Korv',           aliases: ['korv', 'prinskorv', 'chorizo', 'grillkorv'],                                 packageQuantity: 300,  packageUnit: 'g',  estimatedPackagePrice: 35,  purchaseType: 'package' },
   { key: 'lax',            displayName: 'Lax',            aliases: ['lax', 'laxfilé', 'laxfile'],                                                 packageQuantity: 500,  packageUnit: 'g',  estimatedPackagePrice: 90,  purchaseType: 'package' },
@@ -42,6 +46,7 @@ export const REFERENCE_PRICES = [
   { key: 'havregryn',      displayName: 'Havregryn',   aliases: ['havregryn'],                                               packageQuantity: 750,  packageUnit: 'g', estimatedPackagePrice: 18, purchaseType: 'package' },
   { key: 'mjol',           displayName: 'Vetemjöl',    aliases: ['mjöl', 'vetemjöl', 'mjol'],                                packageQuantity: 2000, packageUnit: 'g', estimatedPackagePrice: 22, purchaseType: 'package' },
   { key: 'brod',           displayName: 'Bröd',        aliases: ['bröd', 'brod', 'limpa', 'formfranska', 'tortilla', 'tortillabröd', 'pitabröd'], packageQuantity: 1, packageUnit: 'st', estimatedPackagePrice: 25, purchaseType: 'package' },
+  { key: 'hamburgerbrod',  displayName: 'Hamburgerbröd', aliases: ['hamburgerbröd', 'hamburgerbrod', 'burgerbröd'], packageQuantity: 4, packageUnit: 'st', estimatedPackagePrice: 22, purchaseType: 'package' },
 
   // ── Grönsaker & frukt ──────────────────────────────────────────────────
   { key: 'gul-lok',        displayName: 'Gul lök',     aliases: ['gul lök', 'lök', 'gul lok', 'lok'],                estimatedPricePerUnit: 25, priceUnit: 'kg', purchaseType: 'weight' },
@@ -70,12 +75,14 @@ export const REFERENCE_PRICES = [
   { key: 'kikartor',       displayName: 'Kikärtor',    aliases: ['kikärtor', 'kikärtor på burk', 'kikartor'],        packageQuantity: 400, packageUnit: 'g', estimatedPackagePrice: 12, purchaseType: 'package' },
   { key: 'bonor',          displayName: 'Bönor',       aliases: ['bönor', 'vita bönor', 'svarta bönor', 'kidneybönor', 'bonor'], packageQuantity: 400, packageUnit: 'g', estimatedPackagePrice: 12, purchaseType: 'package' },
   { key: 'majs',           displayName: 'Majs',        aliases: ['majs', 'majskorn'],                                packageQuantity: 340, packageUnit: 'g', estimatedPackagePrice: 15, purchaseType: 'package' },
+  { key: 'gronaoliver',    displayName: 'Gröna oliver', aliases: ['gröna oliver', 'svarta oliver', 'oliver'],         packageQuantity: 200, packageUnit: 'g', estimatedPackagePrice: 25, purchaseType: 'package' },
   { key: 'roda-linser',    displayName: 'Röda linser', aliases: ['röda linser', 'linser', 'roda linser'],            packageQuantity: 500, packageUnit: 'g', estimatedPackagePrice: 30, purchaseType: 'package' },
   { key: 'grona-linser',   displayName: 'Gröna linser', aliases: ['gröna linser', 'grona linser'],                   packageQuantity: 500, packageUnit: 'g', estimatedPackagePrice: 32, purchaseType: 'package' },
   { key: 'gula-artor',     displayName: 'Gula ärtor',  aliases: ['gula ärtor', 'gula artor', 'torkade gula ärtor'],  packageQuantity: 500, packageUnit: 'g', estimatedPackagePrice: 20, purchaseType: 'package' },
   { key: 'kokosmjolk',     displayName: 'Kokosmjölk',  aliases: ['kokosmjölk', 'kokosmjolk'],                        packageQuantity: 400, packageUnit: 'ml', estimatedPackagePrice: 18, purchaseType: 'package' },
   { key: 'buljong',        displayName: 'Buljong',     aliases: ['buljong', 'grönsaksbuljong', 'kycklingbuljong', 'köttbuljong', 'fond', 'kycklingfond', 'grönsaksfond', 'buljongtärning'], packageQuantity: 8, packageUnit: 'st', estimatedPackagePrice: 25, purchaseType: 'package' },
   { key: 'krossade-notter', displayName: 'Nötter',     aliases: ['nötter', 'cashewnötter', 'jordnötter', 'mandel'],  packageQuantity: 200, packageUnit: 'g', estimatedPackagePrice: 30, purchaseType: 'package' },
+  { key: 'jordnotssmor',    displayName: 'Jordnötssmör', aliases: ['jordnötssmör', 'jordnotssmor', 'peanut butter'], packageQuantity: 400, packageUnit: 'g', estimatedPackagePrice: 35, purchaseType: 'package' },
 
   // ── Skafferi ───────────────────────────────────────────────────────────
   { key: 'rapsolja',       displayName: 'Rapsolja',    aliases: ['rapsolja', 'olja', 'matolja'],                     packageQuantity: 1000, packageUnit: 'ml', estimatedPackagePrice: 35, purchaseType: 'package' },
@@ -97,7 +104,10 @@ export const REFERENCE_PRICES = [
   { key: 'vinager',        displayName: 'Vinäger',     aliases: ['vinäger', 'vitvinsvinäger', 'balsamvinäger', 'ättika'], packageQuantity: 500, packageUnit: 'ml', estimatedPackagePrice: 22, purchaseType: 'package' },
   { key: 'senap',          displayName: 'Senap',       aliases: ['senap', 'dijonsenap'],                             packageQuantity: 250,  packageUnit: 'g',  estimatedPackagePrice: 22, purchaseType: 'package' },
   { key: 'ketchup',        displayName: 'Ketchup',     aliases: ['ketchup'],                                         packageQuantity: 500,  packageUnit: 'g',  estimatedPackagePrice: 22, purchaseType: 'package' },
-  { key: 'ingefara',       displayName: 'Ingefära',    aliases: ['ingefära', 'ingefara', 'färsk ingefära'],          packageQuantity: 1,    packageUnit: 'st', estimatedPackagePrice: 12, purchaseType: 'package' },
+  { key: 'ingefara',       displayName: 'Ingefära',    aliases: ['ingefära', 'ingefara', 'färsk ingefära'],          estimatedPricePerUnit: 90, priceUnit: 'kg', purchaseType: 'weight' },
+  { key: 'dill',           displayName: 'Dill',        aliases: ['dill', 'färsk dill'],                              packageQuantity: 1,   packageUnit: 'st', estimatedPackagePrice: 15, purchaseType: 'package' },
+  { key: 'rodcurrypasta',  displayName: 'Röd currypasta', aliases: ['röd currypasta', 'red curry paste', 'currypasta'], packageQuantity: 200, packageUnit: 'g', estimatedPackagePrice: 30, purchaseType: 'package' },
+  { key: 'fisksas',        displayName: 'Fisksås',     aliases: ['fisksås', 'fisksas', 'nam pla'],                   packageQuantity: 250, packageUnit: 'ml', estimatedPackagePrice: 28, purchaseType: 'package' },
 ]
 
 // ── Generiska kategoripriser (reservlösning för okända varor) ──────────────

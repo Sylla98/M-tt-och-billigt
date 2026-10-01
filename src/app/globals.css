@@ -9,16 +9,17 @@
   }
 
   body {
-    background-color: #FBF8F4;
-    color: #2E211A;
+    background-color: #FAF8F3;
+    color: #302D29;
     -webkit-font-smoothing: antialiased;
   }
 
   /* Synlig tangentbordsfokus på alla interaktiva element.
      :focus-visible gör att fokusringen bara syns vid tangentbords-
-     navigering, inte vid musklick. */
+     navigering, inte vid musklick. Kobolt (volt) – appens digitala
+     accentfärg – ger fokusmarkeringen en tydligt "teknisk" karaktär. */
   :focus-visible {
-    outline: 2px solid #BE5A3E;
+    outline: 2px solid #244735;
     outline-offset: 2px;
     border-radius: 4px;
   }
@@ -31,7 +32,7 @@
 
   /* Hårfin avdelare mellan formulärsektioner – ersätter separata kort */
   .divide-hairline > * + * {
-    border-top: 1px solid #E4DACE;
+    border-top: 1px solid #E8E0D2;
   }
 
   .animate-fade-in {
@@ -96,7 +97,7 @@
 }
 
 /* ── Budgetreglage ──────────────────────────────────────────────────────
-   Egen styling av <input type="range"> så reglaget följer terrakotta-
+   Egen styling av <input type="range"> så reglaget följer det nya
    designsystemet. Ingen extern dependency – bara CSS. */
 .budget-slider {
   -webkit-appearance: none;
@@ -111,12 +112,12 @@
 .budget-slider::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: #EFE8DE;
+  background: #E8E0D2;
 }
 .budget-slider::-moz-range-track {
   height: 6px;
   border-radius: 999px;
-  background: #EFE8DE;
+  background: #E8E0D2;
 }
 
 /* Handtag */
@@ -127,26 +128,26 @@
   height: 26px;
   margin-top: -10px; /* centrera mot det 6px höga spåret */
   border-radius: 50%;
-  background: #BE5A3E;
+  background: #244735;
   border: 3px solid #FFFFFF;
-  box-shadow: 0 1px 3px rgba(46, 33, 26, 0.25);
+  box-shadow: 0 1px 3px rgba(48, 45, 41, 0.25);
 }
 .budget-slider::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #BE5A3E;
+  background: #244735;
   border: 3px solid #FFFFFF;
-  box-shadow: 0 1px 3px rgba(46, 33, 26, 0.25);
+  box-shadow: 0 1px 3px rgba(48, 45, 41, 0.25);
 }
 
 /* Tydlig tangentbordsfokus på handtaget */
 .budget-slider:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid #BE5A3E;
+  outline: 2px solid #244735;
   outline-offset: 2px;
 }
 .budget-slider:focus-visible::-moz-range-thumb {
-  outline: 2px solid #BE5A3E;
+  outline: 2px solid #244735;
   outline-offset: 2px;
 }
 
