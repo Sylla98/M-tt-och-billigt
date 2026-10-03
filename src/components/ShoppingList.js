@@ -53,20 +53,27 @@ function buildDisplay(item) {
   return { name: item.displayName, amount: null }
 }
 
-function ShoppingCategory({ category, checked, onToggle }) {
+function ShoppingCategory({ category, checked, onToggle, lastItemRef }) {
   return (
     <section className="break-inside-avoid mb-6">
       <h3 className="text-label font-semibold text-ink pb-2 mb-1 border-b border-line">
         {category.label}
       </h3>
       <ul>
-        {category.items.map((item) => {
+        {category.items.map((item, index) => {
           const key = `${category.label}::${item.displayName}`
           const done = checked.includes(key)
           const { name, amount } = buildDisplay(item)
+          // lastItemRef sätts bara in av föräldern på den sista kategorin
+          // som faktiskt har varor – och bara på DESS sista rad.
+          const isLastRow = Boolean(lastItemRef) && index === category.items.length - 1
 
           return (
-            <li key={key} className="border-b border-line/60 last:border-b-0">
+            <li
+              key={key}
+              ref={isLastRow ? lastItemRef : undefined}
+              className="border-b border-line/60 last:border-b-0"
+            >
               <button
                 type="button"
                 onClick={() => onToggle(key)}
@@ -126,6 +133,13 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
 
   const totalItems = categories.reduce((sum, c) => sum + (c.items?.length || 0), 0)
 
+  // Index för den sista kategorin som faktiskt har minst en vara – dit (och
+  // bara dit) skickas endRef, se ShoppingCategory ovan.
+  const lastCategoryWithItemsIndex = categories.reduce(
+    (lastIdx, cat, idx) => (cat.items && cat.items.length > 0 ? idx : lastIdx),
+    -1
+  )
+
   // shopping_list_viewed / shopping_list_end_reached: listan renderas
   // automatiskt som en del av resultatsidan (ingen klick krävs för att visa
   // den), så en vanlig montering får INTE räknas som en aktiv öppning (se
@@ -139,8 +153,10 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
   // konkreta punkter var för sig:
   //  - headerRef: rubrikraden överst ("Inköpslista" + totalsumman) →
   //    shopping_list_viewed, så fort den blir synlig.
-  //  - endRef: sista stycket (prisreservationen) längst ned →
-  //    shopping_list_end_reached, så fort DET blir synligt.
+  //  - endRef: sista FAKTISKA inköpsraden (inte prisreservationstexten
+  //    under listan) → shopping_list_end_reached, så fort DEN blir synlig.
+  //    lastCategoryWithItemsIndex nedan hittar rätt kategori även om en
+  //    tom kategori skulle råka ligga sist i listan.
   // threshold: 0 betyder "så fort EN pixel av elementet är synlig" – det
   // matchar "blir synlig" bättre än att kräva en viss andel synlig yta, och
   // gör att båda eventen skickas direkt om hela listan redan ryms på
@@ -206,8 +222,14 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
       {/* Desktop: två kolumner via CSS-kolumner, så kategorierna flödar
           naturligt utan att någon kategori blir onödigt kort. */}
       <div className="lg:columns-2 lg:gap-10">
-        {categories.map((cat) => (
-          <ShoppingCategory key={cat.label} category={cat} checked={checked} onToggle={toggle} />
+        {categories.map((cat, index) => (
+          <ShoppingCategory
+            key={cat.label}
+            category={cat}
+            checked={checked}
+            onToggle={toggle}
+            lastItemRef={index === lastCategoryWithItemsIndex ? endRef : undefined}
+          />
         ))}
       </div>
 
@@ -224,7 +246,7 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
         </div>
       )}
 
-      <p ref={endRef} className="text-xs text-ink-light/70 mt-5">
+      <p className="text-xs text-ink-light/70 mt-5">
         Prisuppskattningen bygger på generella svenska matpriser och kan variera mellan butiker.
       </p>
     </div>
