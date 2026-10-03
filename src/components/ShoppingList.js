@@ -126,41 +126,69 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
 
   const totalItems = categories.reduce((sum, c) => sum + (c.items?.length || 0), 0)
 
-  // shopping_list_viewed (QA-granskning, döpt om från "shopping_list_opened"):
-  // listan renderas automatiskt som en del av resultatsidan (ingen klick
-  // krävs för att visa den), så en vanlig montering får INTE räknas som en
-  // aktiv öppning (se uppdragets avsnitt 2/3). Vi mäter istället när
-  // användaren faktiskt scrollar fram till och ser sektionen – en riktig,
-  // aktiv "når fram till"-handling, inte bara att komponenten finns i
-  // DOM:en. Namnet "opened" antydde en klickhandling som inte finns här;
-  // "viewed" beskriver korrekt det som faktiskt mäts (synlighet, inte
-  // interaktion). Ref-flaggan garanterar att det bara skickas en gång per
-  // gång listan visas.
-  const containerRef = useRef(null)
+  // shopping_list_viewed / shopping_list_end_reached: listan renderas
+  // automatiskt som en del av resultatsidan (ingen klick krävs för att visa
+  // den), så en vanlig montering får INTE räknas som en aktiv öppning (se
+  // uppdragets avsnitt 2/3). Vi mäter istället när användaren faktiskt
+  // scrollar fram till start respektive slut av listan.
+  //
+  // Tidigare observerades HELA (potentiellt mycket höga) sektionen med
+  // threshold 0.4 – det krävde att 40% av hela listans yta var synlig
+  // samtidigt, vilket i praktiken bara inträffade efter att användaren
+  // scrollat nästan ända ned. Nu observeras istället två redan existerande,
+  // konkreta punkter var för sig:
+  //  - headerRef: rubrikraden överst ("Inköpslista" + totalsumman) →
+  //    shopping_list_viewed, så fort den blir synlig.
+  //  - endRef: sista stycket (prisreservationen) längst ned →
+  //    shopping_list_end_reached, så fort DET blir synligt.
+  // threshold: 0 betyder "så fort EN pixel av elementet är synlig" – det
+  // matchar "blir synlig" bättre än att kräva en viss andel synlig yta, och
+  // gör att båda eventen skickas direkt om hela listan redan ryms på
+  // skärmen (då är både start och slut synliga från första stund).
+  // Två oberoende ref-flaggor garanterar att vardera event skickas högst en
+  // gång per visad matplan.
+  const headerRef = useRef(null)
+  const endRef = useRef(null)
   const hasTrackedViewRef = useRef(false)
+  const hasTrackedEndRef = useRef(false)
 
   useEffect(() => {
-    const el = containerRef.current
-    if (!el || hasTrackedViewRef.current) return
+    const headerEl = headerRef.current
+    const endEl = endRef.current
+    if (!headerEl || !endEl) return
 
-    const observer = new IntersectionObserver(
+    const viewObserver = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !hasTrackedViewRef.current) {
           hasTrackedViewRef.current = true
           trackEvent('shopping_list_viewed')
-          observer.disconnect()
+          viewObserver.disconnect()
         }
       },
-      { threshold: 0.4 }
+      { threshold: 0 }
+    )
+    const endObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasTrackedEndRef.current) {
+          hasTrackedEndRef.current = true
+          trackEvent('shopping_list_end_reached')
+          endObserver.disconnect()
+        }
+      },
+      { threshold: 0 }
     )
 
-    observer.observe(el)
-    return () => observer.disconnect()
+    viewObserver.observe(headerEl)
+    endObserver.observe(endEl)
+    return () => {
+      viewObserver.disconnect()
+      endObserver.disconnect()
+    }
   }, [])
 
   return (
-    <div ref={containerRef}>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 mb-1">
+    <div>
+      <div ref={headerRef} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 mb-1">
         <h2 className="text-lg font-bold text-ink">Inköpslista</h2>
         {totalCost != null && (
           <div className="text-right">
@@ -196,7 +224,7 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
         </div>
       )}
 
-      <p className="text-xs text-ink-light/70 mt-5">
+      <p ref={endRef} className="text-xs text-ink-light/70 mt-5">
         Prisuppskattningen bygger på generella svenska matpriser och kan variera mellan butiker.
       </p>
     </div>
