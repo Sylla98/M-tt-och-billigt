@@ -1,4 +1,3 @@
-import Link from 'next/link'
 import TrackedLink from '@/components/TrackedLink'
 import SiteFooter from '@/components/SiteFooter'
 
@@ -15,13 +14,14 @@ export default function HomePage() {
           <span className="font-display font-semibold text-ink text-[1.0625rem] tracking-tight">
             Mätt &amp; Billigt
           </span>
-          <Link
+          <TrackedLink
             href="/planera"
+            eventName="landing_cta_clicked"
             className="text-sm font-bold text-white bg-forest hover:bg-forest-dark
                        transition-colors py-2 px-4 rounded-lg"
           >
             Planera veckan
-          </Link>
+          </TrackedLink>
         </div>
       </header>
 
