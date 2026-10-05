@@ -7,89 +7,215 @@
 // VARFÖR vi mockar hela 'posthog-js'-modulen (t.mock.module) istället för
 // att bara stubba window: posthog-js:s riktiga kod anropar webbläsar-API:er
 // (t.ex. window.addEventListener) redan vid IMPORT, inte bara vid init().
-// Ett enkelt `globalThis.window = {}`-stub räcker därför inte. Vi använder
-// TESTETS EGEN t.mock (inte den delade mock-instansen från 'node:test')
-// eftersom den automatiskt återställer mocken efter varje test – annars
-// klagar nästa test att "posthog-js is already mocked".
+// Vi använder TESTETS EGEN t.mock (inte den delade mock-instansen från
+// 'node:test') eftersom den automatiskt återställer mocken efter varje test.
 //
-// src/utils/analytics.js läser NEXT_PUBLIC_ENABLE_ANALYTICS till en konstant
-// VID IMPORT (modulnivå), så varje scenario importerar en egen,
-// cache-bustad instans av modulen (?t=...) efter att ha satt rätt
-// env-variabel och mockat posthog-js – annars skulle testerna dela samma
-// första importerade instans och råka testa fel tillstånd.
+// analytics.js läser NEXT_PUBLIC_ENABLE_ANALYTICS till en konstant VID
+// IMPORT (modulnivå), så varje scenario importerar en egen, cache-bustad
+// instans av modulen (?t=...) efter att ha satt rätt env-variabel och
+// mockat posthog-js. Samtycket (analyticsConsent.js) är däremot en delad
+// singleton som testerna styr direkt.
+//
+// Eftersom PostHog numera laddas med dynamic import först efter ett ja är
+// capture asynkron – testerna väntar in det med settle().
 
 import { test, describe } from 'node:test'
 import assert from 'node:assert/strict'
 
 globalThis.window = globalThis.window || {}
 
+// Samtyckeslagret är en delad singleton (analytics.js importerar samma
+// instans som testerna) – det är så testerna styr "användarens val".
+const consent = await import('../src/utils/analyticsConsent.js')
+
+// Ger asynkrona capture-anrop (dynamic import + promise) tid att köras klart.
+const settle = () => new Promise((resolve) => setTimeout(resolve, 20))
+
 /**
- * Mockar posthog-js (via testets egen mock-tracker t) med en fejk-capture()
+ * Mockar posthog-js (via testets egen mock-tracker t) med en fejk-PostHog
  * och returnerar en färsk instans av analytics.js. calls samlar varje
- * anrop till capture som [eventName, properties].
+ * anrop till capture som [eventName, properties]; initCalls samlar init;
+ * optCalls samlar opt_in/opt_out. Mocken räknar också hur många gånger
+ * själva MODULEN importerades (loaded) – bevis för att biblioteket inte
+ * ens laddas före ett ja.
  */
 async function loadAnalyticsWithMockedTransport(t, { captureImpl } = {}) {
   const calls = []
-  t.mock.module('posthog-js', {
-    defaultExport: {
-      capture: captureImpl || ((...args) => calls.push(args)),
-      init: () => {},
-      __loaded: false,
+  const initCalls = []
+  const optCalls = []
+  let optedOut = false
+  const fakePostHog = {
+    capture: captureImpl || ((...args) => calls.push(args)),
+    init(...args) {
+      initCalls.push(args)
+      fakePostHog.__loaded = true
     },
-  })
+    opt_out_capturing() { optedOut = true; optCalls.push('out') },
+    opt_in_capturing(opts) { optedOut = false; optCalls.push(['in', opts]) },
+    has_opted_out_capturing: () => optedOut,
+    __loaded: false,
+  }
+  t.mock.module('posthog-js', { defaultExport: fakePostHog })
   const mod = await import(`../src/utils/analytics.js?t=${Date.now()}-${Math.random()}`)
-  return { trackEvent: mod.trackEvent, calls }
+  return { trackEvent: mod.trackEvent, calls, initCalls, optCalls }
 }
 
-describe('trackEvent() – mockad transport', () => {
-  test('no-op: skickar INGET event om NEXT_PUBLIC_ENABLE_ANALYTICS inte är satt till "true"', async (t) => {
-    delete process.env.NEXT_PUBLIC_ENABLE_ANALYTICS
-    const { trackEvent, calls } = await loadAnalyticsWithMockedTransport(t)
+// null = miljövariabeln är inte satt alls.
+function setUp({ flag = 'true', key = 'phc_test', choice } = {}) {
+  consent.__resetAnalyticsConsentForTests()
+  if (flag === null) delete process.env.NEXT_PUBLIC_ENABLE_ANALYTICS
+  else process.env.NEXT_PUBLIC_ENABLE_ANALYTICS = flag
+  if (key === null) delete process.env.NEXT_PUBLIC_POSTHOG_KEY
+  else process.env.NEXT_PUBLIC_POSTHOG_KEY = key
+  process.env.NEXT_PUBLIC_POSTHOG_HOST = 'https://eu.i.posthog.com'
+  if (choice) consent.setAnalyticsConsent(choice)
+}
+
+describe('trackEvent() – miljöflagga (NEXT_PUBLIC_ENABLE_ANALYTICS)', () => {
+  test('no-op: skickar INGET event om flaggan inte är satt, ÄVEN med ja', async (t) => {
+    setUp({ flag: null, choice: 'granted' })
+    const { trackEvent, calls, initCalls } = await loadAnalyticsWithMockedTransport(t)
 
     trackEvent('landing_cta_clicked')
+    await settle()
 
-    assert.equal(calls.length, 0, 'Ingen produktionsdata får skickas i lokal utveckling/Preview (flaggan är av som default)')
+    assert.equal(calls.length, 0, 'Flaggan av ska vinna över ett ja')
+    assert.equal(initCalls.length, 0, 'PostHog får inte ens initieras')
   })
 
-  test('no-op: samma sak om flaggan är satt till något ANNAT än exakt "true" (t.ex. felstavat eller "1")', async (t) => {
-    process.env.NEXT_PUBLIC_ENABLE_ANALYTICS = '1'
-    const { trackEvent, calls } = await loadAnalyticsWithMockedTransport(t)
+  test('no-op: samma sak om flaggan är satt till något ANNAT än exakt "true" (t.ex. "1")', async (t) => {
+    setUp({ flag: '1', choice: 'granted' })
+    const { trackEvent, calls, initCalls } = await loadAnalyticsWithMockedTransport(t)
 
     trackEvent('landing_cta_clicked')
+    await settle()
 
-    assert.equal(calls.length, 0, 'Endast exakt strängen "true" ska aktivera analytics – ingen "nästan rätt"-aktivering')
+    assert.equal(calls.length, 0)
+    assert.equal(initCalls.length, 0)
   })
 
-  test('aktiverat: skickar exakt ETT event, med rätt namn, ingen extra data', async (t) => {
-    process.env.NEXT_PUBLIC_ENABLE_ANALYTICS = 'true'
-    const { trackEvent, calls } = await loadAnalyticsWithMockedTransport(t)
+  test('no-op: projektnyckel saknas (felkonfigurerad miljö) – ingen init, inget event', async (t) => {
+    setUp({ key: null, choice: 'granted' })
+    const { trackEvent, calls, initCalls } = await loadAnalyticsWithMockedTransport(t)
 
     trackEvent('recipe_opened')
+    await settle()
 
+    assert.equal(calls.length, 0)
+    assert.equal(initCalls.length, 0)
+  })
+})
+
+describe('trackEvent() – samtycke', () => {
+  test('inget val gjort: inget event och PostHog initieras inte (inget förvalt ja)', async (t) => {
+    setUp({ choice: undefined })
+    const { trackEvent, calls, initCalls } = await loadAnalyticsWithMockedTransport(t)
+
+    trackEvent('landing_cta_clicked')
+    trackEvent('$pageview', { $current_url: 'https://example.se/' })
+    await settle()
+
+    assert.equal(consent.getAnalyticsConsent(), null)
+    assert.equal(calls.length, 0)
+    assert.equal(initCalls.length, 0)
+  })
+
+  test('nej: inget event och PostHog initieras inte', async (t) => {
+    setUp({ choice: 'declined' })
+    const { trackEvent, calls, initCalls } = await loadAnalyticsWithMockedTransport(t)
+
+    trackEvent('meal_plan_generated')
+    await settle()
+
+    assert.equal(calls.length, 0)
+    assert.equal(initCalls.length, 0)
+  })
+
+  test('ja: PostHog initieras EN gång med integritetsinställningarna och eventet skickas', async (t) => {
+    setUp({ choice: 'granted' })
+    const { trackEvent, calls, initCalls } = await loadAnalyticsWithMockedTransport(t)
+
+    trackEvent('recipe_opened')
+    trackEvent('recipe_swapped')
+    await settle()
+
+    assert.equal(initCalls.length, 1, 'init ska ske exakt en gång')
+    const [key, options] = initCalls[0]
+    assert.equal(key, 'phc_test')
+    assert.equal(options.api_host, 'https://eu.i.posthog.com')
+    assert.equal(options.cookieless_mode, 'always')
+    assert.equal(options.person_profiles, 'never')
+    assert.equal(options.autocapture, false)
+    assert.equal(options.capture_pageview, false)
+    assert.equal(options.disable_session_recording, true)
+    assert.equal(typeof options.sanitize_properties, 'function')
+    assert.deepEqual(calls.map((c) => c[0]), ['recipe_opened', 'recipe_swapped'])
+    assert.equal(calls[0][1], undefined, 'Produkthändelserna ska INTE ha eventparametrar')
+  })
+
+  test('ja → nej: framtida event skickas inte och PostHog stängs av (opt_out)', async (t) => {
+    setUp({ choice: 'granted' })
+    const { trackEvent, calls, optCalls } = await loadAnalyticsWithMockedTransport(t)
+
+    trackEvent('recipe_opened')
+    await settle()
     assert.equal(calls.length, 1)
-    assert.equal(calls[0][0], 'recipe_opened')
-    assert.equal(calls[0][1], undefined, 'De sex produkthändelserna ska INTE ha eventparametrar')
+
+    consent.setAnalyticsConsent('declined')
+    trackEvent('recipe_swapped')
+    await settle()
+
+    assert.equal(calls.length, 1, 'Inget mer får skickas efter återkallelse')
+    assert.deepEqual(optCalls, ['out'])
+  })
+
+  test('återkallelse medan PostHog fortfarande laddas: ingen init och inget event', async (t) => {
+    setUp({ choice: 'granted' })
+    const { trackEvent, calls, initCalls } = await loadAnalyticsWithMockedTransport(t)
+
+    trackEvent('recipe_opened')
+    consent.setAnalyticsConsent('declined') // innan dynamic import hunnit klart
+    await settle()
+
+    assert.equal(initCalls.length, 0, 'posthog.init tar kontakt med PostHog – får inte köras efter återkallelse')
+    assert.equal(calls.length, 0)
+  })
+
+  test('ja → nej → ja: skickar igen, utan $opt_in-event', async (t) => {
+    setUp({ choice: 'granted' })
+    const { trackEvent, calls, optCalls, initCalls } = await loadAnalyticsWithMockedTransport(t)
+
+    trackEvent('recipe_opened')
+    await settle()
+    consent.setAnalyticsConsent('declined')
+    consent.setAnalyticsConsent('granted')
+    trackEvent('recipe_swapped')
+    await settle()
+
+    assert.equal(initCalls.length, 1)
+    assert.deepEqual(calls.map((c) => c[0]), ['recipe_opened', 'recipe_swapped'])
+    assert.equal(optCalls[0], 'out')
+    assert.deepEqual(optCalls[1], ['in', { captureEventName: false }])
   })
 
   test('skickar valfria properties vidare (används bara av $pageview, se providers.js)', async (t) => {
-    process.env.NEXT_PUBLIC_ENABLE_ANALYTICS = 'true'
+    setUp({ choice: 'granted' })
     const { trackEvent, calls } = await loadAnalyticsWithMockedTransport(t)
 
     trackEvent('$pageview', { $current_url: 'https://example.se/planera' })
+    await settle()
 
     assert.equal(calls[0][0], '$pageview')
     assert.deepEqual(calls[0][1], { $current_url: 'https://example.se/planera' })
   })
 
   test('kraschar ALDRIG om transporten kastar ett fel (t.ex. nätverksfel eller en innehållsblockerare)', async (t) => {
-    process.env.NEXT_PUBLIC_ENABLE_ANALYTICS = 'true'
+    setUp({ choice: 'granted' })
     const { trackEvent } = await loadAnalyticsWithMockedTransport(t, {
       captureImpl: () => { throw new Error('simulerat nätverksfel') },
     })
 
-    assert.doesNotThrow(
-      () => trackEvent('meal_plan_generated'),
-      'trackEvent() måste svälja fel från transporten – analytics får aldrig störa användarflödet'
-    )
+    assert.doesNotThrow(() => trackEvent('meal_plan_generated'))
+    await settle() // och ingen ohanterad promise-rejection heller
   })
 })

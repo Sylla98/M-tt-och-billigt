@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import TrackedLink from '@/components/TrackedLink'
+import SiteFooter from '@/components/SiteFooter'
 
 // Fyra riktiga, korta receptnamn ur biblioteket – ren variation (kyckling/
 // vegetariskt/kött/fisk), ingen påhittad data. Används bara som exempel på
@@ -154,11 +155,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-line mt-auto">
-        <p className="max-w-[1100px] mx-auto px-4 py-5 text-xs text-ink-light/70">
-          Mätt &amp; Billigt · Hjälper svenska familjer äta gott för mindre
-        </p>
-      </footer>
+      <SiteFooter className="mt-auto" />
     </main>
   )
 }

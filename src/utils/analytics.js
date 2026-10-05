@@ -6,55 +6,171 @@
 // Medvetet enkelt: inga köer, ingen retry-logik, inget eget
 // tracking-ramverk. PostHog-klienten sköter redan batching/leverans.
 //
-// Aktivering styrs av NEXT_PUBLIC_ENABLE_ANALYTICS (se providers.js och
-// README/analytics-avsnittet för miljöuppsättning). När den inte är satt
-// till exakt 'true' är trackEvent() ett no-op – det gäller lokal
-// utveckling och Vercel Preview by design, så våra egna tester aldrig
-// förorenar produktionsstatistiken.
+// TVÅ SPÄRRAR måste båda vara öppna innan PostHog ens laddas:
+//   1. NEXT_PUBLIC_ENABLE_ANALYTICS är exakt 'true' (miljöflagga – gäller
+//      Production; lokal utveckling och Preview är avstängda by design så
+//      våra egna tester aldrig förorenar produktionsstatistiken).
+//   2. Besökaren har AKTIVT valt "Tillåt produktstatistik"
+//      (src/utils/analyticsConsent.js). Inget val räknas som nej.
+//
+// PostHog-biblioteket importeras DYNAMISKT först när båda är uppfyllda. Före
+// ett ja (och för alltid vid ett nej) hämtas varken biblioteket, och
+// posthog.init() anropas aldrig, så ingen kontakt tas med PostHog.
+// Återkallas ja:et stoppas capture direkt (se opt_out_capturing nedan).
 //
 // KRAV: analytics får ALDRIG krascha appen eller störa användarflödet.
 // Därför är allt inneslutet i try/catch och trackEvent() returnerar aldrig
 // något som anropande kod behöver hantera.
 
-import posthog from 'posthog-js'
+import { getAnalyticsConsent, subscribeToAnalyticsConsent } from './analyticsConsent.js'
 
 const ANALYTICS_ENABLED = process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true'
 
+let posthogInstance = null // satt först efter lyckad init
+let loadPromise = null
+let initFailed = false
+
+const hasConsent = () => getAnalyticsConsent() === 'granted'
+
+function warnInDev(message, err) {
+  if (process.env.NODE_ENV !== 'production') {
+    console.warn(message, err)
+  }
+}
+
 /**
- * Skickar ett namngivet analytics-event.
+ * Laddar och initierar PostHog – bara om flaggan är på OCH samtycke finns.
+ * Resolvar till PostHog-instansen, eller null om något av villkoren inte
+ * (längre) uppfylls eller laddningen misslyckas.
+ */
+function loadPostHog() {
+  if (!ANALYTICS_ENABLED || !hasConsent() || initFailed) return Promise.resolve(null)
+  // Flaggan på men projektnyckel saknas (felkonfigurerad miljö): ladda inget.
+  if (!process.env.NEXT_PUBLIC_POSTHOG_KEY) return Promise.resolve(null)
+  if (posthogInstance) return Promise.resolve(posthogInstance)
+  if (loadPromise) return loadPromise
+
+  loadPromise = import('posthog-js')
+    .then((mod) => {
+      const posthog = mod.default
+      // Återkallades samtycket medan biblioteket hämtades? Då initierar vi
+      // inte alls – posthog.init() är det som tar kontakt med PostHog.
+      if (!hasConsent()) return null
+
+      if (!posthog.__loaded) {
+        posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY, {
+          api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+          defaults: '2025-05-24',
+          // capture_pageview: false – PostHogs INBYGGDA, automatiska
+          // sidvisningsspårning är avstängd. Sidvisningar skickas ENDAST via
+          // PostHogPageView i providers.js (manuellt, en gång per pathname-
+          // ändring). Om denna tas bort eller sätts till true får vi DUBBLA
+          // pageviews.
+          capture_pageview: false,
+          autocapture: false,
+          // Cookieless: inga cookies/localStorage från PostHog.
+          cookieless_mode: 'always',
+          person_profiles: 'never',
+          disable_session_recording: true,
+          // Vi använder inga feature flags. Flagganropet (/flags) skickar
+          // dessutom sidans URL och hänvisare som "person properties" UTAN att
+          // gå genom sanitize_properties – av är både enklare och säkrare.
+          advanced_disable_flags: true,
+          // Skicka varje händelse direkt istället för att samla dem i en kö
+          // som töms var tredje sekund. PostHogs batchkö töms nämligen INTE
+          // av opt_out_capturing(): en händelse som köats strax före en
+          // återkallelse skulle annars ändå skickas efteråt (verifierat i
+          // webbläsare). Volymen i appen är låg, så kostnaden är försumbar.
+          request_batching: false,
+          // Körs på VARJE event – vårt eget $pageview och alla produkt-
+          // händelser – och tar bort query/fragment ur URL-egenskaper samt
+          // hänvisande URL:er. Se sanitizeAnalyticsProperties nedan.
+          sanitize_properties: sanitizeAnalyticsProperties,
+        })
+      } else if (posthog.has_opted_out_capturing?.()) {
+        posthog.opt_in_capturing({ captureEventName: false })
+      }
+      posthogInstance = posthog
+      return posthog
+    })
+    .catch((err) => {
+      initFailed = true
+      warnInDev('[analytics] Kunde inte ladda/initiera PostHog:', err)
+      return null
+    })
+    .finally(() => {
+      loadPromise = null
+    })
+
+  return loadPromise
+}
+
+/**
+ * Skickar ett namngivet analytics-event – om flaggan är på och besökaren
+ * tackat ja. Annars är anropet ett no-op.
  *
- * Vi skickar MEDVETET inga eventparametrar för de sex produkthändelserna –
- * se uppdragets integritetskrav (avsnitt 4). `properties` finns bara för
- * PostHogs egna interna event (t.ex. $pageview i providers.js) så att ÄVEN
- * de går genom samma skyddade väg (try/catch) istället för att anropa
- * posthog.capture direkt. Lägg inte till properties på de sex
- * produkthändelserna utan att först motivera ett konkret analysbehov.
+ * Vi skickar MEDVETET inga eventparametrar för produkthändelserna (se
+ * uppdragets integritetskrav). `properties` finns bara för PostHogs egna
+ * interna event (t.ex. $pageview i providers.js) så att ÄVEN de går genom
+ * samma skyddade väg istället för att anropa posthog.capture direkt. Lägg
+ * inte till properties på produkthändelserna utan att först motivera ett
+ * konkret analysbehov – och skicka aldrig budget, hushållsuppgifter eller
+ * fritext (t.ex. skafferiet) som egenskap.
  *
- * @param {string} eventName - Ett eventnamn (ett av de sex, eller $pageview).
+ * @param {string} eventName - Ett produkthändelsenamn eller $pageview.
  * @param {object} [properties] - Valfria eventparametrar.
  */
 export function trackEvent(eventName, properties) {
   if (!ANALYTICS_ENABLED) return
   if (typeof window === 'undefined') return
+  if (!hasConsent()) return
 
   try {
-    posthog.capture(eventName, properties)
+    loadPostHog()
+      .then((posthog) => {
+        // Samtycket kan ha återkallats medan PostHog laddades – kolla igen
+        // precis innan något skickas.
+        if (!posthog || !hasConsent()) return
+        posthog.capture(eventName, properties)
+      })
+      .catch((err) => {
+        warnInDev(`[analytics] Kunde inte skicka event "${eventName}":`, err)
+      })
   } catch (err) {
     // Ska aldrig kunna krascha appen eller blockera navigering/generering.
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn(`[analytics] Kunde inte skicka event "${eventName}":`, err)
-    }
+    warnInDev(`[analytics] Kunde inte skicka event "${eventName}":`, err)
   }
 }
 
-/** Används av providers.js för att avgöra om PostHog ska initieras alls. */
+/** Används av providers.js för att avgöra om samtyckesvalet ska visas alls. */
 export const isAnalyticsEnabled = () => ANALYTICS_ENABLED
+
+// Återkallelse/ändring: stäng av PostHog-klienten direkt så att inget mer
+// skickas – inklusive sådant som redan ligger i SDK:ns sändkö. Ett nytt ja
+// slår på den igen (utan att skicka något $opt_in-event).
+if (typeof window !== 'undefined') {
+  subscribeToAnalyticsConsent((choice) => {
+    const posthog = posthogInstance
+    if (!posthog) return
+    try {
+      if (choice === 'granted') {
+        if (posthog.has_opted_out_capturing?.()) {
+          posthog.opt_in_capturing({ captureEventName: false })
+        }
+      } else {
+        posthog.opt_out_capturing()
+      }
+    } catch (err) {
+      warnInDev('[analytics] Kunde inte uppdatera PostHogs samtyckesläge:', err)
+    }
+  })
+}
 
 // ─── URL-sanering ────────────────────────────────────────────────────────
 // Uppdragets krav: query-parametrar (t.ex. ?name=Anna&budget=500) OCH
 // fragment (#...) ska ALDRIG skickas till PostHog, varken via vår egen
 // $pageview eller via egenskaper PostHogs SDK bifogar AUTOMATISKT på
-// VILKET event som helst (även våra sex produkthändelser, som annars
+// VILKET event som helst (även våra sju produkthändelser, som annars
 // aldrig annars bär någon egen URL-data). Vi behåller pathname – det är
 // det som skiljer sidorna åt i analytics.
 

@@ -3,6 +3,7 @@ import { useState, useRef } from 'react'
 import Link from 'next/link'
 import InputForm from '@/components/InputForm'
 import ResultView from '@/components/ResultView'
+import SiteFooter from '@/components/SiteFooter'
 import { trackEvent } from '@/utils/analytics'
 
 export default function PlaneraPage() {
@@ -126,11 +127,7 @@ export default function PlaneraPage() {
       </div>
 
       {/* Footer */}
-      <footer className="border-t border-line">
-        <p className={`${state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} mx-auto px-4 py-5 text-xs text-ink-light/70`}>
-          Mätt &amp; Billigt · Hjälper svenska familjer äta gott för mindre
-        </p>
-      </footer>
+      <SiteFooter widthClass={state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} />
     </main>
   )
 }

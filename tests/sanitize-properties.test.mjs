@@ -97,28 +97,52 @@ describe('sanitizeAnalyticsProperties()', () => {
   })
 })
 
-describe('providers.js – statisk konfigurationskontroll (regressionsspärr)', () => {
+describe('analytics.js + providers.js – statisk konfigurationskontroll (regressionsspärr)', () => {
   // Detta är EN TEXTKONTROLL av källkoden, inte ett körande test av
   // React-komponenten (providers.js innehåller JSX och kan inte importeras
   // direkt i Node utan en bundlare/transpilerare). Den fångar om någon av
   // de här raderna av misstag tas bort eller ändras i framtiden – den
   // bevisar INTE att posthog.init() faktiskt beter sig rätt i en riktig
   // webbläsare (se slutrapportens punkt om vad som är kodgranskat).
-  const providersPath = path.join(
-    path.dirname(fileURLToPath(import.meta.url)),
-    '..', 'src', 'app', 'providers.js'
-  )
-  const source = readFileSync(providersPath, 'utf8')
+  // posthog.init()-inställningarna ligger i analytics.js (laddas först efter
+  // samtycke); den manuella $pageview byggs i providers.js.
+  const here = path.dirname(fileURLToPath(import.meta.url))
+  const analyticsSource = readFileSync(path.join(here, '..', 'src', 'utils', 'analytics.js'), 'utf8')
+  const providersSource = readFileSync(path.join(here, '..', 'src', 'app', 'providers.js'), 'utf8')
 
   test('capture_pageview är satt till false (förhindrar PostHogs automatiska sidvisningsspårning)', () => {
-    assert.match(source, /capture_pageview:\s*false/)
+    assert.match(analyticsSource, /capture_pageview:\s*false/)
   })
 
   test('sanitize_properties är inkopplat mot sanitizeAnalyticsProperties', () => {
-    assert.match(source, /sanitize_properties:\s*sanitizeAnalyticsProperties/)
+    assert.match(analyticsSource, /sanitize_properties:\s*sanitizeAnalyticsProperties/)
   })
 
   test('den manuella $pageview-egenskapen byggs utan query-sträng (bara origin + pathname)', () => {
-    assert.match(source, /\$current_url:\s*`\$\{window\.origin\}\$\{pathname\}`/)
+    assert.match(providersSource, /\$current_url:\s*`\$\{window\.origin\}\$\{pathname\}`/)
+  })
+
+  test('cookieless-läge, inga identifierade profiler, ingen autocapture och ingen Session Replay är kvar', () => {
+    assert.match(analyticsSource, /cookieless_mode:\s*'always'/)
+    assert.match(analyticsSource, /person_profiles:\s*'never'/)
+    assert.match(analyticsSource, /autocapture:\s*false/)
+    assert.match(analyticsSource, /disable_session_recording:\s*true/)
+  })
+
+  test('feature flags är avstängda (flagganropet skickar URL/hänvisare förbi sanitize_properties)', () => {
+    assert.match(analyticsSource, /advanced_disable_flags:\s*true/)
+  })
+
+  test('batchkö är avstängd (annars skickas köade händelser även efter återkallelse)', () => {
+    assert.match(analyticsSource, /request_batching:\s*false/)
+  })
+
+  test('posthog-js importeras bara dynamiskt – aldrig statiskt (annars laddas biblioteket före samtycke)', () => {
+    const files = ['src/utils/analytics.js', 'src/app/providers.js', 'src/components/TrackedLink.js']
+    for (const f of files) {
+      const src = readFileSync(path.join(here, '..', f), 'utf8')
+      assert.doesNotMatch(src, /^\s*import[^\n]*['"]posthog-js(\/react)?['"]/m, `${f} får inte importera posthog-js statiskt`)
+    }
+    assert.match(analyticsSource, /import\('posthog-js'\)/)
   })
 })
