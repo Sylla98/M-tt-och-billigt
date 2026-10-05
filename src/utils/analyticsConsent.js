@@ -75,19 +75,34 @@ export function subscribeToAnalyticsConsent(listener) {
 }
 
 // ─── "Ändra val"-panelen ────────────────────────────────────────────────────
-// Sidfotens länk "Ändra val för statistik" öppnar samma panel som visas första
-// gången. Panelens öppet/stängt-läge hålls här så att sidfoten (som kan ligga
-// långt från bannern i komponentträdet) kan öppna den.
+// Sidfotens (och integritetssidans) knapp "Ändra val för statistik" öppnar
+// samma panel som visas första gången. Panelens öppet/stängt-läge hålls här
+// så att knapparna (som kan ligga långt från bannern i komponentträdet) kan
+// öppna den. Vi kommer också ihåg EXAKT vilket element som öppnade panelen,
+// så att fokus kan återgå dit när panelen stängs – knappen finns på flera
+// ställen på samma sida och kan därför inte identifieras med ett id.
 let panelRequested = false
+let panelTrigger = null
 const panelListeners = new Set()
 
 export function isConsentPanelRequested() {
   return panelRequested
 }
 
-export function setConsentPanelRequested(value) {
-  if (panelRequested === value) return
+/** Elementet som öppnade panelen (eller null, t.ex. vid första besöket). */
+export function getConsentPanelTrigger() {
+  return panelTrigger
+}
+
+/**
+ * Öppnar (true) eller stänger (false) panelen. Vid öppning anges elementet
+ * som öppnade den; vid stängning nollställs det.
+ */
+export function setConsentPanelRequested(value, trigger = null) {
+  const nextTrigger = value ? trigger : null
+  if (panelRequested === value && panelTrigger === nextTrigger) return
   panelRequested = value
+  panelTrigger = nextTrigger
   for (const listener of [...panelListeners]) listener()
 }
 
@@ -112,6 +127,7 @@ export function __resetAnalyticsConsentForTests() {
   consent = null
   hasReadStorage = false
   panelRequested = false
+  panelTrigger = null
   listeners.clear()
   panelListeners.clear()
 }

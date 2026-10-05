@@ -7,16 +7,19 @@
 // tracking-ramverk. PostHog-klienten sköter redan batching/leverans.
 //
 // TVÅ SPÄRRAR måste båda vara öppna innan PostHog ens laddas:
-//   1. NEXT_PUBLIC_ENABLE_ANALYTICS är exakt 'true' (miljöflagga – gäller
-//      Production; lokal utveckling och Preview är avstängda by design så
-//      våra egna tester aldrig förorenar produktionsstatistiken).
+//   1. NEXT_PUBLIC_ENABLE_ANALYTICS är exakt 'true' (miljöflagga som varje
+//      miljö sätter själv – t.ex. Production och den skyddade Preview som
+//      används för interna tester; lokalt lämnas den tom).
 //   2. Besökaren har AKTIVT valt "Tillåt produktstatistik"
 //      (src/utils/analyticsConsent.js). Inget val räknas som nej.
 //
 // PostHog-biblioteket importeras DYNAMISKT först när båda är uppfyllda. Före
 // ett ja (och för alltid vid ett nej) hämtas varken biblioteket, och
 // posthog.init() anropas aldrig, så ingen kontakt tas med PostHog.
-// Återkallas ja:et stoppas capture direkt (se opt_out_capturing nedan).
+// Återkallas ja:et slutar trackEvent() skicka, och before_send (nedan) stoppar
+// även allt som SDK:n själv försöker fånga. OBS: PostHogs opt_out_capturing()
+// duger inte här – med cookieless_mode 'always' ignoreras det (SDK:n loggar
+// bara en varning) – så vi förlitar oss inte på det.
 //
 // KRAV: analytics får ALDRIG krascha appen eller störa användarflödet.
 // Därför är allt inneslutet i try/catch och trackEvent() returnerar aldrig
@@ -76,19 +79,28 @@ function loadPostHog() {
           // dessutom sidans URL och hänvisare som "person properties" UTAN att
           // gå genom sanitize_properties – av är både enklare och säkrare.
           advanced_disable_flags: true,
+          // Sista grind innan en händelse ens läggs i sändkön: utan aktuellt ja
+          // kastas ALLT, även sådant SDK:n själv fångar (inte bara våra egna
+          // trackEvent-anrop). Gäller nya händelser; ett anrop som redan
+          // påbörjats stoppas inte av detta; omförsök hanteras separat, se
+          // "Återkallelse och omförsök" nedan.
+          before_send: (event) => (hasConsent() ? event : null),
+          // Ingen automatisk "sidan lämnades"-händelse (skulle annars kunna
+          // skickas vid sidbyte, utanför våra egna spärrar).
+          capture_pageleave: false,
           // Skicka varje händelse direkt istället för att samla dem i en kö
-          // som töms var tredje sekund. PostHogs batchkö töms nämligen INTE
-          // av opt_out_capturing(): en händelse som köats strax före en
-          // återkallelse skulle annars ändå skickas efteråt (verifierat i
+          // som töms var tredje sekund. Det går inte att tömma PostHogs
+          // batchkö när samtycket återkallas: en händelse som köats strax före
+          // en återkallelse skickades annars ändå efteråt (verifierat i
           // webbläsare). Volymen i appen är låg, så kostnaden är försumbar.
+          // Notera: ett MISSLYCKAT anrop läggs av SDK:n i en omförsökskö som
+          // inte går att tömma härifrån; se "Återkallelse och omförsök" nedan.
           request_batching: false,
           // Körs på VARJE event – vårt eget $pageview och alla produkt-
           // händelser – och tar bort query/fragment ur URL-egenskaper samt
           // hänvisande URL:er. Se sanitizeAnalyticsProperties nedan.
           sanitize_properties: sanitizeAnalyticsProperties,
         })
-      } else if (posthog.has_opted_out_capturing?.()) {
-        posthog.opt_in_capturing({ captureEventName: false })
       }
       posthogInstance = posthog
       return posthog
@@ -145,23 +157,29 @@ export function trackEvent(eventName, properties) {
 /** Används av providers.js för att avgöra om samtyckesvalet ska visas alls. */
 export const isAnalyticsEnabled = () => ANALYTICS_ENABLED
 
-// Återkallelse/ändring: stäng av PostHog-klienten direkt så att inget mer
-// skickas – inklusive sådant som redan ligger i SDK:ns sändkö. Ett nytt ja
-// slår på den igen (utan att skicka något $opt_in-event).
+// ─── Återkallelse och omförsök ──────────────────────────────────────────────
+// Ett anrop som MISSLYCKAS (nätverksfel, 5xx) lägger PostHog-SDK:n i en
+// intern omförsökskö och skickar om det efter några sekunder – också efter
+// att samtycket återkallats (verifierat mot lokal testserver). Kön går inte
+// att tömma via publika API:er. Däremot hämtar SDK:n fetch_options på nytt
+// vid varje omförsök, så vid återkallelse sätter vi en redan avbruten
+// AbortSignal: omförsök misslyckas då direkt i webbläsaren, utan nätverk.
+// Ett nytt ja återställer det. Detta gäller bara omförsök; ett anrop som
+// redan är under sändning när valet ändras går inte att dra tillbaka.
 if (typeof window !== 'undefined') {
   subscribeToAnalyticsConsent((choice) => {
     const posthog = posthogInstance
     if (!posthog) return
     try {
       if (choice === 'granted') {
-        if (posthog.has_opted_out_capturing?.()) {
-          posthog.opt_in_capturing({ captureEventName: false })
-        }
+        posthog.set_config({ fetch_options: {} })
       } else {
-        posthog.opt_out_capturing()
+        const aborted = new AbortController()
+        aborted.abort()
+        posthog.set_config({ fetch_options: { signal: aborted.signal } })
       }
     } catch (err) {
-      warnInDev('[analytics] Kunde inte uppdatera PostHogs samtyckesläge:', err)
+      warnInDev('[analytics] Kunde inte uppdatera PostHogs omförsöksinställning:', err)
     }
   })
 }

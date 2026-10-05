@@ -11,13 +11,16 @@ export const metadata = {
 // Den här sidan är ett UTKAST för granskning, inte juridisk rådgivning.
 //
 // Måste fyllas i / verifieras av ansvarig innan externa tester:
-//  1. Att produktions-env faktiskt pekar på PostHog EU Cloud
-//     (NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com) – koden visar bara
-//     det som exempelvärde i .env.local.example.
-//  2. Hur PostHog-projektet hanterar IP-adress (projektinställning, syns inte
+//  1. Hur PostHog-projektet hanterar IP-adress (projektinställning, syns inte
 //     i koden) och vad Google Forms-formuläret för feedback samlar in.
-//  3. Hostingplats/loggning hos Vercel (syns inte i koden).
-// Texten nedan påstår därför inget om dessa punkter utöver det koden visar.
+//  2. Hostingplats/loggning hos Vercel (syns inte i koden).
+//  3. Överföringar utanför EU/EES: texten bygger på vårt biträdesavtal med
+//     PostHog (EU Cloud för lagring; behandling kan ske även utanför EU/EES,
+//     bland annat i USA; EU:s standardavtalsklausuler). Texten påstår medvetet
+//     INGEN DPF-registrering – den är inte verifierad. Ändra bara texten om
+//     avtalet eller PostHogs villkor ändras.
+// Texten nedan påstår därför inget om dessa punkter utöver det koden och
+// avtalet visar.
 
 function Section({ title, children }) {
   return (
@@ -53,16 +56,17 @@ export default function IntegritetPage() {
 
         <Section title="Produktstatistik är ett frivilligt val">
           <p>
-            Första gången du besöker appen frågar vi om du vill bidra med produktstatistik.
-            Du kan välja <strong className="text-ink">Tillåt produktstatistik</strong> eller{' '}
+            När produktstatistik är påslagen i appen frågar vi första gången du besöker den om
+            du vill bidra. Du kan välja <strong className="text-ink">Tillåt produktstatistik</strong> eller{' '}
             <strong className="text-ink">Fortsätt utan statistik</strong>. Inget av valen är
-            förvalt, och planeringen fungerar likadant oavsett vad du väljer.
+            förvalt, och planeringen fungerar likadant oavsett vad du väljer. Är statistiken inte
+            påslagen visas inget val, och då skickas ingenting till statistikverktyget.
           </p>
           <p>
             Innan du har valt, och om du väljer att fortsätta utan statistik, laddas inte
-            statistikverktyget och ingenting skickas dit. Du kan ändra ditt val när som helst
-            via länken ”Ändra val för statistik” längst ned på sidorna. Om du tar tillbaka ditt
-            ja slutar appen skicka statistik direkt.
+            statistikverktyget och ingenting skickas dit. När valet visas kan du ändra det när som
+            helst via länken ”Ändra val för statistik”, som finns längst ned på sidorna. Om du
+            tar tillbaka ditt ja slutar appen skicka nya händelser direkt.
           </p>
           <p>
             <AnalyticsSettingsButton className="text-forest font-bold underline underline-offset-4 hover:text-forest-dark" />
@@ -116,6 +120,15 @@ export default function IntegritetPage() {
             tillhörande metadata sparas i minst ett år. Därefter kan äldre data finnas kvar i
             så kallad kallagring eller raderas. Vi kan därför inte ange någon exakt dag då
             uppgifterna tas bort.
+          </p>
+        </Section>
+
+        <Section title="Var behandlas uppgifterna?">
+          <p>
+            Vi använder PostHog EU Cloud för att lagra statistiken. Enligt vårt biträdesavtal med
+            PostHog kan PostHog dock behandla uppgifter även utanför EU/EES, bland annat i USA.
+            Avtalet hänvisar till EU-kommissionens standardavtalsklausuler som skydd när
+            uppgifter förs över till ett land utanför EU/EES.
           </p>
         </Section>
 

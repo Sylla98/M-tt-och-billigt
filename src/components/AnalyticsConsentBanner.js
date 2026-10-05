@@ -14,10 +14,10 @@ import {
   setAnalyticsConsent,
   subscribeToAnalyticsConsent,
   isConsentPanelRequested,
+  getConsentPanelTrigger,
   setConsentPanelRequested,
   subscribeToConsentPanel,
 } from '@/utils/analyticsConsent'
-import { ANALYTICS_SETTINGS_BUTTON_ID } from '@/components/AnalyticsSettingsButton'
 
 const SERVER_SNAPSHOT = 'loading'
 
@@ -41,15 +41,19 @@ export default function AnalyticsConsentBanner() {
   const visible = consent !== SERVER_SNAPSHOT && (consent === null || panelRequested)
   const isReopened = consent !== null && consent !== SERVER_SNAPSHOT
 
-  // När panelen öppnas via sidfotens länk flyttas fokus hit; vid stängning
-  // tillbaka till länken. Första besöket stjäl vi inte fokus.
+  // När panelen öppnas via en "Ändra val för statistik"-knapp flyttas fokus
+  // hit (utan att scrolla sidan). Första besöket stjäl vi inte fokus.
   useEffect(() => {
-    if (visible && panelRequested) panelRef.current?.focus()
+    if (visible && panelRequested) panelRef.current?.focus({ preventScroll: true })
   }, [visible, panelRequested])
 
+  // Vid stängning går fokus tillbaka till EXAKT den knapp som öppnade panelen.
+  // Öppnades den inte av en knapp (första besöket) rörs fokus och scroll-
+  // position inte alls – annars kunde det första valet hoppa till sidfoten.
   const close = () => {
+    const trigger = getConsentPanelTrigger()
     setConsentPanelRequested(false)
-    document.getElementById(ANALYTICS_SETTINGS_BUTTON_ID)?.focus()
+    if (trigger && trigger.isConnected) trigger.focus()
   }
 
   const choose = (choice) => {

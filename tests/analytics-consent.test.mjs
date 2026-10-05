@@ -85,4 +85,30 @@ describe('analyticsConsent', () => {
     assert.equal(consent.getAnalyticsConsent(), 'declined')
     assert.deepEqual(seen, ['declined'])
   })
+
+  test('panelen kommer ihåg exakt vilket element som öppnade den, och glömmer det vid stängning', () => {
+    const footerButton = { name: 'sidfot' }
+    const contentButton = { name: 'innehåll' }
+
+    assert.equal(consent.getConsentPanelTrigger(), null, 'Första besöket: ingen knapp har öppnat panelen')
+
+    consent.setConsentPanelRequested(true, footerButton)
+    assert.equal(consent.isConsentPanelRequested(), true)
+    assert.equal(consent.getConsentPanelTrigger(), footerButton)
+
+    consent.setConsentPanelRequested(false)
+    assert.equal(consent.getConsentPanelTrigger(), null)
+
+    // Samma panel, två knappar på samma sida: det är den KLICKADE som gäller.
+    consent.setConsentPanelRequested(true, contentButton)
+    assert.equal(consent.getConsentPanelTrigger(), contentButton)
+  })
+
+  test('panellyssnare notifieras när öppnande element byts', () => {
+    let calls = 0
+    consent.subscribeToConsentPanel(() => { calls++ })
+    consent.setConsentPanelRequested(true, { a: 1 })
+    consent.setConsentPanelRequested(true, { b: 2 })
+    assert.equal(calls, 2)
+  })
 })

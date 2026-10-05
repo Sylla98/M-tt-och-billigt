@@ -34,30 +34,27 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 20))
 /**
  * Mockar posthog-js (via testets egen mock-tracker t) med en fejk-PostHog
  * och returnerar en färsk instans av analytics.js. calls samlar varje
- * anrop till capture som [eventName, properties]; initCalls samlar init;
- * optCalls samlar opt_in/opt_out. Mocken räknar också hur många gånger
- * själva MODULEN importerades (loaded) – bevis för att biblioteket inte
- * ens laddas före ett ja.
+ * anrop till capture som [eventName, properties]; initCalls samlar init.
+ * OBS: PostHogs opt_in/opt_out_capturing ignoreras av SDK:n i
+ * cookieless_mode 'always' och används därför inte; samtycket vid
+ * återkallelse upprätthålls av trackEvent() och init-optionen before_send.
  */
 async function loadAnalyticsWithMockedTransport(t, { captureImpl } = {}) {
   const calls = []
   const initCalls = []
-  const optCalls = []
-  let optedOut = false
+  const configCalls = []
   const fakePostHog = {
     capture: captureImpl || ((...args) => calls.push(args)),
     init(...args) {
       initCalls.push(args)
       fakePostHog.__loaded = true
     },
-    opt_out_capturing() { optedOut = true; optCalls.push('out') },
-    opt_in_capturing(opts) { optedOut = false; optCalls.push(['in', opts]) },
-    has_opted_out_capturing: () => optedOut,
+    set_config(cfg) { configCalls.push(cfg) },
     __loaded: false,
   }
   t.mock.module('posthog-js', { defaultExport: fakePostHog })
   const mod = await import(`../src/utils/analytics.js?t=${Date.now()}-${Math.random()}`)
-  return { trackEvent: mod.trackEvent, calls, initCalls, optCalls }
+  return { trackEvent: mod.trackEvent, calls, initCalls, configCalls }
 }
 
 // null = miljövariabeln är inte satt alls.
@@ -148,25 +145,49 @@ describe('trackEvent() – samtycke', () => {
     assert.equal(options.autocapture, false)
     assert.equal(options.capture_pageview, false)
     assert.equal(options.disable_session_recording, true)
+    assert.equal(options.advanced_disable_flags, true)
+    assert.equal(options.request_batching, false)
+    assert.equal(options.capture_pageleave, false)
     assert.equal(typeof options.sanitize_properties, 'function')
     assert.deepEqual(calls.map((c) => c[0]), ['recipe_opened', 'recipe_swapped'])
     assert.equal(calls[0][1], undefined, 'Produkthändelserna ska INTE ha eventparametrar')
   })
 
-  test('ja → nej: framtida event skickas inte och PostHog stängs av (opt_out)', async (t) => {
+  test('ja → nej: framtida event skickas inte, och before_send kastar allt SDK:n själv försöker fånga', async (t) => {
     setUp({ choice: 'granted' })
-    const { trackEvent, calls, optCalls } = await loadAnalyticsWithMockedTransport(t)
+    const { trackEvent, calls, initCalls } = await loadAnalyticsWithMockedTransport(t)
 
     trackEvent('recipe_opened')
     await settle()
     assert.equal(calls.length, 1)
+    const { before_send } = initCalls[0][1]
+    assert.equal(typeof before_send, 'function')
+    const sdkEvent = { event: '$exception' }
+    assert.equal(before_send(sdkEvent), sdkEvent, 'Med ja släpps händelser igenom')
 
     consent.setAnalyticsConsent('declined')
     trackEvent('recipe_swapped')
     await settle()
 
     assert.equal(calls.length, 1, 'Inget mer får skickas efter återkallelse')
-    assert.deepEqual(optCalls, ['out'])
+    assert.equal(before_send(sdkEvent), null, 'Efter återkallelse kastar before_send även SDK-interna händelser')
+  })
+
+  test('återkallelse avbryter omförsök: en redan avbruten AbortSignal sätts som fetch_options, och nollställs vid nytt ja', async (t) => {
+    setUp({ choice: 'granted' })
+    const { trackEvent, configCalls } = await loadAnalyticsWithMockedTransport(t)
+
+    trackEvent('recipe_opened')
+    await settle()
+    assert.equal(configCalls.length, 0, 'Inget ingrepp så länge ja gäller')
+
+    consent.setAnalyticsConsent('declined')
+    assert.equal(configCalls.length, 1)
+    assert.equal(configCalls[0].fetch_options.signal.aborted, true)
+
+    consent.setAnalyticsConsent('granted')
+    assert.equal(configCalls.length, 2)
+    assert.deepEqual(configCalls[1], { fetch_options: {} })
   })
 
   test('återkallelse medan PostHog fortfarande laddas: ingen init och inget event', async (t) => {
@@ -181,9 +202,9 @@ describe('trackEvent() – samtycke', () => {
     assert.equal(calls.length, 0)
   })
 
-  test('ja → nej → ja: skickar igen, utan $opt_in-event', async (t) => {
+  test('ja → nej → ja: skickar igen (utan ny init)', async (t) => {
     setUp({ choice: 'granted' })
-    const { trackEvent, calls, optCalls, initCalls } = await loadAnalyticsWithMockedTransport(t)
+    const { trackEvent, calls, initCalls } = await loadAnalyticsWithMockedTransport(t)
 
     trackEvent('recipe_opened')
     await settle()
@@ -194,8 +215,8 @@ describe('trackEvent() – samtycke', () => {
 
     assert.equal(initCalls.length, 1)
     assert.deepEqual(calls.map((c) => c[0]), ['recipe_opened', 'recipe_swapped'])
-    assert.equal(optCalls[0], 'out')
-    assert.deepEqual(optCalls[1], ['in', { captureEventName: false }])
+    const sdkEvent = { event: 'x' }
+    assert.equal(initCalls[0][1].before_send(sdkEvent), sdkEvent)
   })
 
   test('skickar valfria properties vidare (används bara av $pageview, se providers.js)', async (t) => {

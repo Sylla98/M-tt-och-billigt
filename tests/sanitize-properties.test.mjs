@@ -137,6 +137,11 @@ describe('analytics.js + providers.js – statisk konfigurationskontroll (regres
     assert.match(analyticsSource, /request_batching:\s*false/)
   })
 
+  test('before_send kastar händelser utan samtycke, och opt_out/opt_in-anrop (ignoreras i cookieless-läge) används inte', () => {
+    assert.match(analyticsSource, /before_send:\s*\(event\)\s*=>\s*\(hasConsent\(\)\s*\?\s*event\s*:\s*null\)/)
+    assert.doesNotMatch(analyticsSource, /\.(opt_out_capturing|opt_in_capturing)\(/)
+  })
+
   test('posthog-js importeras bara dynamiskt – aldrig statiskt (annars laddas biblioteket före samtycke)', () => {
     const files = ['src/utils/analytics.js', 'src/app/providers.js', 'src/components/TrackedLink.js']
     for (const f of files) {
