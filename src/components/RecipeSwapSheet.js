@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { selectSwapAlternatives } from '@/utils/selectRecipes'
 import { getRecipeImage, FALLBACK_IMAGE } from '@/utils/getRecipeImage'
+import { formatPlanCostDelta } from '@/utils/formatPlanCostDelta'
 
 const PAGE_SIZE = 3
 
@@ -42,6 +43,7 @@ export default function RecipeSwapSheet({
   pantryTerms,
   budgetPerServing,
   referenceRecipe, // fullständigt receptobjekt för currentRecipe, för pris-/tidnärhet
+  getCostDelta,    // (newRecipeId) => kr-skillnad för HELA planen (negativt = billigare) | null
   onSelect,        // (newRecipeId) => void
 }) {
   const [shownCount, setShownCount] = useState(PAGE_SIZE)
@@ -92,6 +94,18 @@ export default function RecipeSwapSheet({
       referenceRecipe,
     })
   }, [open, currentRecipe?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Skillnaden räknas bara för de alternativ som faktiskt visas (varje
+  // beräkning bygger om hela planen) och först när dialogen är öppen. Räknas
+  // om när planen ändrats, eftersom getCostDelta då har en ny identitet.
+  const costDeltaText = useMemo(() => {
+    const map = new Map()
+    if (!open || !getCostDelta) return map
+    for (const { recipe } of rankedAlternatives.slice(0, shownCount)) {
+      map.set(recipe.id, formatPlanCostDelta(getCostDelta(recipe.id)))
+    }
+    return map
+  }, [open, rankedAlternatives, shownCount, getCostDelta])
 
   if (!open) return null
 
@@ -148,8 +162,13 @@ export default function RecipeSwapSheet({
           </div>
 
           {currentRecipe?.title && (
-            <p className="text-sm text-ink-light mb-4">
+            <p className="text-sm text-ink-light mb-1">
               Ersätter <span className="font-medium text-ink">{currentRecipe.title}</span>
+            </p>
+          )}
+          {getCostDelta && (
+            <p className="text-meta text-ink-light/80 mb-4">
+              Visar hur planens uppskattade inköpskostnad ändras jämfört med nu.
             </p>
           )}
 
@@ -178,6 +197,14 @@ export default function RecipeSwapSheet({
                     <div className="text-meta text-ink-light/70 mt-0.5">
                       {recipe.totalTimeMinutes} min · ca {Math.round(costPerServing)} kr/portion
                     </div>
+                    {costDeltaText.get(recipe.id) && (
+                      <div
+                        className={`text-sm font-semibold mt-1 tabular-nums
+                          ${costDeltaText.get(recipe.id).startsWith('\u2212') ? 'text-forest' : 'text-ink'}`}
+                      >
+                        {costDeltaText.get(recipe.id)}
+                      </div>
+                    )}
                   </div>
                 </button>
               ))}

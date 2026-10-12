@@ -1,11 +1,11 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import RecipeCard from './RecipeCard'
 import ShoppingList from './ShoppingList'
 import RecipeSwapSheet from './RecipeSwapSheet'
 import RecipeDetailModal from './RecipeDetailModal'
 import { RECIPES } from '@/data/recipes'
-import { rebuildPlanData } from '@/utils/selectRecipes'
+import { rebuildPlanData, getBaseRecipeId, buildSwapOccurrenceSpecs, calculateSwapCostDelta } from '@/utils/selectRecipes'
 import { trackEvent } from '@/utils/analytics'
 
 // Samma brytpunkt som receptgridens 2-kolumnsläge (`lg:grid-cols-2` nedan)
@@ -41,10 +41,8 @@ export default function ResultView({ data, onReset, onUpdateResult }) {
 
   // Ett recept kan förekomma flera gånger som separata tillagningstillfällen
   // (se route.js batchlogik) – då får senare tillfällen ett id på formen
-  // "receptid-tillfalle-2". Central hjälpfunktion för att hitta det
-  // ursprungliga receptid:t, återanvänd nedan istället för att upprepa
-  // samma regex på flera ställen.
-  const getBaseRecipeId = (id) => (id || '').replace(/-tillfalle-\d+$/, '')
+  // "receptid-tillfalle-2". getBaseRecipeId (importerad från selectRecipes)
+  // hittar det ursprungliga receptid:t.
 
   // Slår ihop alla tillagningstillfällen av samma recept till ETT kort.
   // Inköpslistan är opåverkad och räknar fortfarande alla tillfällen.
@@ -125,16 +123,38 @@ export default function ResultView({ data, onReset, onUpdateResult }) {
   const budgetPerServing = pricing && totalServings > 0 ? pricing.budget / totalServings : null
   const swapReferenceRecipe = swapTarget ? RECIPES.find((r) => r.id === swapTarget.id) : null
 
+  // Hur planens uppskattade inköpskostnad ändras om användaren väljer
+  // `newRecipeId`, i hela kronor (negativt = billigare). Visas i byt-vyn
+  // INNAN valet görs. Räknar med exakt samma specifikation och pipeline som
+  // det faktiska bytet nedan (buildSwapOccurrenceSpecs + rebuildPlanData),
+  // så beloppet är precis den ändring av totalsumman som visas efter valet.
+  // Returnerar null om det inte går att räkna (ska aldrig krascha vyn).
+  const getSwapCostDelta = useCallback(
+    (newRecipeId) => {
+      if (!swapTarget || !pricing) return null
+      try {
+        return calculateSwapCostDelta({
+          occurrences: recipes,
+          replacedBaseId: swapTarget.id,
+          newRecipeId,
+          pantryText: pantry,
+          budget: pricing.budget,
+          currentTotalCost: pricing.estimatedTotalCost,
+        })
+      } catch {
+        return null
+      }
+    },
+    [swapTarget, pricing, recipes, pantry]
+  )
+
   const handleSwapSelect = (newRecipeId) => {
     if (!swapTarget || !pricing) return
 
     // Planen beskrivs helt av (baseId, servings) per tillagningstillfälle –
     // byt bara ut de tillfällen som tillhörde den gamla receptplatsen,
     // behåll ALLA andra exakt som de är (inklusive deras portionsantal).
-    const occurrenceSpecs = recipes.map((r) => {
-      const baseId = getBaseRecipeId(r.id)
-      return { baseId: baseId === swapTarget.id ? newRecipeId : baseId, servings: r.servings }
-    })
+    const occurrenceSpecs = buildSwapOccurrenceSpecs(recipes, swapTarget.id, newRecipeId)
 
     const rebuilt = rebuildPlanData(occurrenceSpecs, pantry, pricing.budget)
     onUpdateResult(rebuilt)
@@ -292,6 +312,7 @@ export default function ResultView({ data, onReset, onUpdateResult }) {
         pantryTerms={pantryItemsUsed}
         budgetPerServing={budgetPerServing}
         referenceRecipe={swapReferenceRecipe}
+        getCostDelta={getSwapCostDelta}
         onSelect={handleSwapSelect}
       />
 

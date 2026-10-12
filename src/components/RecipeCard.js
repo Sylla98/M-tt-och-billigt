@@ -254,16 +254,22 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
             </span>
           </button>
 
-          {/* Diskret, sekundär – ska aldrig konkurrera med receptnamnet
-              eller "Visa recept". ml-auto ger tydlig visuell separation. */}
+          {/* Sekundär men tydlig handling: en testare hittade inte "Byt rätt"
+              när den var en liten, blek textlänk. Nu en ram-knapp med ikon
+              som syns även när kortet är stängt, men fortfarande utan
+              fylld färg så den inte konkurrerar med "Visa recept" eller
+              receptnamnet. ml-auto ger tydlig visuell separation. */}
           {onSwapRequest && (
             <button
               onClick={onSwapRequest}
-              className="ml-auto inline-flex items-center gap-1 text-xs text-ink-light/70
-                         hover:underline underline-offset-4
-                         min-h-[44px] px-1 transition-colors
+              aria-label={`Byt rätt: ersätt ${title}`}
+              className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-ink
+                         border border-line-strong rounded-lg px-3
+                         hover:border-forest/50 hover:bg-cream
+                         min-h-[44px] transition-colors
                          [-webkit-tap-highlight-color:transparent]"
             >
+              <span aria-hidden="true">&#8644;</span>
               Byt rätt
             </button>
           )}

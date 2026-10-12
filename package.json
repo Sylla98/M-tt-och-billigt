@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "validate:recipes": "node --experimental-default-type=module scripts/validate-recipes.mjs",
-    "test:analytics": "node --experimental-default-type=module --experimental-test-module-mocks --test tests/*.test.mjs"
+    "test:analytics": "node --experimental-default-type=module --experimental-test-module-mocks --test tests/*.test.mjs",
+    "test:swap": "node --experimental-default-type=module --import ./tests/swap/register-alias.mjs --test tests/swap/*.test.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.111.0",

@@ -416,6 +416,44 @@ export function selectSwapAlternatives({ foodTypes, excludeIds = [], budgetPerSe
 }
 
 /**
+ * Ett tillagningstillfälle har id "receptid" eller "receptid-tillfalle-N"
+ * (se buildRecipeOccurrences). Returnerar det ursprungliga receptid:t.
+ */
+export function getBaseRecipeId(id) {
+  return (id || '').replace(/-tillfalle-\d+$/, '')
+}
+
+/**
+ * Beskriver planen efter ett byte: byter ut ALLA tillagningstillfällen som
+ * tillhörde receptplatsen `replacedBaseId` mot `newRecipeId` och behåller alla
+ * andra exakt som de är (inklusive deras portionsantal). `occurrences` är
+ * planens `recipes`-lista. Används både av det faktiska bytet och av
+ * förhandsvisningen av kostnadsskillnaden, så de ALDRIG kan räkna olika.
+ */
+export function buildSwapOccurrenceSpecs(occurrences, replacedBaseId, newRecipeId) {
+  return occurrences.map((r) => {
+    const baseId = getBaseRecipeId(r.id)
+    return { baseId: baseId === replacedBaseId ? newRecipeId : baseId, servings: r.servings }
+  })
+}
+
+/**
+ * Hur planens uppskattade inköpskostnad (kr, heltal) skulle ändras av ett
+ * byte, jämfört med planens nuvarande totalsumma. Bygger om HELA planen med
+ * samma pipeline som ett faktiskt byte (rebuildPlanData): alla
+ * tillagningstillfällen, skafferi, sammanslagen inköpslista och hela
+ * förpackningar – alltså inte bara skillnaden i kr per portion. Negativt tal
+ * = billigare, positivt = dyrare. Skillnaden är exakt den ändring av
+ * totalsumman som visas efter bytet, eftersom båda beräknas med
+ * estimatedTotalCost från rebuildPlanData.
+ */
+export function calculateSwapCostDelta({ occurrences, replacedBaseId, newRecipeId, pantryText, budget, currentTotalCost }) {
+  const specs = buildSwapOccurrenceSpecs(occurrences, replacedBaseId, newRecipeId)
+  const rebuilt = rebuildPlanData(specs, pantryText, budget)
+  return rebuilt.pricing.estimatedTotalCost - currentTotalCost
+}
+
+/**
  * Bygger om den skalade receptlistan, inköpslistan och priserna för HELA
  * planen utifrån en lista av (baseId, servings)-par – det enda en
  * receptplats behöver beskrivas av. Samma pipeline som route.js använder
