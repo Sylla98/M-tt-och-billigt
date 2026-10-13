@@ -21,9 +21,12 @@ import {
 
 const SERVER_SNAPSHOT = 'loading'
 
+// Båda valen har exakt samma stil och storlek. På mobil ligger de bredvid
+// varandra med något mindre text så att panelen inte täcker halva skärmen.
 const choiceButtonClass =
-  'flex-1 inline-flex items-center justify-center bg-forest hover:bg-forest-dark ' +
-  'text-white font-bold py-3 px-5 rounded-lg text-sm min-h-[44px] transition-colors duration-150'
+  'flex-1 inline-flex items-center justify-center text-center bg-forest hover:bg-forest-dark ' +
+  'text-white font-bold py-2 px-2 sm:py-3 sm:px-5 rounded-lg text-[13px] leading-tight sm:text-sm ' +
+  'sm:leading-normal min-h-[44px] transition-colors duration-150'
 
 export default function AnalyticsConsentBanner() {
   const consent = useSyncExternalStore(
@@ -81,12 +84,12 @@ export default function AnalyticsConsentBanner() {
         aria-describedby="analytics-consent-text"
         tabIndex={-1}
         className="pointer-events-auto max-w-[660px] mx-auto bg-surface border border-line-strong
-                   rounded-2xl shadow-lg p-5 outline-none"
+                   rounded-2xl shadow-lg p-4 sm:p-5 outline-none"
       >
-        <h2 id="analytics-consent-title" className="font-bold text-ink text-base mb-2">
+        <h2 id="analytics-consent-title" className="font-bold text-ink text-base mb-1.5 sm:mb-2">
           Vill du bidra med produktstatistik?
         </h2>
-        <div id="analytics-consent-text" className="text-sm text-ink-light leading-relaxed space-y-2 mb-4">
+        <div id="analytics-consent-text" className="text-[13px] sm:text-sm text-ink-light leading-snug sm:leading-relaxed space-y-1.5 sm:space-y-2 mb-3 sm:mb-4">
           <p>
             Vi vill förstå hur appen används – till exempel hur många som skapar en
             matplan eller öppnar ett recept. Det är helt frivilligt och appen fungerar
@@ -108,7 +111,7 @@ export default function AnalyticsConsentBanner() {
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3">
+        <div className="flex flex-row gap-3">
           <button type="button" onClick={() => choose('granted')} className={choiceButtonClass}>
             Tillåt produktstatistik
           </button>
