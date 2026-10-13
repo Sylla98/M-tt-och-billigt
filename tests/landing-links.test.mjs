@@ -21,24 +21,24 @@ const planeraTags = [...source.matchAll(/<(\w+)\b[^>]*?href="\/planera"[^>]*>/g)
 }))
 
 describe('startsidans länkar till /planera', () => {
-  test('det finns exakt två ingångar (rubrikradens knapp och hjältens knapp)', () => {
-    assert.equal(planeraTags.length, 2)
+  test('det finns exakt en ingång (hjältens knapp "Skapa min matplan")', () => {
+    assert.equal(planeraTags.length, 1)
   })
 
-  test('båda är TrackedLink – ingen vanlig <Link> eller <a> som hoppar över spårningen', () => {
+  test('ingången är en TrackedLink – ingen vanlig <Link> eller <a> som hoppar över spårningen', () => {
     for (const tag of planeraTags) {
       assert.equal(tag.name, 'TrackedLink', `Ospårad ingång till /planera: ${tag.text}`)
     }
   })
 
-  test('båda skickar den befintliga händelsen landing_cta_clicked, inga andra eventnamn', () => {
+  test('ingången skickar den befintliga händelsen landing_cta_clicked, inga andra eventnamn', () => {
     for (const tag of planeraTags) {
       assert.match(tag.text, /eventName="landing_cta_clicked"/)
     }
   })
 
-  test('texten "/planera" förekommer exakt två gånger i filen (fångar även href med enkla citattecken eller uttryck)', () => {
-    assert.equal((source.match(/\/planera/g) || []).length, 2)
+  test('texten "/planera" förekommer exakt en gång i filen (fångar även href med enkla citattecken eller uttryck)', () => {
+    assert.equal((source.match(/\/planera/g) || []).length, 1)
   })
 
   test('startsidan har inga egna trackEvent-anrop eller eventparametrar (allt går via TrackedLink)', () => {

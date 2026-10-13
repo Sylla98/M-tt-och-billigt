@@ -13,14 +13,6 @@ export default function HomePage() {
           <span className="font-display font-semibold text-ink text-[1.0625rem] tracking-tight">
             Mätt &amp; Billigt
           </span>
-          <TrackedLink
-            href="/planera"
-            eventName="landing_cta_clicked"
-            className="text-sm font-bold text-white bg-forest hover:bg-forest-dark
-                       transition-colors py-2 px-4 rounded-lg"
-          >
-            Planera veckan
-          </TrackedLink>
         </div>
       </header>
 
