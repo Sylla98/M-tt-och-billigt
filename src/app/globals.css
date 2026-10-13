@@ -8,6 +8,47 @@
     -webkit-text-size-adjust: 100%;
   }
 
+  /* Startsidans avstånd på mobil. Luftigt som standard (valet om statistik är
+     redan gjort, sidan fyller skärmen utan tom yta). När statistikvalet visas
+     (html[data-consent='open'], satt av ett litet skript i <head> före första
+     målningen och av AnalyticsConsentBanner) används de kompakta värdena så att
+     rubrik, knapp och alla tre rutor ryms ovanför valet. Desktop (md och uppåt)
+     styrs av egna klasser och påverkas inte. */
+  :root {
+    --land-header-py: 1rem;
+    --land-pt: 1.5rem;
+    --land-h1: 2.75rem;
+    --land-h1-mb: 1rem;
+    --land-lead-mb: 1.25rem;
+    --land-cta-py: 0.875rem;
+    --land-sec-gap: 1.75rem;
+    --land-gap: 0.75rem;
+    --land-pad: 1.25rem;
+    --land-title: 1.25rem;
+    --land-chip-fs: 0.8125rem;
+    --land-chip-px: 0.75rem;
+    --land-chip-py: 0.375rem;
+    --land-vis-mt: 0.875rem;
+    --land-slider-mt: 1.125rem;
+  }
+  html[data-consent='open'] {
+    --land-header-py: 0.75rem;
+    --land-pt: 0.5rem;
+    --land-h1: 2rem;
+    --land-h1-mb: 0.5rem;
+    --land-lead-mb: 0.75rem;
+    --land-cta-py: 0.625rem;
+    --land-sec-gap: 1rem;
+    --land-gap: 0.5rem;
+    --land-pad: 0.75rem;
+    --land-title: 1.125rem;
+    --land-chip-fs: 0.75rem;
+    --land-chip-px: 0.625rem;
+    --land-chip-py: 0.25rem;
+    --land-vis-mt: 0.5rem;
+    --land-slider-mt: 0.625rem;
+  }
+
   body {
     background-color: #FAF8F3;
     color: #302D29;

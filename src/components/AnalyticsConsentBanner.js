@@ -42,6 +42,17 @@ export default function AnalyticsConsentBanner() {
   const panelRef = useRef(null)
 
   const visible = consent !== SERVER_SNAPSHOT && (consent === null || panelRequested)
+
+  // Håller html[data-consent="open"] i synk med att statistikvalet visas för
+  // första gången (inget val gjort). Startsidan använder det för att välja
+  // kompakta avstånd; se globals.css. Att panelen öppnas igen via
+  // "Ändra val för statistik" ändrar inte sidans avstånd.
+  useEffect(() => {
+    if (consent === SERVER_SNAPSHOT) return
+    const root = document.documentElement
+    if (consent === null) root.setAttribute('data-consent', 'open')
+    else root.removeAttribute('data-consent')
+  }, [consent])
   const isReopened = consent !== null && consent !== SERVER_SNAPSHOT
 
   // När panelen öppnas via en "Ändra val för statistik"-knapp flyttas fokus
