@@ -28,9 +28,13 @@
 
 ### Tester efter ändringens risk
 - **Ren bildfil byts (samma filnamn och sökväg, ingen kodändring):** kontrollera att filen är en giltig JPEG med rimliga mått och storlek, att `image`-fältet i `src/data/recipes.js` pekar på filen, och att bilden visas rätt i receptkort och receptvy på mobilbredd och desktop i webbläsare. Kör inte `test:analytics`, `test:swap`, `validate:recipes` eller `build`; de berör inte ändringen och Vercels Preview-bygge täcker bygget. Ingen separat granskare behövs om bara en bildfil ändrats och kontrollen ovan är gjord.
-- **Receptdata (`src/data/recipes.js`) ändras:** `npm run validate:recipes`, och `npm run build` om kod också ändrats. Ändras ingredienser, mängder eller priser ska du dessutom kontrollera, i appen eller via `/api/meal-plan`, en genererad plan som innehåller det ändrade receptet: totalsumman, inköpslistan (rätt ingredienser, mängder och summor per kategori) och kostnadsskillnaden när receptet byts med Byt rätt (`npm run test:swap`). Redovisa vilken plan (hushåll, budget, period) som kontrollerades. Priser är uppskattningar och ska inte beskrivas som en faktisk varukorg.
+- **Receptdata (`src/data/recipes.js`) ändras:** `npm run validate:recipes`, och `npm run build` om kod också ändrats. Ändras ingredienser, mängder eller priser ska du dessutom kontrollera, i appen eller via `/api/meal-plan`, en genererad plan som innehåller det ändrade receptet: totalsumman, inköpslistan (rätt ingredienser, mängder och summor per kategori) och kostnadsskillnaden när receptet byts med Byt rätt (`npm run test:swap`). Redovisa vilken plan (hushåll, budget, period) som kontrollerades. Priser är uppskattningar och ska inte beskrivas som en faktisk varukorg. Hela kontrollmatrisen och ett färdigt planverifieringsskript finns i `RECEPTFLÖDE.md` (avsnitt 2.5 och bilaga A).
 - **Appens kod ändras:** `npm run build`, och testa berört flöde i webbläsare. Ändrar du analytics eller samtycke: `npm run test:analytics` och kontrollera före samtycke, efter ja, efter nej och efter återkallelse. Ändrar du Byt rätt: `npm run test:swap`.
 - **Regressionsrisk** (receptöppning, scroll, modal, analytics, prisberäkning): låt en separat granskare leta efter konkreta fel, rätta dem och kontrollera igen. Undvik ändringsrundor för rena stilpreferenser.
+
+### Recept
+- När Elis ber om att lägga till, ändra eller ta bort ett recept (t.ex. "lägg till det här receptet enligt receptflödet", med länk eller recepttext) ska du följa [RECEPTFLÖDE.md](RECEPTFLÖDE.md) från underlag till leverans. Läs den hela innan du börjar. Den beskriver hur recept, ingredienser, priser, kostval, planering och bilder fungerar i koden, vilka kontroller som krävs och hur du rapporterar.
+- Vid konflikt mellan de två filerna gäller `CLAUDE.md`.
 
 ### Receptbilder
 - Byt bild på plats med samma filnamn i `public/recipe-images/`; då behövs ingen kodändring.
