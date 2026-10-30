@@ -74,6 +74,12 @@ const input = {
 const G = { g: 1, kg: 1000 }
 const ML = { ml: 1, cl: 10, dl: 100, l: 1000 }
 const SPOON = ['msk', 'tsk', 'krm']
+// Svenska måttsatsen: skedmått är exakta VOLYMmått (1 krm = 1 ml, 1 tsk = 5 ml, 1 msk = 15 ml).
+// De kan jämföras med varandra men aldrig räknas om till gram eller antal (ingen densitet).
+const SPOON_ML = { krm: 1, tsk: 5, msk: 15 }
+const famOf = (u) => (u in G ? 'vikt' : u in ML ? 'volym' : u in SPOON_ML ? 'sked' : u === 'st' || !u ? 'antal' : `annat:${u}`)
+/** Mängd i familjens gemensamma enhet (g, ml, skedmått som ml-ekvivalent, st). */
+const amt = (q, u) => q * (u in G ? G[u] : u in ML ? ML[u] : u in SPOON_ML ? SPOON_ML[u] : 1)
 const baseOf = (q, u) => (u in G ? { fam: 'vikt', unit: 'g', v: q * G[u] } : u in ML ? { fam: 'volym', unit: 'ml', v: q * ML[u] } : SPOON.includes(u) ? { fam: 'sked', unit: u, v: q } : { fam: 'antal', unit: u || 'st', v: q })
 const GENERIC_KEY = { meat: 'protein', dairy: 'mejeri', vegetables: 'gronsak', canned: 'konserv', pasta: 'torrvara', pantry: 'krydda' }
 const r1 = (n) => Math.round(n * 10) / 10
@@ -107,47 +113,52 @@ function expectedBuy(name, categoryKey, req) {
  * Returnerar { total, rows } och fyller `errors`/`notes`.
  */
 function independentCheck(label, planLike) {
-  const occ = new Map() // normaliserat namn → { sum per enhet, namn }
+  // Summera varje ingrediens över alla tillfällen, per (normaliserat namn, enhetsfamilj).
+  const occ = new Map() // `${namn}|${familj}` → { names, v, byUnit }
   for (const r of planLike.recipes) {
     for (const ing of r.ingredients) {
-      const b = baseOf(ing.quantity, ing.unit)
-      const e = occ.get(norm(ing.name)) || { names: new Set(), byUnit: {} }
+      const key = `${norm(ing.name)}|${famOf(ing.unit)}`
+      const e = occ.get(key) || { names: new Set(), v: 0, byUnit: {} }
       e.names.add(ing.name)
-      e.byUnit[b.unit] = (e.byUnit[b.unit] || 0) + b.v
-      occ.set(norm(ing.name), e)
+      e.v += amt(ing.quantity, ing.unit)
+      e.byUnit[ing.unit] = (e.byUnit[ing.unit] || 0) + ing.quantity
+      occ.set(key, e)
     }
   }
   let total = 0
   const rows = []
+  const rowsPerName = new Map()
   for (const [categoryKey, cat] of Object.entries(planLike.shoppingList)) {
     for (const it of cat.items) {
-      const e = occ.get(norm(it.displayName))
-      const req = baseOf(it.requiredQuantity, it.requiredUnit)
-      const units = e ? Object.keys(e.byUnit) : []
+      const fam = famOf(it.requiredUnit)
+      const key = `${norm(it.displayName)}|${fam}`
+      const e = occ.get(key)
+      const reqAmt = amt(it.requiredQuantity, it.requiredUnit)
+      rowsPerName.set(norm(it.displayName), [...(rowsPerName.get(norm(it.displayName)) || []), it.displayName])
       if (!e) {
-        errors.push(`${label}: raden "${it.displayName}" hör inte till något recept i planen`)
-      } else if (units.length > 1) {
-        const kept = e.byUnit[req.unit]
-        const lost = units.filter((u) => u !== req.unit).map((u) => `${r1(e.byUnit[u])} ${u}`)
-        notes.push(`${label}: "${it.displayName}" består av ${[...e.names].join(' + ')} med olika enheter (${units.join(', ')}) och slås ihop till en rad (${it.requiredQuantity} ${it.requiredUnit}). Mängden i raden räknar bara ${req.unit}; ${lost.join(' + ')} tappas${kept != null && Math.abs(kept - req.v) > 0.01 ? ` och radens ${req.unit}-summa avviker dessutom från recepten (${r1(kept)})` : ''}`)
-      } else if (Math.abs(e.byUnit[units[0]] - req.v) > 0.01) {
-        const msg = `${label}: "${it.displayName}" behöver enligt recepten ${e.byUnit[units[0]]} ${units[0]} men inköpslistan säger ${it.requiredQuantity} ${it.requiredUnit}`
-        if (req.fam === 'sked') notes.push(`${msg} (skedmått, påverkar inte kostnaden)`)
-        else errors.push(msg)
+        errors.push(`${label}: raden "${it.displayName}" (${it.requiredQuantity} ${it.requiredUnit}) hör inte till något recept i planen`)
+      } else if (Math.abs(e.v - reqAmt) > 0.01) {
+        const parts = Object.entries(e.byUnit).map(([u, q]) => `${r1(q)} ${u}`).join(' + ')
+        errors.push(`${label}: "${it.displayName}" ska enligt recepten vara ${parts} men inköpslistan säger ${it.requiredQuantity} ${it.requiredUnit} (mängd tappad eller felräknad)`)
       }
-      if (e && e.names.size > 1 && units.length === 1) notes.push(`${label}: ${[...e.names].join(' + ')} slås ihop till en rad "${it.displayName}" (samma normaliserade namn)`)
-      const exp = expectedBuy(it.displayName, categoryKey, req)
+      if (e && e.names.size > 1) notes.push(`${label}: ${[...e.names].join(' + ')} slås ihop till en rad "${it.displayName}" (samma normaliserade namn)`)
+      const exp = expectedBuy(it.displayName, categoryKey, baseOf(it.requiredQuantity, it.requiredUnit))
       if (Math.abs(exp.cost - it.lineCost) > 0.01) errors.push(`${label}: "${it.displayName}" kostar ${it.lineCost} kr i appen men ${exp.cost} kr enligt oberoende uträkning (${exp.text})`)
       if (exp.packages != null && it.packagesRequired !== exp.packages) errors.push(`${label}: "${it.displayName}" antal förpackningar ${it.packagesRequired} i appen mot ${exp.packages} i uträkningen`)
       if (!!exp.generic !== !!it.isGenericEstimate) errors.push(`${label}: "${it.displayName}" generiskt pris-flagga avviker (appen ${!!it.isGenericEstimate}, uträkning ${!!exp.generic})`)
       total += exp.cost
-      rows.push({ it, exp, req, categoryKey })
+      rows.push({ it, exp, req: baseOf(it.requiredQuantity, it.requiredUnit), key })
     }
   }
-  // Täckning: skafferi är alltid tomt här, så VARJE ingrediens i planens recept ska ha en inköpsrad.
-  const rowKeys = new Set(rows.map((x) => norm(x.it.displayName)))
+  // Täckning: skafferi är alltid tomt här, så VARJE (namn, enhetsfamilj) i planens recept ska ha en inköpsrad.
+  const rowKeys = new Set(rows.map((x) => x.key))
   for (const [key, e] of occ) {
-    if (!rowKeys.has(key)) errors.push(`${label}: ingrediensen "${[...e.names].join(' / ')}" finns i planens recept men saknar inköpsrad (kostnaden saknas i totalsumman)`)
+    if (!rowKeys.has(key)) errors.push(`${label}: ingrediensen "${[...e.names].join(' / ')}" (${Object.entries(e.byUnit).map(([u, q]) => `${r1(q)} ${u}`).join(' + ')}) finns i planens recept men saknar inköpsrad (kostnaden saknas i totalsumman)`)
+  }
+  // Samma vara på flera rader (olika enhetsfamiljer utan säker omräkning): mängderna bevaras, men
+  // priset kan räknas som flera inköp av samma produkt.
+  for (const [name, list] of rowsPerName) {
+    if (list.length > 1) notes.push(`${label}: "${name}" ligger på ${list.length} rader (${list.join(' | ')}) eftersom enheterna inte kan räknas om till varandra utan påhittad densitet. Kontrollera om det är samma produkt (kostnaden kan då räknas som flera inköp)`)
   }
   const totalRounded = Math.round(total)
   if (totalRounded !== planLike.pricing.estimatedTotalCost) errors.push(`${label}: totalsumman är ${planLike.pricing.estimatedTotalCost} kr i appen men ${totalRounded} kr enligt oberoende uträkning`)
@@ -224,7 +235,7 @@ for (const ing of recipe.ingredients) {
     }
   })
   const own = qtys.reduce((a, b) => a + b, 0)
-  const row = check.rows.find((x) => norm(x.it.displayName) === norm(ing.name))
+  const row = check.rows.find((x) => x.key === `${norm(ing.name)}|${famOf(ing.unit)}`)
   if (!row) {
     notes.push(`${ing.name}: finns inte som inköpsrad (borttagen eller sammanslagen)`)
     continue
@@ -232,7 +243,7 @@ for (const ing of recipe.ingredients) {
   const decimals = ing.unit === 'st' && !rule.isCountable && qtys.some((q) => !Number.isInteger(q))
   if (decimals) notes.push(`${ing.name}: styckevara som inte är räknebar skalas med decimaler (${qtys.join(' + ')} st) – använd g eller bedöm`)
   const dl = [4, 7, 11].map((p) => scaleIngredient(ing, recipe.baseServings, p).quantity).join(' / ')
-  const share = row.req.v !== own && !SPOON.includes(ing.unit) ? ` (receptets andel ${own} ${ing.unit}; resten från andra recept)` : ''
+  const share = !SPOON.includes(ing.unit) && Math.abs(amt(row.it.requiredQuantity, row.it.requiredUnit) - amt(own, ing.unit)) > 0.01 ? ` (receptets andel ${r1(own)} ${ing.unit}; resten från andra recept)` : ''
   console.log(`  ${ing.name} [${ing.unit}/${ing.category}] vid 4/7/11 portioner: ${dl} ${ing.unit}${decimals ? '  ⚠ decimaler' : ''}`)
   console.log(`     i planen: ${qtys.join(' + ')} ${ing.unit}; hela planen behöver ${row.it.requiredQuantity} ${row.it.requiredUnit}${share}`)
   console.log(`     inköp: ${row.exp.text} = ${Math.round(row.exp.cost)} kr ${Math.abs(row.exp.cost - row.it.lineCost) < 0.01 ? '✔ = appens rad' : '✘ appens rad: ' + row.it.lineCost + ' kr'}`)

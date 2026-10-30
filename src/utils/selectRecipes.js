@@ -160,21 +160,37 @@ export function scaleRecipe(recipe, targetServings) {
 }
 
 // ── Inköpslista: slå ihop ingredienser över alla recept ─────────────────────
+// Mängder får bara slås ihop när det finns en EXAKT omräkning:
+//  - vikt: g och kg (till gram)
+//  - volym: ml, cl, dl och l (till ml)
+//  - skedmått: krm, tsk och msk. Svenska måttsatsen är exakta volymmått
+//    (1 krm = 1 ml, 1 tsk = 5 ml, 1 msk = 15 ml) och räknas bara om
+//    sinsemellan, aldrig till gram eller antal.
+//  - antal (st), och övriga enheter var för sig.
+// Det finns ingen säker omräkning mellan familjerna (t.ex. msk ↔ g, st ↔ tsk,
+// ml ↔ g, utan påhittad densitet eller storlek). Då bevaras mängderna på
+// SEPARATA rader i stället för att summeras felaktigt eller tappas bort.
+const SPOON_TO_ML = { krm: 1, tsk: 5, msk: 15 }
+
 function toBase(quantity, unit) {
   const u = (unit || '').toLowerCase()
-  if (u in WEIGHT_TO_GRAMS) return { value: quantity * WEIGHT_TO_GRAMS[u], unit: 'g' }
-  if (u in VOLUME_TO_ML) return { value: quantity * VOLUME_TO_ML[u], unit: 'ml' }
-  return { value: quantity, unit: u || 'st' }
+  if (u in WEIGHT_TO_GRAMS) return { family: 'vikt', value: quantity * WEIGHT_TO_GRAMS[u], unit: 'g' }
+  if (u in VOLUME_TO_ML) return { family: 'volym', value: quantity * VOLUME_TO_ML[u], unit: 'ml' }
+  if (u in SPOON_TO_ML) return { family: 'sked', value: quantity, unit: u }
+  if (!u || u === 'st') return { family: 'antal', value: quantity, unit: 'st' }
+  return { family: `annat:${u}`, value: quantity, unit: u }
 }
 
 /**
- * Slår ihop samma ingrediens från alla skalade recept till en rad per vara.
- * Skafferivaror (som användaren redan har) utesluts helt ur listan.
+ * Slår ihop samma ingrediens från alla skalade recept till en rad per vara och
+ * enhetsfamilj (se toBase: bara exakta omräkningar summeras, övriga mängder
+ * bevaras på separata rader). Skafferivaror (som användaren redan har) utesluts
+ * helt ur listan.
  * Returnerar platta rader: { displayName, searchTerm, quantity, unit, category }
  */
 export function buildShoppingItems(scaledRecipes, pantryText) {
   const pantryTerms = parsePantryTerms(pantryText)
-  const merged = new Map() // normaliserat namn → rad
+  const merged = new Map() // normaliserat namn + enhetsfamilj → rad
 
   for (const recipe of scaledRecipes) {
     for (const ing of recipe.ingredients) {
@@ -187,33 +203,38 @@ export function buildShoppingItems(scaledRecipes, pantryText) {
       if (inPantry) continue
 
       const base = toBase(ing.quantity, ing.unit)
-      const key = normName
+      const key = `${normName}|${base.family}`
 
       if (merged.has(key)) {
         const row = merged.get(key)
-        if (row.unit === base.unit) {
-          row.quantity += base.value
+        if (base.family === 'sked') {
+          // Skedmått med olika enheter räknas om exakt via volymmåttet. Summan hålls
+          // exakt i ml och avrundas först när raden presenteras (inget avrundningsfel
+          // som växer för varje sammanslagning).
+          row.exactMl += base.value * SPOON_TO_ML[base.unit]
+          row.quantity = Math.round((row.exactMl / SPOON_TO_ML[row.unit]) * 10000) / 10000
         } else {
-          // olika enhetsfamiljer (t.ex. msk + g) – behåll den större posten,
-          // lägg skedmått som minsta möjliga tillägg (försumbart för köp)
-          if (base.unit === 'g' || base.unit === 'ml') {
-            row.quantity = base.value + row.quantity // rå summering – båda små
-            row.unit = base.unit
-          }
+          row.quantity += base.value // samma enhet (g, ml, st eller övrig enhet)
         }
       } else {
+        // Samma vara med en annan enhetsfamilj får en egen rad. Är namnet identiskt
+        // med en syskonrad läggs enheten till, så att raderna går att skilja åt
+        // (inköpslistan använder namnet som nyckel).
+        const sameName = [...merged.values()].some((r) => r.searchTerm === normName && r.displayName === ing.name)
         merged.set(key, {
-          displayName: ing.name,
+          displayName: sameName ? `${ing.name} (${base.unit})` : ing.name,
           searchTerm: normName,
           quantity: base.value,
           unit: base.unit,
           category: ing.category || 'pantry',
+          ...(base.family === 'sked' ? { exactMl: base.value * SPOON_TO_ML[base.unit] } : {}),
         })
       }
     }
   }
 
-  return [...merged.values()]
+  // exactMl är bara en hjälpsumma för skedmått och ska inte följa med i inköpsraderna
+  return [...merged.values()].map(({ exactMl, ...row }) => row)
 }
 
 export function parsePantryTerms(pantryText) {

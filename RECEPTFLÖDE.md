@@ -68,7 +68,7 @@ Alla recept ligger i en enda array `RECIPES`. Ordningen spelar ingen roll för u
 
 ### 1.5 Planering, inköpslista och Byt rätt
 - **Plan:** portionsbehov = (vuxna + 0,6 × barn) × 2 måltider/dag × dagar × 1,1. Portionerna delas på tillagningstillfällen (idealstorlek 7), och unika recept roterar. Samma recept kan alltså lagas flera gånger.
-- **Inköpslista:** alla skalade recept slås ihop per normaliserat namn, skafferivaror ("Har hemma") utesluts, och raderna prissätts. Totalsumman är summan av hela förpackningar, avrundad till hela kronor. Går planen över budget byts upp till 3 dyra recept mot billigare.
+- **Inköpslista:** alla skalade recept slås ihop per normaliserat namn **och enhetsfamilj**. Bara exakta omräkningar summeras: g/kg, ml/cl/dl/l och skedmått sinsemellan (1 krm = 1 ml, 1 tsk = 5 ml, 1 msk = 15 ml). Mellan familjerna (skedmått ↔ vikt, antal ↔ skedmått, vikt ↔ volym) finns ingen säker omräkning och inga densiteter eller styckevikter hittas på, så mängderna bevaras på **separata rader** (t.ex. `Färsk basilika` i st och `Torkad basilika` i tsk). Testas i `tests/swap/shopping-list-units.test.mjs` (`npm run test:swap`). Dessutom: skafferivaror ("Har hemma") utesluts, och raderna prissätts. Totalsumman är summan av hela förpackningar, avrundad till hela kronor. Går planen över budget byts upp till 3 dyra recept mot billigare.
 - **Byt rätt:** ersätter alla tillfällen av en receptplats. Kostnadsskillnaden bygger om **hela** planen med samma funktioner som själva bytet och är därför konsekvent med själva bytet (testas i `npm run test:swap`). Eftersom förhandsvisning och byte delar kod **bevisar det inte att kostnaden är rätt**: kontrollera även konkreta ingrediensmängder och inköp (se 2.5). Kandidater rangordnas med samma kostval/poäng, med litet avdrag för skillnad i pris och tid.
 - Planer sparas inte hos användaren och analytics skickar inga recept-id, så att byta namn på, ändra eller ta bort ett recept påverkar inga sparade data.
 
@@ -259,11 +259,12 @@ Bifoga referensbilder: public/recipe-images/butter-chicken.jpg m.fl. (se 3.1).
 ### Kvarstående frågor i nuvarande data (ej åtgärdade)
 Befintliga avvikelser som inte orsakas av en ny receptuppgift. Redovisa dem som "fanns redan" och åtgärda dem bara efter uttrycklig uppgift.
 - `Parmesanost` (i `en-riktigt-god-kottfarssas`) saknar referenspris, och `Parmesan` är en annan rad i inköpslistan.
-- Ingredienser med olika enheter under samma normaliserade namn slås ihop till en rad där den ena enhetens mängd tappas: `Salt` och `Kanel` (tsk + krm), `Oregano` och `Paprikapulver` (tsk + msk), `Dijonsenap` (msk + tsk) och basilika (`Basilika`, `Torkad basilika` och `Färsk basilika`: tsk + st). Kostnaden påverkas inte (skedmått är en förpackning), men den visade mängden i inköpslistan kan vara för låg. Skriptet redovisar vad som tappas.
+- *Åtgärdat 2026-10-30 (`feature/fix-inkopslista-enheter`):* ingredienser med olika enheter tappade mängd i inköpslistan (Salt, Kanel, Oregano, Paprikapulver, Dijonsenap, basilika). Se 1.5. Skedmått slås nu ihop exakt och övriga mängder bevaras på egna rader.
 - Styckevaror som inte är räknebara skalas med decimaler (Tortillabröd, Bröd, Äpple, Gurka, Tomat, Hamburgerbröd, Färsk basilika).
 - Kategoribilderna och `fallback.jpg` finns inte. Två bilder står i stående format (`krispiga-potatistacos-bonor-vitloksyoghurt.jpg`, `kycklingwok-nudlar.jpg`), tre bildfiler används inte (`klassisk-kottfarssas.jpg`, `korv-potatismos.jpg`, `kramig-broccolipasta-citron-parmesan.jpg`) och 47 av 63 bilder är över 500 KB.
 - Fem recept har `familyFriendly: true` men saknar taggen `familjevänlig` (taggen används inte).
 - Tre varningar från `validate:recipes` (vitlök vid 18 portioner) och bara 5 lågprisrecept (< 14 kr/portion).
+- **Osäkerheter i prisunderlaget (kvarstår, ej åtgärdade):** (a) `Färsk basilika` (st) prissätts via produkten `Basilika` (1 st = 18 kr, i praktiken en kryddburk), så 3,3 st blir 4 × 18 = 72 kr i en plan. Mängden är nu korrekt bevarad men priset är osäkert. (b) Samma vara på flera rader (t.ex. Smör 100 g + 2 msk) räknas som flera inköp. (c) Skedmått kan inte räknas om till vikt, så en vara med viktförpackning (t.ex. `Tomatpuré` 22,5 msk mot 200 g) prissätts alltid som en förpackning. Inget av detta kan avgöras utan prisunderlag från Elis.
 - Prislistans alias `biff av nöt` och `grytbitar av nöt` ger Högrev-priset (se 1.3).
 - `public/recipe-images/README.md` och kommentarerna överst i `recipes.js` är föråldrade.
 
@@ -302,20 +303,20 @@ Standard: 2 vuxna, 1 barn, "1 månad", **budget 100000 kr**, 14 rätter, inga ko
 
 **Vad det gör**
 1. Genererar planer med den riktiga `/api/meal-plan`-handlern tills receptet ingår.
-2. **Räknar oberoende om mängder och inköp:** summerar varje ingrediens över alla tillagningstillfällen i planen, räknar förpackningar och kronor direkt ur `REFERENCE_PRICES` och jämför rad för rad med appens inköpslista och totalsumma. Samma sak görs för planen utan receptet. Varje ingrediens i planens recept måste ha en inköpsrad.
+2. **Räknar oberoende om mängder och inköp:** summerar varje ingrediens över alla tillagningstillfällen i planen, räknar förpackningar och kronor direkt ur `REFERENCE_PRICES` och jämför rad för rad med appens inköpslista och totalsumma. Samma sak görs för planen utan receptet. Varje ingrediens (per enhetsfamilj) i planens recept måste ha en inköpsrad med rätt summerad mängd. Tappad eller felräknad mängd är FEL.
 3. Kontrollerar receptets skalning med egen härledning (linjär, dämpad och räknebar) mot mängderna i planen.
 4. Skriver ut för varje ingrediens: mängd vid 4/7/11 portioner, mängd i planen, vad hela planen behöver och hur inköpet räknas (t.ex. `1760 g ÷ 800 g/förp → 3 förp × 90 kr = 270 kr`).
 5. **Prisunderlag:** `SAKNAT PRISUNDERLAG` (ingen referensprodukt, appen använder ett generiskt kategoripris) och "prissätts som annan produkt" (t.ex. `Nötfärs → Köttfärs`).
 6. **Byt rätt** åt båda håll. Kontrollen med delad kod visar bara att förhandsvisning och byte är konsekventa. Skillnaden jämförs därför även mot de oberoende totalsummorna.
 7. Bildfilen: att `image` är `/recipe-images/<id>.jpg`, att filen finns och dess storlek.
 
-**Utfall:** `FEL` ger avslutskod 1: okänt id, bildfil saknas, mängd, skalning eller kostnad avviker från den oberoende uträkningen, en ingrediens saknar inköpsrad, Byt rätt-skillnaden stämmer inte. `SAKNAT PRISUNDERLAG`, prisantaganden och `ATT BEDÖMA/REDOVISA` ger avslutskod 0 men **ska stå i rapporten**. Det senare gäller decimaler på styckevaror, ihopslagna namn med olika enheter (med vad som tappas) och bild över ca 500 KB.
+**Utfall:** `FEL` ger avslutskod 1: okänt id, bildfil saknas, mängd, skalning eller kostnad avviker från den oberoende uträkningen, en ingrediens saknar inköpsrad, Byt rätt-skillnaden stämmer inte. `SAKNAT PRISUNDERLAG`, prisantaganden och `ATT BEDÖMA/REDOVISA` ger avslutskod 0 men **ska stå i rapporten**. Det senare gäller decimaler på styckevaror, samma vara på flera rader och bild över ca 500 KB.
 
 **Begränsningar**
 - Prislistan (`REFERENCE_PRICES`, `GENERIC_CATEGORY_PRICES`) och produktmatchningen (`findReferenceProduct`, namnnormaliseringen) delas medvetet med appen. Skriptet visar vilken produkt varje ingrediens matchar, men om priserna i sig är rimliga kräver underlag och kontrolleras inte.
 - Skafferifunktionen ("Har hemma") testas inte.
 - Skalnings- och avrundningskontrollen gäller bara mängderna i det aktuella receptet vid de portionstal planen ger. Ett fel i en avrundningsregel syns bara om receptet berör det.
-- För ingredienser med olika enheter under samma namn (se avsnitt 4) kan mängden inte jämföras rad för rad. Skriptet redovisar i stället vad som tappas.
+- Mängder jämförs per (normaliserat namn, enhetsfamilj); skedmått jämförs exakt via volymmåtten. Att samma vara ligger på flera rader redovisas som `ATT BEDÖMA`, eftersom priset då kan räknas som flera inköp.
 
 **Provkört 2026-10-30:** sju recept (kött, kyckling, fisk, vegetariskt och burgare, med olika hushåll, perioder och kostval) stämde rad för rad och i total mot den oberoende uträkningen. Granskaren (separat agent) och jag körde följande avsiktligt införda fel i appens kod på kopior eller tillfälligt med omedelbar återställning, och skriptet gav avslutskod 1 för alla: `Math.ceil` → `Math.floor` för förpackningar, 150 g → 100 g per styck lösvikt, fel `dl`-konstant, `Math.round` → `Math.floor` på totalsumman, Byt rätt-skillnaden +1, sammanslagning som tappar mängd, saknad inköpsrad, fel dämpningstakt och uppåtavrundning av räknebara varor (den sista syns bara för recept med mängder som påverkas). Ett ändrat generiskt proteinpris upptäcks inte, eftersom prislistan delas.
 
