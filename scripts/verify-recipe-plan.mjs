@@ -5,9 +5,11 @@
 //
 // Kör: npm run verify:recipe -- <recept-id> [vuxna] [barn] [period] [budget] [rätter] [kostval]
 //   period:  "1 vecka" | "2 veckor" | "1 månad"      (standard: "1 månad")
+//   budget:  kr                                       (standard: 100000, så att budgetbytet inte
+//            väljer bort receptet; ange en egen budget för att testa ett realistiskt hushåll)
 //   rätter:  5 | 7 | 10 | 14                          (standard: 14)
 //   kostval: kommaseparerat, t.ex. vegetariskt,familjevanligt (standard: inga)
-// Exempel: npm run verify:recipe -- skagen-rakpasta 2 1 "1 månad" 4000 14
+// Exempel: npm run verify:recipe -- en-riktigt-god-kottfarssas 2 1 "1 månad" 4000 14
 //
 // Vad skriptet gör
 //  1. Genererar planer med den RIKTIGA /api/meal-plan-handlern tills receptet ingår.
@@ -22,8 +24,14 @@
 //     visar därför bara att förhandsvisning och byte är konsekventa. Rätt kostnad
 //     styrs av steg 2: skillnaden jämförs även mot de oberoende totalsummorna.
 //
+// Delas medvetet med appen: prislistan (REFERENCE_PRICES, GENERIC_CATEGORY_PRICES) och
+// produktmatchningen (findReferenceProduct, normalizeIngredientName). Skriptet visar vilken
+// produkt varje ingrediens matchar, men att priserna i sig är rimliga kräver underlag och
+// kontrolleras inte. Skafferifunktionen ("Har hemma") testas inte.
+//
 // Avslutskod 1 vid FEL (okänt id, bildfil saknas/fel bildväg, mängd eller kostnad
-// avviker från den oberoende uträkningen, Byt rätt-skillnaden stämmer inte).
+// avviker från den oberoende uträkningen, en ingrediens saknar inköpsrad, Byt rätt-
+// skillnaden stämmer inte).
 // PRISUNDERLAG och ATT BEDÖMA ger avslutskod 0 men ska redovisas.
 // '@/'-aliaset laddas via --import (se package.json: verify:recipe).
 
@@ -39,7 +47,7 @@ const { getIngredientRule } = await import(`${root}/src/utils/ingredientRules.js
 const { scaleIngredient } = await import(`${root}/src/utils/portionScaling.js`)
 const { formatPlanCostDelta } = await import(`${root}/src/utils/formatPlanCostDelta.js`)
 
-const [id, adults = 2, children = 1, duration = '1 månad', budget = 4000, dishes = 14, foodTypesArg = ''] = process.argv.slice(2)
+const [id, adults = 2, children = 1, duration = '1 månad', budget = 100000, dishes = 14, foodTypesArg = ''] = process.argv.slice(2)
 if (!id) {
   console.error('Användning: npm run verify:recipe -- <recept-id> [vuxna] [barn] [period] [budget] [rätter] [kostval]')
   process.exit(2)
@@ -119,7 +127,9 @@ function independentCheck(label, planLike) {
       if (!e) {
         errors.push(`${label}: raden "${it.displayName}" hör inte till något recept i planen`)
       } else if (units.length > 1) {
-        notes.push(`${label}: "${it.displayName}" består av ${[...e.names].join(' + ')} med olika enheter (${units.join(', ')}) och slås ihop till en rad (${it.requiredQuantity} ${it.requiredUnit}). Mängden kan tappas vid sammanslagning`)
+        const kept = e.byUnit[req.unit]
+        const lost = units.filter((u) => u !== req.unit).map((u) => `${r1(e.byUnit[u])} ${u}`)
+        notes.push(`${label}: "${it.displayName}" består av ${[...e.names].join(' + ')} med olika enheter (${units.join(', ')}) och slås ihop till en rad (${it.requiredQuantity} ${it.requiredUnit}). Mängden i raden räknar bara ${req.unit}; ${lost.join(' + ')} tappas${kept != null && Math.abs(kept - req.v) > 0.01 ? ` och radens ${req.unit}-summa avviker dessutom från recepten (${r1(kept)})` : ''}`)
       } else if (Math.abs(e.byUnit[units[0]] - req.v) > 0.01) {
         const msg = `${label}: "${it.displayName}" behöver enligt recepten ${e.byUnit[units[0]]} ${units[0]} men inköpslistan säger ${it.requiredQuantity} ${it.requiredUnit}`
         if (req.fam === 'sked') notes.push(`${msg} (skedmått, påverkar inte kostnaden)`)
@@ -133,6 +143,11 @@ function independentCheck(label, planLike) {
       total += exp.cost
       rows.push({ it, exp, req, categoryKey })
     }
+  }
+  // Täckning: skafferi är alltid tomt här, så VARJE ingrediens i planens recept ska ha en inköpsrad.
+  const rowKeys = new Set(rows.map((x) => norm(x.it.displayName)))
+  for (const [key, e] of occ) {
+    if (!rowKeys.has(key)) errors.push(`${label}: ingrediensen "${[...e.names].join(' / ')}" finns i planens recept men saknar inköpsrad (kostnaden saknas i totalsumman)`)
   }
   const totalRounded = Math.round(total)
   if (totalRounded !== planLike.pricing.estimatedTotalCost) errors.push(`${label}: totalsumman är ${planLike.pricing.estimatedTotalCost} kr i appen men ${totalRounded} kr enligt oberoende uträkning`)
@@ -167,7 +182,7 @@ for (let n = 1; n <= 200 && !plan; n++) {
   if (body.recipes.some((r) => sel.getBaseRecipeId(r.id) === id)) plan = body
 }
 if (!plan) {
-  console.error('\nReceptet valdes inte av 200 genererade planer. Prova andra kostval (7:e argumentet) eller fler rätter.')
+  console.error('\nReceptet valdes inte av 200 genererade planer. Möjliga skäl: för låg budget (appen byter då ut dyra recept mot billigare), kostval som utesluter receptet eller för få rätter. Prova högre budget, andra kostval (7:e argumentet) eller fler rätter.')
   process.exit(1)
 }
 const slots = [...new Set(plan.recipes.map((r) => sel.getBaseRecipeId(r.id)))]
@@ -194,10 +209,19 @@ for (const ing of recipe.ingredients) {
   // Skalningskontroll: linjärt skalade varor ska följa mängd × portioner ÷ baseServings inom avrundningen.
   const rule = getIngredientRule(ing.name, ing.unit)
   myOcc.forEach((o, k) => {
-    if (rule.isDampened || rule.isCountable) return
-    const exact = (ing.quantity * o.servings) / recipe.baseServings
-    const step = SPOON.includes(ing.unit) ? 0.5 : exact >= 100 ? 10 : 0.1
-    if (Math.abs(qtys[k] - exact) > step / 2 + 1e-9) errors.push(`${ing.name}: ${qtys[k]} ${ing.unit} för ${o.servings} portioner, förväntat ca ${r1(exact)} (linjär skalning)`)
+    // Egen härledning av skalningen (konstanterna 6 portioner och halv takt dupliceras medvetet;
+    // ändras de i ingredientRules.js ska de ändras här också).
+    const linear = o.servings / recipe.baseServings
+    const factor = rule.isDampened ? (o.servings <= 6 ? linear : 6 / recipe.baseServings + ((o.servings - 6) / recipe.baseServings) * 0.5) : linear
+    const exact = ing.quantity * factor
+    if (rule.isCountable) {
+      const gran = rule.countRule?.granularity ?? 1
+      const want = Math.max(gran, Math.round(exact / gran) * gran)
+      if (Math.abs(qtys[k] - want) > 1e-9) errors.push(`${ing.name}: ${qtys[k]} st för ${o.servings} portioner, förväntat ${want} st (räknebar, steg ${gran})`)
+    } else {
+      const step = SPOON.includes(ing.unit) ? 0.5 : exact >= 100 ? 10 : 0.1
+      if (Math.abs(qtys[k] - exact) > step / 2 + 1e-9) errors.push(`${ing.name}: ${qtys[k]} ${ing.unit} för ${o.servings} portioner, förväntat ca ${r1(exact)} (${rule.isDampened ? 'dämpad' : 'linjär'} skalning)`)
+    }
   })
   const own = qtys.reduce((a, b) => a + b, 0)
   const row = check.rows.find((x) => norm(x.it.displayName) === norm(ing.name))
@@ -216,9 +240,6 @@ for (const ing of recipe.ingredients) {
   else if (norm(row.exp.product.displayName) !== norm(ing.name)) sharedProduct.push(`${ing.name} → ${row.exp.product.displayName} (${row.exp.product.purchaseType === 'weight' ? `${row.exp.product.estimatedPricePerUnit} kr/kg` : `${row.exp.product.packageQuantity} ${row.exp.product.packageUnit}, ${row.exp.product.estimatedPackagePrice} kr`})`)
 }
 const planGeneric = check.rows.filter((r) => r.exp.generic && !ownBase.some((n) => norm(n) === norm(r.it.displayName))).map((r) => r.it.displayName)
-const names = check.rows.map((r) => r.it.displayName.toLowerCase())
-const dupes = [...new Set(names.filter((n, i) => names.indexOf(n) !== i))]
-if (dupes.length) errors.push(`dubblettrader i inköpslistan: ${dupes.join(', ')}`)
 
 // ── 5. Byt rätt: konsekvens (delad kod) + oberoende kontroll ────────────────
 console.log('\nBYT RÄTT – kostnadsskillnad för hela planen:')

@@ -20,13 +20,13 @@ Kartlagt i koden 2026-10-29 (60 recept). Där koden ändras senare gäller koden
 ### 1.1 Datamodell – `src/data/recipes.js`
 Alla recept ligger i en enda array `RECIPES`. Ordningen spelar ingen roll för urvalet. Filen är indelad med kommentarsrubriker per omgång och proteintyp (antalen i rubrikerna är inaktuella). Nya recept läggs sist i arrayen, före `]`, under en egen rubrik. Det finns inget fält för källa, prisdatum eller verifieringsstatus.
 
-| Fält | Konvention (alla 60 följer den) | Används av |
+| Fält | Konvention i befintliga recept | Används av |
 |---|---|---|
 | `id` | kebab-case, ASCII (å→a, ä→a, ö→o), unikt. **Samma som bildens filnamn.** Ändras aldrig för befintliga recept | Byt rätt, bildväg, React-nycklar |
 | `name` | svenskt visningsnamn, unikt | UI, bildval-fallback |
 | `description` | en mening, 36–91 tecken | receptkort och receptvy |
 | `baseServings` | **4** | all skalning |
-| `dietTypes` | veg: `['vegetarisk','blandkost']`. Kött/fisk: `['blandkost','kott-gront','proteinrikt']` (4 st har bara de två första) | **bara `'vegetarisk'` styr urvalet** och valideras. Övriga värden är beskrivande |
+| `dietTypes` | veg: `['vegetarisk','blandkost']`. Kött/fisk: `['blandkost','kott-gront','proteinrikt']` (4 st har bara de två första). Ett vegetariskt recept har även `'somrigt'` | **bara `'vegetarisk'` styr urvalet** och valideras. Övriga värden är beskrivande |
 | `familyFriendly` | boolean | hårt filter vid kostval "Familjevänligt", +20 poäng |
 | `activeTimeMinutes` / `totalTimeMinutes` | heltal, aktiv ≤ total | poäng ("snabb": aktiv ≤ 25 och total ≤ 40), receptkortet, validering |
 | `difficulty` | `'enkel'` (58 av 60) eller `'medel'` | används inte i logiken |
@@ -43,7 +43,7 @@ Alla recept ligger i en enda array `RECIPES`. Ordningen spelar ingen roll för u
 | `image` | `/recipe-images/<id>.jpg` | receptkort, receptvy, Byt rätt-miniatyr |
 
 ### 1.2 Ingredienser, enheter och kategorier
-- **Enheter** (valideras): `g kg ml l dl cl st msk tsk krm`. Vätskor anges i `ml` (grädde, mjölk, kokosmjölk, vatten och buljong visas automatiskt som dl i receptvyn).
+- **Enheter** (valideras): `g kg ml l dl cl st msk tsk krm`. Vätskor anges i `ml` (grädde, mjölk, kokosmjölk, vatten och buljong visas automatiskt som dl i receptvyn). Fyra recept anger Mjölk i `dl`, vilket också fungerar eftersom inköpslistan räknar om till ml.
 - **Kategorier** (valideras, styr inköpslistans sektioner): `meat` (kött, fisk, skaldjur, chark), `dairy` (mejeri och ägg), `vegetables` (grönsaker, frukt, potatis), `canned` (konserver, baljväxter, tomatpuré, kokosmjölk), `pasta` (pasta, ris, spannmål, bröd, mjöl), `pantry` (kryddor, olja, buljong, såser, socker).
 - **Styckevaror ska anges i `st`** (kravet valideras): gul lök/rödlök/schalottenlök, vitlök (klyftor), ägg, citron/lime, paprika/morot, buljongtärningar.
 - **Namn ska vara identiska med befintliga ingredienser.** Inköpslistan slår ihop rader på normaliserat namn (gemener, brusord som "färsk", "riven", "hackad" tas bort). Två stavningar ger två rader (t.ex. `Parmesan` och `Parmesanost`). Lista befintliga namn, enheter och kategorier innan du skriver ett nytt recept (se 2.3).
@@ -54,7 +54,7 @@ Alla recept ligger i en enda array `RECIPES`. Ordningen spelar ingen roll för u
 ### 1.3 Priser – `src/data/referencePrices.js` och `src/utils/referencePricing.js`
 - Priserna är **ungefärliga normalpriser**, inte verifierade butikspriser. Appen kallar dem uppskattningar och receptkostnader ska beskrivas så.
 - En ingrediens matchas mot en produkt via `aliases` (exakt namn först, sedan delmatchning på hela ord). Flera ingredienser delar produkt: t.ex. `Kycklinglårfilé` och `Kycklingfärs` prissätts som Kycklingfilé (900 g, 100 kr), `Chorizo` som Korv, `Gnocchi` och `Spaghetti` som Pasta, `Parmesan` och `Mozzarella` som Ost, `Lime` som Citron.
-- Förpackade varor köps i **hela förpackningar** (uppåt avrundat), lösviktsvaror (potatis, gul lök, morötter m.fl.) per kg, och **skedmått räknas alltid som en hel förpackning**. Matchar enhetsfamiljerna inte köps en förpackning.
+- Förpackade varor köps i **hela förpackningar** (uppåt avrundat), lösviktsvaror (potatis, gul lök, morötter m.fl.) per kg, och **skedmått räknas som en hel förpackning** (för lösviktsvaror blir ett skedmått 0,5 kg; ingen nuvarande ingrediens påverkas). Matchar enhetsfamiljerna inte köps en förpackning.
 - **Saknas produkten används tyst ett generiskt kategoripris** (t.ex. 25 kr för mejeri, 80 kr för protein, 20 kr för krydda). Raden får `isGenericEstimate: true` i API-svaret men **visas inte** annorlunda i appen. Valideringsskriptet och receptpoängen räknar i stället 10 kr. En saknad prismatchning syns alltså varken i UI eller i `validate:recipes`. **`npm run verify:recipe` (bilaga A) listar dem.**
 - Aliasen `biff av nöt` och `grytbitar av nöt` pekar på **Högrev** (140 kr/kg). Högrev är en gryträtt med lång tillagning och **inte** en prisreferens för biff eller filé som steks snabbt. Använd inte de aliasen för sådana recept.
 - Idag saknar en enda befintlig ingrediens referenspris: `Parmesanost` (i `en-riktigt-god-kottfarssas`).
@@ -62,7 +62,7 @@ Alla recept ligger i en enda array `RECIPES`. Ordningen spelar ingen roll för u
 
 ### 1.4 Kostval och urval – `src/utils/selectRecipes.js`
 - **Hårda filter:** `Vegetariskt` ⇒ `dietTypes` innehåller `'vegetarisk'`. `Kött & grönt` ⇒ `proteinType !== 'vegetariskt'` (alltså även fisk). `Familjevänligt` ⇒ `familyFriendly: true` (om det finns tillräckligt många). `Blandkost` ⇒ hela biblioteket.
-- **Poäng:** bas 50, familjevänligt +20 (+10 om snabb), `somrig`-tagg +15 vid "Somrigt", proteinrikt +10 för kött/fisk, +8 per skafferiträff (max 24), billiga recept får bonus vid budget under 14 kr/portion.
+- **Poäng:** bas 50. Bara när motsvarande kostval är valt: "Familjevänligt" ger +20 för `familyFriendly` och +10 för snabba recept (aktiv ≤ 25 och total ≤ 40 min, oavsett `familyFriendly`), "Somrigt" ger +15 för taggen `somrig`, "Proteinrikt" ger +10 för kött/fisk. Dessutom +8 per skafferiträff (max 24) och en bonus för billiga recept när budgeten är under 14 kr/portion.
 - **Urval:** slumpas bland recept inom 10 poäng från bästa, med högst 2 av samma `proteinType` och 2 av samma `carbohydrateType` så länge det går. Ett nytt recept dyker alltså upp slumpmässigt i planer, och `proteinType`/`carbohydrateType`/`familyFriendly`/tider/`tags` avgör hur ofta.
 - Användaren väljer 5, 7, 10 eller 14 rätter. **Poolen för varje kostval måste vara minst 14** (vegetariskt ger idag 17), annars blir planen "för få rätter". Ta aldrig bort recept så att en pool understiger det utan att fråga.
 
@@ -155,7 +155,7 @@ Följ `CLAUDE.md` ("Tester efter ändringens risk") och anpassa efter ändringen
 **Planverifiering (`npm run verify:recipe -- <id> …`, bilaga A):** kontrollera en genererad plan som innehåller receptet: totalsumma, inköpslista och kostnadsskillnaden vid Byt rätt (åt båda håll). **Redovisa alltid hushåll, budget och period.**
 - **Konkreta mängder och inköp, inte bara att koden är konsekvent.** Förhandsvisningen av Byt rätt och själva bytet delar kod, så att de stämmer med varandra bevisar inte att kostnaden är rätt. Skriptet summerar därför varje ingrediens över alla tillfällen i planen, räknar förpackningar och kronor direkt ur prislistan och jämför rad för rad med appens inköpslista och totalsumma. Redovisa några exempelrader (behov → förpackningar → kr) ur utskriften.
 - **Prisunderlag.** Ingredienser utan referenspris, som appen prissätter med ett generiskt kategoripris, redovisas under `SAKNAT PRISUNDERLAG`. Det är inte ett verifierat pris och ska stå i rapporten, med kronbeloppet som användes. Ingredienser som prissätts som en annan produkt redovisas som antagande.
-- Kontrollera även att mängderna är rimliga (hela förpackningar, inga dubblettrader, inga märkliga enheter).
+- Kontrollera även att mängderna är rimliga (hela förpackningar, inga ingredienser som saknar inköpsrad, inga märkliga enheter).
 - Dessutom i webbläsaren: att receptet syns i planen, att receptvyn är komplett och att inget går sönder på mobil.
 
 Bygg (`npm run build`) bara om appkod har ändrats. `test:analytics` bara om analytics berörs.
@@ -259,7 +259,7 @@ Bifoga referensbilder: public/recipe-images/butter-chicken.jpg m.fl. (se 3.1).
 ### Kvarstående frågor i nuvarande data (ej åtgärdade)
 Befintliga avvikelser som inte orsakas av en ny receptuppgift. Redovisa dem som "fanns redan" och åtgärda dem bara efter uttrycklig uppgift.
 - `Parmesanost` (i `en-riktigt-god-kottfarssas`) saknar referenspris, och `Parmesan` är en annan rad i inköpslistan.
-- Ingredienser med olika enheter under samma normaliserade namn slås ihop till en rad där mängden kan tappas: `Salt` och `Kanel` (tsk + krm), `Färsk basilika` + `Torkad basilika` (st + tsk). Kostnaden påverkas inte (skedmått är alltid en förpackning), men visad mängd kan vara fel.
+- Ingredienser med olika enheter under samma normaliserade namn slås ihop till en rad där den ena enhetens mängd tappas: `Salt` och `Kanel` (tsk + krm), `Oregano` och `Paprikapulver` (tsk + msk), `Dijonsenap` (msk + tsk) och basilika (`Basilika`, `Torkad basilika` och `Färsk basilika`: tsk + st). Kostnaden påverkas inte (skedmått är en förpackning), men den visade mängden i inköpslistan kan vara för låg. Skriptet redovisar vad som tappas.
 - Styckevaror som inte är räknebara skalas med decimaler (Tortillabröd, Bröd, Äpple, Gurka, Tomat, Hamburgerbröd, Färsk basilika).
 - Kategoribilderna och `fallback.jpg` finns inte. Två bilder står i stående format (`krispiga-potatistacos-bonor-vitloksyoghurt.jpg`, `kycklingwok-nudlar.jpg`), tre bildfiler används inte (`klassisk-kottfarssas.jpg`, `korv-potatismos.jpg`, `kramig-broccolipasta-citron-parmesan.jpg`) och 47 av 63 bilder är över 500 KB.
 - Fem recept har `familyFriendly: true` men saknar taggen `familjevänlig` (taggen används inte).
@@ -295,21 +295,28 @@ Skriptet `scripts/verify-recipe-plan.mjs` ändrar inga filer och behöver ingen 
 
 ```
 npm run verify:recipe -- <recept-id> [vuxna] [barn] [period] [budget] [rätter] [kostval]
-npm run verify:recipe -- skagen-rakpasta 2 1 "1 månad" 4000 14
-npm run verify:recipe -- kramig-kikartspasta 3 0 "2 veckor" 2500 10 vegetariskt
+npm run verify:recipe -- en-riktigt-god-kottfarssas 2 1 "1 månad" 4000 14
+npm run verify:recipe -- vegetarisk-stroganoff 3 0 "2 veckor" 2500 10 vegetariskt
 ```
-Standard: 2 vuxna, 1 barn, "1 månad", 4000 kr, 14 rätter, inga kostval. Period är "1 vecka", "2 veckor" eller "1 månad", rätter är 5, 7, 10 eller 14, kostval är kommaseparerade (`vegetariskt`, `kott-gront`, `blandkost`, `familjevanligt`, `proteinrikt`, `somrigt`).
+Standard: 2 vuxna, 1 barn, "1 månad", **budget 100000 kr**, 14 rätter, inga kostval. Standardbudgeten är hög med flit: är den låg byter appen ut dyra recept mot billigare (`swapForBudget`) och receptet kan väljas bort ur planen (skriptet ger då avslutskod 1 och säger det). Ange en egen budget när du vill redovisa ett realistiskt hushåll. Period är "1 vecka", "2 veckor" eller "1 månad", rätter är 5, 7, 10 eller 14, kostval är kommaseparerade (`vegetariskt`, `kott-gront`, `blandkost`, `familjevanligt`, `proteinrikt`, `somrigt`).
 
 **Vad det gör**
 1. Genererar planer med den riktiga `/api/meal-plan`-handlern tills receptet ingår.
-2. **Räknar oberoende om mängder och inköp:** summerar varje ingrediens över alla tillagningstillfällen i planen, räknar förpackningar och kronor direkt ur `REFERENCE_PRICES` och jämför rad för rad med appens inköpslista och totalsumma. Samma sak görs för planen utan receptet. Skriptet kontrollerar också att linjärt skalade mängder följer mängd × portioner ÷ `baseServings`.
-3. Skriver ut för varje ingrediens: mängd vid 4/7/11 portioner, mängd i planen, vad hela planen behöver och hur inköpet räknas (t.ex. `1760 g ÷ 800 g/förp → 3 förp × 90 kr = 270 kr`).
-4. **Prisunderlag:** `SAKNAT PRISUNDERLAG` (ingen referensprodukt, appen använder ett generiskt kategoripris), och "prissätts som annan produkt" (t.ex. `Nötfärs → Köttfärs`).
-5. **Byt rätt** åt båda håll. Kontrollen med delad kod visar bara att förhandsvisning och byte är konsekventa. Skillnaden jämförs därför även mot de oberoende totalsummorna.
-6. Bildfilen: att `image` är `/recipe-images/<id>.jpg`, att filen finns och dess storlek.
+2. **Räknar oberoende om mängder och inköp:** summerar varje ingrediens över alla tillagningstillfällen i planen, räknar förpackningar och kronor direkt ur `REFERENCE_PRICES` och jämför rad för rad med appens inköpslista och totalsumma. Samma sak görs för planen utan receptet. Varje ingrediens i planens recept måste ha en inköpsrad.
+3. Kontrollerar receptets skalning med egen härledning (linjär, dämpad och räknebar) mot mängderna i planen.
+4. Skriver ut för varje ingrediens: mängd vid 4/7/11 portioner, mängd i planen, vad hela planen behöver och hur inköpet räknas (t.ex. `1760 g ÷ 800 g/förp → 3 förp × 90 kr = 270 kr`).
+5. **Prisunderlag:** `SAKNAT PRISUNDERLAG` (ingen referensprodukt, appen använder ett generiskt kategoripris) och "prissätts som annan produkt" (t.ex. `Nötfärs → Köttfärs`).
+6. **Byt rätt** åt båda håll. Kontrollen med delad kod visar bara att förhandsvisning och byte är konsekventa. Skillnaden jämförs därför även mot de oberoende totalsummorna.
+7. Bildfilen: att `image` är `/recipe-images/<id>.jpg`, att filen finns och dess storlek.
 
-**Utfall:** `FEL` ger avslutskod 1 (okänt id, bildfil saknas, mängd eller kostnad avviker från den oberoende uträkningen, Byt rätt-skillnaden stämmer inte). `SAKNAT PRISUNDERLAG`, prisantaganden och `ATT BEDÖMA/REDOVISA` (decimaler på styckevaror, ihopslagna namn med olika enheter, dubblettrader, bild över ca 500 KB) ger avslutskod 0 men **ska stå i rapporten**.
+**Utfall:** `FEL` ger avslutskod 1: okänt id, bildfil saknas, mängd, skalning eller kostnad avviker från den oberoende uträkningen, en ingrediens saknar inköpsrad, Byt rätt-skillnaden stämmer inte. `SAKNAT PRISUNDERLAG`, prisantaganden och `ATT BEDÖMA/REDOVISA` ger avslutskod 0 men **ska stå i rapporten**. Det senare gäller decimaler på styckevaror, ihopslagna namn med olika enheter (med vad som tappas) och bild över ca 500 KB.
 
-**Provkört 2026-10-30:** på sex recept (kött, kyckling, fisk, vegetariskt och burgare, med olika hushåll, perioder och kostval) stämde alla rader och totalsumman med den oberoende uträkningen. Två avsiktligt införda fel i prismotorn (`Math.ceil` → `Math.floor` för förpackningar, och 150 g → 100 g per styck lösvikt) fångades båda av skriptet med avslutskod 1. Felen återställdes direkt.
+**Begränsningar**
+- Prislistan (`REFERENCE_PRICES`, `GENERIC_CATEGORY_PRICES`) och produktmatchningen (`findReferenceProduct`, namnnormaliseringen) delas medvetet med appen. Skriptet visar vilken produkt varje ingrediens matchar, men om priserna i sig är rimliga kräver underlag och kontrolleras inte.
+- Skafferifunktionen ("Har hemma") testas inte.
+- Skalnings- och avrundningskontrollen gäller bara mängderna i det aktuella receptet vid de portionstal planen ger. Ett fel i en avrundningsregel syns bara om receptet berör det.
+- För ingredienser med olika enheter under samma namn (se avsnitt 4) kan mängden inte jämföras rad för rad. Skriptet redovisar i stället vad som tappas.
+
+**Provkört 2026-10-30:** sju recept (kött, kyckling, fisk, vegetariskt och burgare, med olika hushåll, perioder och kostval) stämde rad för rad och i total mot den oberoende uträkningen. Granskaren (separat agent) och jag körde följande avsiktligt införda fel i appens kod på kopior eller tillfälligt med omedelbar återställning, och skriptet gav avslutskod 1 för alla: `Math.ceil` → `Math.floor` för förpackningar, 150 g → 100 g per styck lösvikt, fel `dl`-konstant, `Math.round` → `Math.floor` på totalsumman, Byt rätt-skillnaden +1, sammanslagning som tappar mängd, saknad inköpsrad, fel dämpningstakt och uppåtavrundning av räknebara varor (den sista syns bara för recept med mängder som påverkas). Ett ändrat generiskt proteinpris upptäcks inte, eftersom prislistan delas.
 
 Skriptet ersätter inte webbläsarkontrollen (kort, receptvy, Byt rätt-miniatyr på mobil och desktop), `npm run validate:recipes`, `npm run test:swap` eller innehållsgranskningen av ingredienslista mot steg.
