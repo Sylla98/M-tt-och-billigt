@@ -112,7 +112,9 @@ function expectedBuy(name, categoryKey, req) {
  * mängd per rad = summa över alla tillfällen, kostnad direkt ur prislistan.
  * Returnerar { total, rows } och fyller `errors`/`notes`.
  */
-function independentCheck(label, planLike) {
+function independentCheck(label, planLike, focus = null) {
+  // focus: normaliserade namn som noteringar (inte fel) ska gälla; null = alla.
+  const inFocus = (name) => !focus || focus.has(name)
   // Summera varje ingrediens över alla tillfällen, per (normaliserat namn, enhetsfamilj).
   const occ = new Map() // `${namn}|${familj}` → { names, v, byUnit }
   for (const r of planLike.recipes) {
@@ -141,7 +143,7 @@ function independentCheck(label, planLike) {
         const parts = Object.entries(e.byUnit).map(([u, q]) => `${r1(q)} ${u}`).join(' + ')
         errors.push(`${label}: "${it.displayName}" ska enligt recepten vara ${parts} men inköpslistan säger ${it.requiredQuantity} ${it.requiredUnit} (mängd tappad eller felräknad)`)
       }
-      if (e && e.names.size > 1) notes.push(`${label}: ${[...e.names].join(' + ')} slås ihop till en rad "${it.displayName}" (samma normaliserade namn)`)
+      if (e && e.names.size > 1 && inFocus(norm(it.displayName))) notes.push(`${label}: ${[...e.names].join(' + ')} slås ihop till en rad "${it.displayName}" (samma normaliserade namn)`)
       const exp = expectedBuy(it.displayName, categoryKey, baseOf(it.requiredQuantity, it.requiredUnit))
       if (Math.abs(exp.cost - it.lineCost) > 0.01) errors.push(`${label}: "${it.displayName}" kostar ${it.lineCost} kr i appen men ${exp.cost} kr enligt oberoende uträkning (${exp.text})`)
       if (exp.packages != null && it.packagesRequired !== exp.packages) errors.push(`${label}: "${it.displayName}" antal förpackningar ${it.packagesRequired} i appen mot ${exp.packages} i uträkningen`)
@@ -158,7 +160,7 @@ function independentCheck(label, planLike) {
   // Samma vara på flera rader (olika enhetsfamiljer utan säker omräkning): mängderna bevaras, men
   // priset kan räknas som flera inköp av samma produkt.
   for (const [name, list] of rowsPerName) {
-    if (list.length > 1) notes.push(`${label}: "${name}" ligger på ${list.length} rader (${list.join(' | ')}) eftersom enheterna inte kan räknas om till varandra utan påhittad densitet. Kontrollera om det är samma produkt (kostnaden kan då räknas som flera inköp)`)
+    if (list.length > 1 && inFocus(name)) notes.push(`${label}: "${name}" ligger på ${list.length} rader (${list.join(' | ')}) eftersom enheterna inte kan räknas om till varandra utan påhittad densitet. Kontrollera om det är samma produkt (kostnaden kan då räknas som flera inköp)`)
   }
   const totalRounded = Math.round(total)
   if (totalRounded !== planLike.pricing.estimatedTotalCost) errors.push(`${label}: totalsumman är ${planLike.pricing.estimatedTotalCost} kr i appen men ${totalRounded} kr enligt oberoende uträkning`)
@@ -205,7 +207,8 @@ console.log('PLAN (recept ×tillfällen (portioner)):', slots.map((b) => {
 console.log(`TOTALSUMMA: ${plan.pricing.estimatedTotalCost} kr (budget ${plan.pricing.budget}, ${plan.pricing.isWithinBudget ? 'inom' : 'över'} budget), ${plan.totalServings} portioner`)
 
 // ── 3. Oberoende uträkning av hela planen ───────────────────────────────────
-const check = independentCheck('plan', plan)
+const ownNorms = new Set(recipe.ingredients.map((i) => norm(i.name)))
+const check = independentCheck('plan', plan, ownNorms)
 console.log(`OBEROENDE TOTALSUMMA (mängder summerade över alla tillfällen, kronor ur prislistan): ${check.total} kr ${check.total === plan.pricing.estimatedTotalCost ? '✔ = appens totalsumma' : '✘ ≠ appens totalsumma'}`)
 
 // ── 4. Receptets ingredienser: mängd, skalning, inköp, prisunderlag ─────────
@@ -274,7 +277,7 @@ console.log(`  ut ${alt.id} → in ${id}: ${formatPlanCostDelta(back)} (plan uta
 const sum = without.pricing.estimatedTotalCost + back
 console.log(`  konsekvens (delad kod): ${without.pricing.estimatedTotalCost} ${back < 0 ? '−' : '+'} ${Math.abs(back)} = ${sum} kr ${sum === plan.pricing.estimatedTotalCost ? '✔' : '✘'} – visar bara att förhandsvisning och byte räknar lika`)
 if (sum !== plan.pricing.estimatedTotalCost) errors.push(`Byt rätt: ${without.pricing.estimatedTotalCost} + ${back} = ${sum}, planens totalsumma är ${plan.pricing.estimatedTotalCost}`)
-const checkWithout = independentCheck(`plan utan receptet (${alt.id} i stället)`, without)
+const checkWithout = independentCheck(`plan utan receptet (${alt.id} i stället)`, without, ownNorms)
 const indepDelta = check.total - checkWithout.total
 console.log(`  oberoende kontroll: ${check.total} kr (med) − ${checkWithout.total} kr (utan) = ${indepDelta} kr, appens skillnad vid inbyte av receptet = ${back} kr ${indepDelta === back ? '✔' : '✘'}`)
 if (indepDelta !== back) errors.push(`Byt rätt-skillnaden ${back} kr stämmer inte med oberoende uträkning (${indepDelta} kr)`)

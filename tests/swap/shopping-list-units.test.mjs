@@ -143,6 +143,29 @@ describe('mängder utan säker omräkning bevaras på separata rader', () => {
   })
 })
 
+describe('radens övriga egenskaper är oförändrade', () => {
+  test('radordning (första förekomst) och kategori per rad bevaras, och bara förväntade fält finns', () => {
+    const items = buildShoppingItems([
+      rec(['Pasta', 400, 'g', 'pasta'], ['Salt', 1, 'tsk', 'pantry'], ['Grädde', 2, 'dl', 'dairy']),
+      rec(['Salt', 2, 'krm', 'pantry'], ['Basilika', 2, 'st', 'vegetables'], ['Basilika', 1, 'tsk', 'pantry'], ['Pasta', 100, 'g', 'pasta']),
+    ])
+    assert.deepEqual(items.map((i) => i.displayName), ['Pasta', 'Salt', 'Grädde', 'Basilika', 'Basilika (tsk)'])
+    assert.deepEqual(items.map((i) => i.category), ['pasta', 'pantry', 'dairy', 'vegetables', 'pantry'])
+    for (const i of items) assert.deepEqual(Object.keys(i).sort(), ['category', 'displayName', 'quantity', 'searchTerm', 'unit'])
+  })
+
+  test('okända enheter hålls isär från st och från varandra (ingen gissad omräkning)', () => {
+    const items = buildShoppingItems([rec(['Smak', 1, 'st'], ['Smak', 2, 'paket'], ['Smak', 3, 'burk'], ['Smak', 4, 'paket']), rec(['Smak', 1, 'st'])])
+    assert.deepEqual(items.map((i) => [i.quantity, i.unit]).sort(), [[2, 'st'], [3, 'burk'], [6, 'paket']])
+    assert.equal(new Set(items.map((i) => i.displayName)).size, 3)
+  })
+
+  test('enheter med versaler tolkas som motsvarande små bokstäver', () => {
+    const [row] = buildShoppingItems([rec(['Salt', 1, 'TSK']), rec(['Salt', 1, 'tsk'])])
+    assert.deepEqual([row.quantity, row.unit], [2, 'tsk'])
+  })
+})
+
 describe('skafferi ("Har hemma") påverkar blandade enheter rätt', () => {
   const recipes = [
     rec(['Salt', 1.5, 'krm'], ['Torkad basilika', 1, 'tsk'], ['Kanel', 1, 'tsk']),
