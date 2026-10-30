@@ -28,7 +28,7 @@
 
 ### Tester efter ändringens risk
 - **Ren bildfil byts (samma filnamn och sökväg, ingen kodändring):** kontrollera att filen är en giltig JPEG med rimliga mått och storlek, att `image`-fältet i `src/data/recipes.js` pekar på filen, och att bilden visas rätt i receptkort och receptvy på mobilbredd och desktop i webbläsare. Kör inte `test:analytics`, `test:swap`, `validate:recipes` eller `build`; de berör inte ändringen och Vercels Preview-bygge täcker bygget. Ingen separat granskare behövs om bara en bildfil ändrats och kontrollen ovan är gjord.
-- **Receptdata (`src/data/recipes.js`) ändras:** `npm run validate:recipes`, och `npm run build` om kod också ändrats. Ändras ingredienser, mängder eller priser ska du dessutom kontrollera, i appen eller via `/api/meal-plan`, en genererad plan som innehåller det ändrade receptet: totalsumman, inköpslistan (rätt ingredienser, mängder och summor per kategori) och kostnadsskillnaden när receptet byts med Byt rätt (`npm run test:swap`). Redovisa vilken plan (hushåll, budget, period) som kontrollerades. Priser är uppskattningar och ska inte beskrivas som en faktisk varukorg. Hela kontrollmatrisen och ett färdigt planverifieringsskript finns i `RECEPTFLÖDE.md` (avsnitt 2.5 och bilaga A).
+- **Receptdata (`src/data/recipes.js`) ändras:** `npm run validate:recipes`, och `npm run build` om kod också ändrats. Ändras ingredienser, mängder eller priser ska du dessutom kontrollera, i appen eller via `/api/meal-plan`, en genererad plan som innehåller det ändrade receptet: totalsumman, inköpslistan (rätt ingredienser, mängder och summor per kategori) och kostnadsskillnaden när receptet byts med Byt rätt (`npm run test:swap`). Redovisa vilken plan (hushåll, budget, period) som kontrollerades. Priser är uppskattningar och ska inte beskrivas som en faktisk varukorg. Kör `npm run verify:recipe -- <recept-id>`: det räknar oberoende om mängder, inköp och totalsumma och redovisar saknat prisunderlag (generiskt kategoripris är inte ett verifierat pris). Hela kontrollmatrisen finns i `RECEPTFLÖDE.md` (avsnitt 2.5 och bilaga A).
 - **Appens kod ändras:** `npm run build`, och testa berört flöde i webbläsare. Ändrar du analytics eller samtycke: `npm run test:analytics` och kontrollera före samtycke, efter ja, efter nej och efter återkallelse. Ändrar du Byt rätt: `npm run test:swap`.
 - **Regressionsrisk** (receptöppning, scroll, modal, analytics, prisberäkning): låt en separat granskare leta efter konkreta fel, rätta dem och kontrollera igen. Undvik ändringsrundor för rena stilpreferenser.
 
@@ -40,6 +40,7 @@
 - Byt bild på plats med samma filnamn i `public/recipe-images/`; då behövs ingen kodändring.
 - Liggande JPG, helst 1200–1600 px bred, utan omskalning om källan redan är rimlig, och helst under ca 500 KB. Bilden visas med `object-cover` (240 px hög ruta på mobil), så kontrollera beskärningen på mobilbredd.
 - Använd bara bilder som Elis tillhandahållit eller som har tillåten licens.
+- Bildstandard för nya receptbilder (vinkel, komposition, ljus, att bilden ska stämma med receptet, exempel): `RECEPTFLÖDE.md` avsnitt 3.1.
 
 ### Rapport
 Rapportera kort och håll isär:

@@ -55,7 +55,8 @@ Alla recept ligger i en enda array `RECIPES`. Ordningen spelar ingen roll för u
 - Priserna är **ungefärliga normalpriser**, inte verifierade butikspriser. Appen kallar dem uppskattningar och receptkostnader ska beskrivas så.
 - En ingrediens matchas mot en produkt via `aliases` (exakt namn först, sedan delmatchning på hela ord). Flera ingredienser delar produkt: t.ex. `Kycklinglårfilé` och `Kycklingfärs` prissätts som Kycklingfilé (900 g, 100 kr), `Chorizo` som Korv, `Gnocchi` och `Spaghetti` som Pasta, `Parmesan` och `Mozzarella` som Ost, `Lime` som Citron.
 - Förpackade varor köps i **hela förpackningar** (uppåt avrundat), lösviktsvaror (potatis, gul lök, morötter m.fl.) per kg, och **skedmått räknas alltid som en hel förpackning**. Matchar enhetsfamiljerna inte köps en förpackning.
-- **Saknas produkten används tyst ett generiskt kategoripris** (t.ex. 25 kr för mejeri, 80 kr för protein, 20 kr för krydda). Raden får `isGenericEstimate: true` i API-svaret men **visas inte** annorlunda i appen. Valideringsskriptet och receptpoängen räknar i stället 10 kr. En saknad prismatchning syns alltså varken i UI eller i `validate:recipes`. **Planverifieringen i bilaga A listar dem.**
+- **Saknas produkten används tyst ett generiskt kategoripris** (t.ex. 25 kr för mejeri, 80 kr för protein, 20 kr för krydda). Raden får `isGenericEstimate: true` i API-svaret men **visas inte** annorlunda i appen. Valideringsskriptet och receptpoängen räknar i stället 10 kr. En saknad prismatchning syns alltså varken i UI eller i `validate:recipes`. **`npm run verify:recipe` (bilaga A) listar dem.**
+- Aliasen `biff av nöt` och `grytbitar av nöt` pekar på **Högrev** (140 kr/kg). Högrev är en gryträtt med lång tillagning och **inte** en prisreferens för biff eller filé som steks snabbt. Använd inte de aliasen för sådana recept.
 - Idag saknar en enda befintlig ingrediens referenspris: `Parmesanost` (i `en-riktigt-god-kottfarssas`).
 - En **receptkostnad per portion** (`estimateRecipeCostPerServing`) används för poäng, budgetbyte och "liknande recept" i Byt rätt. Den är proportionell och skiljer sig från planens förpackningsbaserade totalsumma. Kostnaden som visas för användaren är alltid planens totalsumma.
 
@@ -68,7 +69,7 @@ Alla recept ligger i en enda array `RECIPES`. Ordningen spelar ingen roll för u
 ### 1.5 Planering, inköpslista och Byt rätt
 - **Plan:** portionsbehov = (vuxna + 0,6 × barn) × 2 måltider/dag × dagar × 1,1. Portionerna delas på tillagningstillfällen (idealstorlek 7), och unika recept roterar. Samma recept kan alltså lagas flera gånger.
 - **Inköpslista:** alla skalade recept slås ihop per normaliserat namn, skafferivaror ("Har hemma") utesluts, och raderna prissätts. Totalsumman är summan av hela förpackningar, avrundad till hela kronor. Går planen över budget byts upp till 3 dyra recept mot billigare.
-- **Byt rätt:** ersätter alla tillfällen av en receptplats. Kostnadsskillnaden bygger om **hela** planen med samma funktioner som själva bytet och är därför exakt ändringen av totalsumman (testas i `npm run test:swap`). Kandidater rangordnas med samma kostval/poäng, med litet avdrag för skillnad i pris och tid.
+- **Byt rätt:** ersätter alla tillfällen av en receptplats. Kostnadsskillnaden bygger om **hela** planen med samma funktioner som själva bytet och är därför konsekvent med själva bytet (testas i `npm run test:swap`). Eftersom förhandsvisning och byte delar kod **bevisar det inte att kostnaden är rätt**: kontrollera även konkreta ingrediensmängder och inköp (se 2.5). Kandidater rangordnas med samma kostval/poäng, med litet avdrag för skillnad i pris och tid.
 - Planer sparas inte hos användaren och analytics skickar inga recept-id, så att byta namn på, ändra eller ta bort ett recept påverkar inga sparade data.
 
 ### 1.6 Bilder
@@ -115,7 +116,7 @@ Kontrollera och rätta, och redovisa det du ändrat:
   node --input-type=module -e "import('./src/data/recipes.js').then(({RECIPES})=>{const m={};for(const r of RECIPES)for(const i of r.ingredients)(m[i.name]??=new Set()).add(i.unit+'/'+i.category);for(const k of Object.keys(m).sort())console.log(k,[...m[k]].join(' '))})"
   ```
   Finns ingrediensen: använd exakt namn, enhet och kategori. Finns den inte: välj enhet och kategori enligt 1.2, och kontrollera priset (nedan).
-- **Priser:** kör planverifieringen (bilaga A) och se vilka ingredienser som matchar vilken produkt. Hitta aldrig på ett pris, lägg aldrig till en prisrad utan underlag, och markera aldrig något som "verifierat" (det finns ingen sådan markering).
+- **Priser:** kör `npm run verify:recipe` (bilaga A) och se vilka ingredienser som matchar vilken produkt. Hitta aldrig på ett pris, lägg aldrig till en prisrad utan underlag, och markera aldrig något som "verifierat" (det finns ingen sådan markering).
   1. Ingrediensen matchar rätt produkt: klart. Redovisa produkter som delas ("`Kycklinglår` prissätts som Kycklingfilé").
   2. Ingrediensen matchar en **likvärdig** produkt via alias: lägg bara till aliaset om det är samma vara. Det är en ändring av `referencePrices.js` och redovisas separat.
   3. Ingrediensen saknar produkt och är **bisak** (krydda, en skvätt): den får falla tillbaka på det generiska kategoripriset. Redovisa den som "generiskt, ej verifierat".
@@ -128,7 +129,7 @@ Kontrollera och rätta, och redovisa det du ändrat:
 
 **Fråga Elis bara när något av detta gäller:**
 - Receptet går inte att läsa i sin helhet, eller mängder/portioner är oklara på ett sätt som ändrar resultatet.
-- En **huvudingrediens saknar pris** eller prismatchningen är tveksam (t.ex. benfria kontra benin kycklinglår, vilt, specialprodukter). *Väsentligt* = huvudkomponenten, eller ingrediensen står för mer än ca 2 kr per portion, eller den skulle ändra receptets plats bland "billiga" recept.
+- En **huvudingrediens saknar pris** eller prismatchningen är tveksam (t.ex. kycklinglår med ben eller benfria – kontrollera **källreceptet först** – eller biff/filé, specialprodukter). *Väsentligt* = huvudkomponenten, eller ingrediensen står för mer än ca 2 kr per portion, eller den skulle ändra receptets plats bland "billiga" recept.
 - Receptet kräver ändring i appkod, ingrediensregler (`COUNT_RULES`), prismotorn eller datastrukturen.
 - Receptet är i praktiken en dubblett av ett befintligt, eller en borttagning gör att en filterpool, ett minimiantal eller en andel i valideringen underskrids.
 - Receptet bryter mot kostvalet det ska tillhöra, eller en säkerhetsfråga (t.ex. rått ägg, ostekt fågel) går inte att lösa i texten.
@@ -136,8 +137,8 @@ Kontrollera och rätta, och redovisa det du ändrat:
 ### 2.4 Bilder
 **Gör**
 - **Återanvänd en befintlig godkänd bild** när den *faktiskt visar den färdiga rätten* (samma huvudråvara, tillagning och tillbehör). Ändras ett recept så att bilden fortfarande stämmer behålls filen. Ett *nytt* recept kan inte peka på en annan rätts fil (valideringen kräver unika bildvägar, och konventionen är att filnamnet = id): kopiera i så fall filen till `<nytt-id>.jpg` och redovisa att bilden är återanvänd. Om bilden bara liknar rätten ska den inte återanvändas.
-- **Behövs ny bild:** ta fram ett komplett bildbrief (mall i avsnitt 3) utifrån det **färdiga** receptet. Skapa inga bilder själv. Bildgenerering sker i Elis separata bildchatt. Leverera receptet utan bild enbart som utkast och säg tydligt att bilden saknas: kontrollera att `image` pekar på en fil som finns, annars visas bara en textplatshållare. Säg också att den saknade bilden är det som återstår.
-- **Bildstandard:** en formell visuell standard finns **inte dokumenterad** i repot. Det finns bara tekniska krav (1.6). Briefen använder därför den stil som de godkända bilderna 2026-10 har (3.1), och det anges i briefen att stilen är härledd, inte fastställd. Elis bekräftar eller kompletterar standarden. Ange alltid att standarden saknas.
+- **Behövs ny bild:** ta fram ett komplett bildbrief (mall i 3.2) utifrån det **färdiga** receptet och bildstandarden (3.1). Skapa inga bilder själv. Bildgenerering sker i Elis separata bildchatt. Leverera receptet utan bild enbart som utkast och säg tydligt att bilden saknas: kontrollera att `image` pekar på en fil som finns, annars visas bara en textplatshållare. Säg också att den saknade bilden är det som återstår.
+- **Bildstandard:** gäller den som är dokumenterad i 3.1 (Elis har godkänt stilen 2026-10-30). Avvik inte från den i briefen. Behövs ett undantag (som burgaren från lägre vinkel): skriv det som ett uttryckligt förslag i briefen och låt Elis godkänna det. Claude väljer aldrig själv mellan alternativa genererade bilder, det gör Elis i bildchatten.
 - När en bild levereras: följ `CLAUDE.md` för bildfiler (JPG, 1200–1600 px, helst under ca 500 KB, ingen märkbar kvalitetsförlust, samma filnamn som `image`-fältet) och kontrollera i webbläsare: receptkort, receptvy (mobil) och Byt rätt-miniatyr, på mobil och desktop. Jämför bilden med receptets ingredienser, tillbehör och uppläggning, och rapportera avvikelser.
 
 ### 2.5 Verifiering
@@ -145,13 +146,17 @@ Följ `CLAUDE.md` ("Tester efter ändringens risk") och anpassa efter ändringen
 
 | Ändring | Kontroller |
 |---|---|
-| Nytt recept | `npm run validate:recipes` (efter `EXPECTED_TOTAL`), **planverifiering** (bilaga A), `npm run test:swap`, bildfil finns, webbläsare: kort, receptvy, Byt rätt-miniatyr |
+| Nytt recept | `npm run validate:recipes` (efter `EXPECTED_TOTAL`), `npm run verify:recipe -- <id>` (bilaga A), `npm run test:swap`, webbläsare: kort, receptvy, Byt rätt-miniatyr |
 | Ändrade ingredienser, mängder eller priser | som ovan. För prisändringar i `referencePrices.js`: kör planverifiering för minst 3 recept som använder varan och redovisa ändrade totalsummor |
 | Ändrad text, tid, tagg, förvaring (inte ingredienser/mängder) | `npm run validate:recipes`, receptvyn i webbläsaren |
 | Borttaget recept | `validate:recipes` (efter `EXPECTED_TOTAL`), sök efter id i `src`, `tests`, `scripts`, att poolerna enligt 1.4 fortfarande är ≥ 14, `git rm` på bildfilen, `npm run test:swap` |
 | Bildbyte | enligt `CLAUDE.md` för rena bildändringar |
 
-**Planverifiering:** kontrollera en genererad plan som innehåller receptet. Totalsumma, inköpslista och kostnadsskillnaden vid Byt rätt (i båda riktningarna, och att `pris utan receptet ± skillnad = planens totalsumma`). **Redovisa alltid hushåll, budget och period** och vilka ingredienser som fått generiskt pris. Kontrollera även att mängderna i inköpslistan är rimliga (hela förpackningar, inga dubblettrader, inga märkliga enheter). Dessutom i webbläsaren: att receptet syns i planen, att receptvyn är komplett och att inget går sönder på mobil.
+**Planverifiering (`npm run verify:recipe -- <id> …`, bilaga A):** kontrollera en genererad plan som innehåller receptet: totalsumma, inköpslista och kostnadsskillnaden vid Byt rätt (åt båda håll). **Redovisa alltid hushåll, budget och period.**
+- **Konkreta mängder och inköp, inte bara att koden är konsekvent.** Förhandsvisningen av Byt rätt och själva bytet delar kod, så att de stämmer med varandra bevisar inte att kostnaden är rätt. Skriptet summerar därför varje ingrediens över alla tillfällen i planen, räknar förpackningar och kronor direkt ur prislistan och jämför rad för rad med appens inköpslista och totalsumma. Redovisa några exempelrader (behov → förpackningar → kr) ur utskriften.
+- **Prisunderlag.** Ingredienser utan referenspris, som appen prissätter med ett generiskt kategoripris, redovisas under `SAKNAT PRISUNDERLAG`. Det är inte ett verifierat pris och ska stå i rapporten, med kronbeloppet som användes. Ingredienser som prissätts som en annan produkt redovisas som antagande.
+- Kontrollera även att mängderna är rimliga (hela förpackningar, inga dubblettrader, inga märkliga enheter).
+- Dessutom i webbläsaren: att receptet syns i planen, att receptvyn är komplett och att inget går sönder på mobil.
 
 Bygg (`npm run build`) bara om appkod har ändrats. `test:analytics` bara om analytics berörs.
 
@@ -173,7 +178,25 @@ Bygg (`npm run build`) bara om appkod har ändrats. `test:analytics` bara om ana
 
 ## 3. Mallar
 
-### 3.1 Bildbrief
+### 3.1 Bildstandard (godkänd av Elis)
+**Krav:**
+1. **Vinkel:** nästan rakt uppifrån. Undantag: burgaren (`husmansburgare-coleslaw.jpg`) har en redan godkänd lägre vinkel. Andra undantag föreslås i briefen och godkänns av Elis.
+2. **Komposition:** hela tallriken syns, med lite bord runt omkring men utan stora tomma ytor.
+3. **Ljus:** varmt, naturligt ljus.
+4. **Mat:** verklighetstrogen (hemlagad, inte stiliserad).
+5. **Format:** liggande. Godkända bilder är 3:2, 1536×1024. Filen i repot följer `CLAUDE.md` (JPG, 1200–1600 px bred, helst under ca 500 KB, filnamn `<id>.jpg`).
+6. **Ingen text** i bilden.
+7. **Bilden ska stämma med receptet:** ingredienser, tillagning och tillbehör. Allt som syns ska finnas i receptets ingredienslista och allt som ingår i måltiden (ris, potatis, couscous, sås, sallad, bröd m.m.) ska synas. Ytan, stekgraden och såsen ska motsvara stegen. Råvarudetaljer ska stämma, t.ex. långkornigt, smalt basmatiris till butter chicken och små oregelbundna bitar kycklinglårfilé i den marockanska grytan.
+
+**Beskärning:** appen visar bilden med `object-cover`: knappt beskuren i mobilens 240 px höga ruta, men ca 5–6 % av bredden försvinner på varje sida i desktopens 4:3-kort. Håll tallriken och det viktiga inom de mittersta ca 85 % av bredden. Burgarens tallrikskant beskärs på desktop och är godkänd ändå.
+
+**Exempel (godkända bilder i `public/recipe-images/`):** `butter-chicken.jpg`, `krispig-torsk-citronyoghurt-potatis.jpg`, `ugnsbakad-sej-medelhavsgronsaker.jpg`, `marockansk-kycklinggryta-citron-oliver.jpg`, `kycklingpaella-formenklad.jpg`, `kycklingshawarma-bulgur-yoghurtsas.jpg`, `flaskytterfile-appel-senapssas-rostad-potatis.jpg`, `kottbullar-mellanosternstil-kummin-kanel.jpg`, och som undantag `husmansburgare-coleslaw.jpg`. Titta på dem innan en brief skrivs och bifoga dem till bildchatten.
+
+**Observerat i exemplen (inget krav, får variera):** ljus beige stenyta, rund ljus keramiktallrik, gaffel till höger, gråbeige linneduk i vänstra kanten, vattenglas uppe i högra hörnet, citron endast när citron ingår i receptet.
+
+Bilder genereras i Elis bildchatt. Claude väljer aldrig mellan alternativa genererade bilder. `public/recipe-images/README.md` är föråldrad och ersätts av det här avsnittet och `CLAUDE.md`.
+
+### 3.2 Bildbrief
 Fylls i utifrån det färdiga receptet (efter 2.2) och skickas till Elis för bildchatten.
 
 ```
@@ -187,21 +210,20 @@ Bild finns:  nej / ja (befintlig bild används inte för att …)
    Tillbehör som ingår i måltiden: <ris/potatis/pasta/sallad/bröd … med mängd>
    Garnityr: <endast sådant som finns i receptets ingredienslista, t.ex. persilja>
 2. Råvaror som SKA synas igen: <lista ur receptet, t.ex. gröna ärtor, röd paprika>
-3. Får INTE synas: <råvaror som inte ingår, fel ris/pasta, extra tillbehör, text,
-   händer, varumärken, flera tallrikar med olika mat>
+3. Får INTE synas: <råvaror som inte ingår, fel ris/pasta, extra tillbehör, text>
 4. Uppläggning: <hur komponenterna ligger på tallriken, vad som är i förgrunden>
-5. Stil och teknik (härledd ur godkända bilder 2026-10, EJ formellt fastställd):
-   ovanifrån, mjukt dagsljus från övre höger, beige stenyta, ljus spräcklig tallrik,
-   gaffel med träskaft till höger, linneduk till vänster, vattenglas uppe till höger,
-   mat och tillbehör mitt på tallriken. Liggande 3:2, 1536×1024.
-   Avvikelse godkänd för enstaka rätter (t.ex. burgare från lägre vinkel).
+5. Stil och teknik: enligt bildstandarden i RECEPTFLÖDE.md 3.1 (nästan rakt uppifrån,
+   hela tallriken med lite bord runt men utan stora tomma ytor, varmt naturligt ljus,
+   verklighetstrogen mat, liggande 3:2, 1536×1024, ingen text, viktigt inom mittersta
+   ca 85 % av bredden).
+   Undantag från standarden (om något): <förslag + skäl, Elis godkänner>
 6. Kontroll när bilden finns: jämför ingrediens för ingrediens mot receptet,
    inga ingredienser som saknas eller är fel, rimlig portion, tillbehör med, 3:2,
    skarp på mobil.
-STANDARD: ingen formell bildstandard finns dokumenterad. Elis bekräftar/kompletterar.
+Bifoga referensbilder: public/recipe-images/butter-chicken.jpg m.fl. (se 3.1).
 ```
 
-### 3.2 Receptskelett (`src/data/recipes.js`)
+### 3.3 Receptskelett (`src/data/recipes.js`)
 ```js
 {
   id: 'kebab-case-ascii',
@@ -232,103 +254,62 @@ STANDARD: ingen formell bildstandard finns dokumenterad. Elis bekräftar/komplet
 
 ---
 
-## 4. Känd status i nuvarande data (2026-10-29)
+## 4. Kvarstående frågor och receptlogg (2026-10-30)
 
-Det här är befintliga avvikelser som inte orsakas av en ny receptuppgift. Rapportera dem som "redan fanns" och åtgärda dem bara efter uttrycklig uppgift.
-- `Parmesanost` saknar referenspris (generiskt pris) och finns bredvid `Parmesan`, som är en annan rad i inköpslistan.
-- Kategoribilderna och `fallback.jpg` finns inte, se 1.6.
-- Två receptbilder står i stående format (≈ 753×1024): `krispiga-potatistacos-bonor-vitloksyoghurt.jpg` och `kycklingwok-nudlar.jpg`. 47 av 63 bilder är större än 500 KB.
-- Fem recept har `familyFriendly: true` men saknar taggen `familjevänlig` (`boeuf-bourguignon-formenklad`, `ungersk-gulasch`, `vastafrikansk-jordnotsgryta-kyckling`, `marockansk-kycklinggryta-citron-oliver`, `fransk-fisksoppa-rakor-torsk`). Taggen används inte i logiken.
-- Tre bildfiler används inte av något recept: `klassisk-kottfarssas.jpg`, `korv-potatismos.jpg`, `kramig-broccolipasta-citron-parmesan.jpg` (63 bildfiler, 60 recept). Radera dem inte utan uppgift.
+### Kvarstående frågor i nuvarande data (ej åtgärdade)
+Befintliga avvikelser som inte orsakas av en ny receptuppgift. Redovisa dem som "fanns redan" och åtgärda dem bara efter uttrycklig uppgift.
+- `Parmesanost` (i `en-riktigt-god-kottfarssas`) saknar referenspris, och `Parmesan` är en annan rad i inköpslistan.
+- Ingredienser med olika enheter under samma normaliserade namn slås ihop till en rad där mängden kan tappas: `Salt` och `Kanel` (tsk + krm), `Färsk basilika` + `Torkad basilika` (st + tsk). Kostnaden påverkas inte (skedmått är alltid en förpackning), men visad mängd kan vara fel.
+- Styckevaror som inte är räknebara skalas med decimaler (Tortillabröd, Bröd, Äpple, Gurka, Tomat, Hamburgerbröd, Färsk basilika).
+- Kategoribilderna och `fallback.jpg` finns inte. Två bilder står i stående format (`krispiga-potatistacos-bonor-vitloksyoghurt.jpg`, `kycklingwok-nudlar.jpg`), tre bildfiler används inte (`klassisk-kottfarssas.jpg`, `korv-potatismos.jpg`, `kramig-broccolipasta-citron-parmesan.jpg`) och 47 av 63 bilder är över 500 KB.
+- Fem recept har `familyFriendly: true` men saknar taggen `familjevänlig` (taggen används inte).
 - Tre varningar från `validate:recipes` (vitlök vid 18 portioner) och bara 5 lågprisrecept (< 14 kr/portion).
+- Prislistans alias `biff av nöt` och `grytbitar av nöt` ger Högrev-priset (se 1.3).
 - `public/recipe-images/README.md` och kommentarerna överst i `recipes.js` är föråldrade.
 
-### Receptlogg – tidigare receptuppdrag (kontrollerat 2026-10-29)
-Biblioteket har 60 recept på `feature/receptflode-dokumentation` (`main` har bara 40). Ingen annan gren och inga PR:er innehåller receptarbete som saknas här.
+### Receptlogg – receptuppdraget
+Biblioteket har 60 recept på `feature/receptflode-dokumentation` och grenar därifrån (`main` har bara 40). Ingen annan gren och inga PR:er innehåller receptarbete som saknas här. **Inga recept har ändrats eller tagits bort än.**
 
-| Recept | Status |
+**Ska tas bort senare och ersättas av de tre nya recepten nedan** (granskas inte, Elis beslut 2026-10-30):
+
+| Befintligt recept | Notering inför borttagning |
 |---|---|
-| Krämig kikärtspasta | **Finns:** `kramig-kikartspasta`, bild finns (receptet tillagt i `cfb9a91`) |
-| Kycklinggryta med dijonsenap, purjolök och grädde | **Finns:** `kycklinggryta-dijonsenap-purjolok`, bild finns (tillagt i `f9ad2cc`) |
-| Skagen-räkpasta | **Finns:** `skagen-rakpasta`, bild finns (tillagt i `f9ad2cc`) |
-| Kycklinggryta med bacon | **Saknas.** Bacon finns bara i `boeuf-bourguignon-formenklad` |
-| Kycklinglår i ugn | **Saknas.** Närmast: `grekisk-citronkyckling-ugn-potatis`, `honungs-senapskyckling-rostad-potatis` (benfri kycklinglårfilé). OBS: `Kycklinglår` prissätts som Kycklingfilé (benfritt, 900 g/100 kr). Fråga om benfria eller benin |
-| Nötkötts- eller viltgryta med svamp, dijonsenap och crème fraîche | **Saknas.** Närmast: `boeuf-bourguignon-formenklad` (högrev, champinjoner, bacon), `ungersk-gulasch`, `kycklingstroganoff-ris`. **Vilt saknar pris** och måste prissättas av Elis. Nötkött kan prissättas som Högrev |
+| Krämig kikärtspasta (`kramig-kikartspasta`) | vegetariskt: efter borttagning 16 vegetariska = valideringens minimum; ett av de 5 lågprisrecepten |
+| Kycklinggryta med dijonsenap, purjolök och grädde (`kycklinggryta-dijonsenap-purjolok`) | kyckling 18 → 17 (minimum 16) |
+| Skagen-räkpasta (`skagen-rakpasta`) | fisk: efter borttagning 9 fisk = valideringens minimum |
 
-De tre befintliga recepten har inte granskats mot det här flödet (bara att de finns och valideras). Vid behov: "granska recept X enligt receptflödet".
+Byts tre recept mot tre i samma uppdrag förblir `EXPECTED_TOTAL` 60. Tas de bort och läggs till i separata steg måste `EXPECTED_TOTAL` följa varje steg. Respektive bildfil tas bort med `git rm` när receptet tas bort.
+
+**Nya recept (ej påbörjade):**
+
+| Nytt recept | Underlag och att tänka på |
+|---|---|
+| Kycklinggryta med bacon | Första receptet som provar flödet. `Bacon` och `Kycklingfilé`/`Kycklinglårfilé` har referenspris. Bacon finns i `boeuf-bourguignon-formenklad` |
+| Kycklinglår i ugn | **Kontrollera källreceptet först: avser det kycklinglår med ben eller benfria?** Först därefter bedöms råvara, mängd per portion och pris. `Kycklinglår` och `Kycklinglårfilé` prissätts som Kycklingfilé (benfritt, 900 g för 100 kr), och lår med ben väger mer per portion. Närmast befintliga (benfri lårfilé, ugn): `grekisk-citronkyckling-ugn-potatis`, `honungs-senapskyckling-rostad-potatis` |
+| Nötköttsgryta med svamp, dijonsenap och crème fraîche | Originalet använder **biff eller filé som steks snabbt**. Behåll receptets råvara. Högrev är inte likvärdig råvara eller prisreferens för den tillagningen (lång tillagning), och aliasen `biff av nöt`/`grytbitar av nöt` får inte användas som prisunderlag. **Prisunderlag för biff/filé saknas** i `referencePrices.js`: be Elis om pris och underlag, annars redovisas `SAKNAT PRISUNDERLAG` (generiskt proteinpris 80 kr, inte verifierat). Välj ingrediensnamn som inte råkar matcha ett Högrev-alias och kontrollera med `npm run verify:recipe`. Champinjoner har referenspris och Dijonsenap prissätts som Senap |
 
 ---
 
-## Bilaga A – Planverifieringsskript
-Spara som en tillfällig fil (t.ex. i scratchpad, **inte** i repot) och kör från repots rot. Det anropar den riktiga `/api/meal-plan`-handlern och appens egna funktioner. Utskriften ska redovisas enligt 2.5.
+## Bilaga A – Planverifieringsskript (`npm run verify:recipe`)
+Skriptet `scripts/verify-recipe-plan.mjs` ändrar inga filer och behöver ingen API-nyckel. Receptet måste redan finnas i `src/data/recipes.js`.
 
 ```
-node --import ./tests/swap/register-alias.mjs <fil>.mjs <recept-id> [vuxna] [barn] [period] [budget] [rätter]
+npm run verify:recipe -- <recept-id> [vuxna] [barn] [period] [budget] [rätter] [kostval]
+npm run verify:recipe -- skagen-rakpasta 2 1 "1 månad" 4000 14
+npm run verify:recipe -- kramig-kikartspasta 3 0 "2 veckor" 2500 10 vegetariskt
 ```
+Standard: 2 vuxna, 1 barn, "1 månad", 4000 kr, 14 rätter, inga kostval. Period är "1 vecka", "2 veckor" eller "1 månad", rätter är 5, 7, 10 eller 14, kostval är kommaseparerade (`vegetariskt`, `kott-gront`, `blandkost`, `familjevanligt`, `proteinrikt`, `somrigt`).
 
-```js
-// Planverifiering för ett recept-id. Kör från repots rot:
-//   node --import ./tests/swap/register-alias.mjs <fil>.mjs <recept-id> [vuxna] [barn] [period] [budget] [rätter]
-// Exempel: ... planverify.mjs skagen-rakpasta 2 1 "1 månad" 4000 14
-// Använder den RIKTIGA /api/meal-plan-handlern och appens egna funktioner (ingen kopia av logiken).
-const root = process.cwd()
-const { POST } = await import(`${root}/src/app/api/meal-plan/route.js`)
-const sel = await import(`${root}/src/utils/selectRecipes.js`)
-const { RECIPES } = await import(`${root}/src/data/recipes.js`)
-const { formatPlanCostDelta } = await import(`${root}/src/utils/formatPlanCostDelta.js`)
+**Vad det gör**
+1. Genererar planer med den riktiga `/api/meal-plan`-handlern tills receptet ingår.
+2. **Räknar oberoende om mängder och inköp:** summerar varje ingrediens över alla tillagningstillfällen i planen, räknar förpackningar och kronor direkt ur `REFERENCE_PRICES` och jämför rad för rad med appens inköpslista och totalsumma. Samma sak görs för planen utan receptet. Skriptet kontrollerar också att linjärt skalade mängder följer mängd × portioner ÷ `baseServings`.
+3. Skriver ut för varje ingrediens: mängd vid 4/7/11 portioner, mängd i planen, vad hela planen behöver och hur inköpet räknas (t.ex. `1760 g ÷ 800 g/förp → 3 förp × 90 kr = 270 kr`).
+4. **Prisunderlag:** `SAKNAT PRISUNDERLAG` (ingen referensprodukt, appen använder ett generiskt kategoripris), och "prissätts som annan produkt" (t.ex. `Nötfärs → Köttfärs`).
+5. **Byt rätt** åt båda håll. Kontrollen med delad kod visar bara att förhandsvisning och byte är konsekventa. Skillnaden jämförs därför även mot de oberoende totalsummorna.
+6. Bildfilen: att `image` är `/recipe-images/<id>.jpg`, att filen finns och dess storlek.
 
-const [id, adults = 2, children = 1, duration = '1 månad', budget = 4000, dishes = 14] = process.argv.slice(2)
-const input = { adults: +adults, children: +children, duration, budget: +budget, foodTypes: [], pantry: '', numberOfDishes: +dishes }
-const recipe = RECIPES.find((r) => r.id === id)
-if (!recipe) throw new Error(`Okänt recept-id: ${id}`)
+**Utfall:** `FEL` ger avslutskod 1 (okänt id, bildfil saknas, mängd eller kostnad avviker från den oberoende uträkningen, Byt rätt-skillnaden stämmer inte). `SAKNAT PRISUNDERLAG`, prisantaganden och `ATT BEDÖMA/REDOVISA` (decimaler på styckevaror, ihopslagna namn med olika enheter, dubblettrader, bild över ca 500 KB) ger avslutskod 0 men **ska stå i rapporten**.
 
-// Planurvalet är slumpat: generera tills receptet ingår (max 200 försök).
-let plan
-for (let n = 1; n <= 200 && !plan; n++) {
-  const res = await POST(new Request('http://localhost/api/meal-plan', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-forwarded-for': `10.9.${n >> 8}.${n & 255}` },
-    body: JSON.stringify(input),
-  }))
-  const body = await res.json()
-  if (res.ok && body.recipes.some((r) => sel.getBaseRecipeId(r.id) === id)) plan = body
-}
-if (!plan) throw new Error('Receptet valdes inte av 200 planer – prova färre kostval/fler rätter (foodTypes i input).')
+**Provkört 2026-10-30:** på sex recept (kött, kyckling, fisk, vegetariskt och burgare, med olika hushåll, perioder och kostval) stämde alla rader och totalsumman med den oberoende uträkningen. Två avsiktligt införda fel i prismotorn (`Math.ceil` → `Math.floor` för förpackningar, och 150 g → 100 g per styck lösvikt) fångades båda av skriptet med avslutskod 1. Felen återställdes direkt.
 
-const slots = [...new Set(plan.recipes.map((r) => sel.getBaseRecipeId(r.id)))]
-console.log('HUSHÅLL/PERIOD/BUDGET:', JSON.stringify(input))
-console.log('PLAN (recept ×tillfällen (portioner)):', slots.map((b) => {
-  const o = plan.recipes.filter((r) => sel.getBaseRecipeId(r.id) === b)
-  return `${b} ×${o.length} (${o.map((r) => r.servings).join('/')})`
-}).join(', '))
-console.log(`TOTALSUMMA: ${plan.pricing.estimatedTotalCost} kr (budget ${plan.pricing.budget}, ${plan.pricing.isWithinBudget ? 'inom' : 'över'} budget), ${plan.totalServings} portioner`)
-
-const items = Object.values(plan.shoppingList).flatMap((c) => c.items)
-const mine = new Set(recipe.ingredients.map((i) => i.name.toLowerCase()))
-console.log('\nINKÖPSLISTA – receptets ingredienser (G = generiskt kategoripris = inget referenspris):')
-for (const it of items.filter((i) => mine.has(i.displayName.toLowerCase()))) {
-  const buy = it.isWeightBased ? `${it.purchaseQuantity} ${it.purchaseUnit}` : `${it.packagesRequired} × ${it.packageAmount} ${it.packageUnit}`
-  console.log(`  ${it.isGenericEstimate ? 'G ' : '  '}${it.displayName}: behov ${it.requiredQuantity} ${it.requiredUnit} → ${buy} = ${Math.round(it.lineCost)} kr`)
-}
-console.log('Generiska priser i hela planen:', items.filter((i) => i.isGenericEstimate).map((i) => i.displayName).join(', ') || 'inga')
-const names = items.map((i) => i.displayName.toLowerCase())
-console.log('Dubblettrader (samma namn):', [...new Set(names.filter((n, i) => names.indexOf(n) !== i))].join(', ') || 'inga')
-
-// Byt rätt: kostnadsskillnaden ska vara exakt ändringen av totalsumman efter bytet.
-console.log('\nBYT RÄTT – kostnadsskillnad för hela planen:')
-const reference = RECIPES.find((r) => r.id === slots.find((s) => s !== id))
-const alt = sel.selectSwapAlternatives({
-  foodTypes: plan.foodTypes, excludeIds: slots, pantryTerms: sel.parsePantryTerms(plan.pantry),
-  budgetPerServing: plan.pricing.budget / plan.totalServings, referenceRecipe: reference,
-})[0].recipe
-const delta = (occurrences, replaced, next, currentTotal) => sel.calculateSwapCostDelta({
-  occurrences, replacedBaseId: replaced, newRecipeId: next, pantryText: plan.pantry,
-  budget: plan.pricing.budget, currentTotalCost: currentTotal,
-})
-console.log(`  ut ${id} → in ${alt.id}: ${formatPlanCostDelta(delta(plan.recipes, id, alt.id, plan.pricing.estimatedTotalCost))}`)
-const without = sel.rebuildPlanData(sel.buildSwapOccurrenceSpecs(plan.recipes, id, alt.id), plan.pantry, plan.pricing.budget)
-const back = delta(without.recipes, alt.id, id, without.pricing.estimatedTotalCost)
-const sum = without.pricing.estimatedTotalCost + back
-console.log(`  ut ${alt.id} → in ${id}: ${formatPlanCostDelta(back)} (plan utan receptet: ${without.pricing.estimatedTotalCost} kr)`)
-console.log(`  kontroll: ${without.pricing.estimatedTotalCost} ${back < 0 ? '−' : '+'} ${Math.abs(back)} = ${sum} kr ${sum === plan.pricing.estimatedTotalCost ? '✔ = ursprunglig totalsumma' : '✘ ≠ ursprunglig totalsumma – undersök'}`)
-```
+Skriptet ersätter inte webbläsarkontrollen (kort, receptvy, Byt rätt-miniatyr på mobil och desktop), `npm run validate:recipes`, `npm run test:swap` eller innehållsgranskningen av ingredienslista mot steg.
