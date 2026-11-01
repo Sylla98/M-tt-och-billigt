@@ -2,8 +2,8 @@
 // enheter (buildShoppingItems i src/utils/selectRecipes.js).
 //
 // Fel som testerna skyddar mot: ingredienser med samma namn men olika enheter
-// (t.ex. Salt i tsk och krm, Oregano i tsk och msk, Färsk basilika i st och
-// Torkad basilika i tsk) slogs ihop till en rad där den ena mängden tappades
+// (t.ex. Salt i tsk och krm, Oregano i tsk och msk; basilika i st och tsk var
+// ett fall före 2026-11-01, då färsk basilika angavs i st) slogs ihop till en rad där den ena mängden tappades
 // bort, eller där g och ml summerades som om de vore samma sak.
 //
 // Regler som testas: bara EXAKTA omräkningar får summeras (g/kg, ml/cl/dl/l och
@@ -107,7 +107,7 @@ describe('exakta omräkningar summeras', () => {
 })
 
 describe('mängder utan säker omräkning bevaras på separata rader', () => {
-  test('Färsk basilika (st) och Torkad basilika (tsk): båda bevaras, ingen summeras eller tappas', () => {
+  test('Syntetiskt (gamla fallet före 2026-11-01): Färsk basilika (st) och Torkad basilika (tsk) bevaras båda, ingen summeras eller tappas', () => {
     const items = buildShoppingItems([rec(['Torkad basilika', 1, 'tsk'], ['Färsk basilika', 1.8, 'st', 'vegetables'])])
     assert.deepEqual(items.map((i) => [i.displayName, i.quantity, i.unit]).sort(), [['Färsk basilika', 1.8, 'st'], ['Torkad basilika', 1, 'tsk']])
   })

@@ -38,8 +38,14 @@ const rowSum = (plan) => Math.round(allItems(plan).reduce((s, i) => s + i.lineCo
 /** Lägger tillfälligt in en TESTprodukt för färsk basilika och tar bort den igen. */
 function withTestFreshProduct(fn, product = {}) {
   const p = { key: 'farsk-basilika', displayName: 'TESTPRODUKT färsk basilika', aliases: ['testprodukt-ingen-namnmatchning'], packageQuantity: 20, packageUnit: 'g', estimatedPackagePrice: 99, purchaseType: 'package', ...product }
+  // En ev. verklig produkt med samma nyckel plockas bort under testet och sätts tillbaka efteråt.
+  const real = REFERENCE_PRICES.filter((x) => x.key === p.key)
+  for (const r of real) REFERENCE_PRICES.splice(REFERENCE_PRICES.indexOf(r), 1)
   REFERENCE_PRICES.push(p)
-  try { return fn(p) } finally { REFERENCE_PRICES.splice(REFERENCE_PRICES.indexOf(p), 1) }
+  try { return fn(p) } finally {
+    REFERENCE_PRICES.splice(REFERENCE_PRICES.indexOf(p), 1)
+    REFERENCE_PRICES.push(...real)
+  }
 }
 
 describe('redaktionella receptval är pinnade', () => {
@@ -91,6 +97,18 @@ describe('prismatchning: priceKey har företräde och faller aldrig tillbaka på
         assert.equal(resolveReferenceProduct({ priceKey: 'farsk-basilika', name }), p, name)
       }
     })
+  })
+
+  test('receptpoäng (estimateIngredientCost) respekterar priceKey: färsk basilika räknas aldrig som torkad', () => {
+    const r = recipe(KOTTFARS)
+    const without = { ...r, ingredients: r.ingredients.filter((i) => i.name !== 'Färsk basilika') }
+    const diff = () => (sel.estimateRecipeCostPerServing(r) - sel.estimateRecipeCostPerServing(without)) * r.baseServings
+    withTestFreshProduct(() => {
+      assert.equal(Math.round(diff() * 100) / 100, 49.5, '10 g av en 20 g-förpackning à 99 kr (TESTvärden) = 0,5 × 99')
+    })
+    if (!REFERENCE_PRICES.some((p) => p.key === 'farsk-basilika')) assert.equal(diff(), 10, 'ingen produkt: schablon 10 kr, inte den torkade burkens pris')
+    const stripped = { ...r, ingredients: r.ingredients.map((i) => (i.name === 'Färsk basilika' ? { name: i.name, quantity: i.quantity, unit: i.unit, category: i.category } : i)) }
+    assert.notEqual(sel.estimateRecipeCostPerServing(stripped), sel.estimateRecipeCostPerServing(r), 'utan priceKey blir uppskattningen en annan (namnmatchning till torkad) – priceKey styr')
   })
 
   test('utan priceKey gäller namnmatchningen som förut (oförändrat beteende för övriga varor)', () => {
@@ -260,7 +278,7 @@ describe('valideraren och verifieringsskriptet', () => {
       fs.writeFileSync(file, broken)
       const r = spawnSync(process.execPath, ['--import', './tests/swap/register-alias.mjs', 'scripts/verify-recipe-plan.mjs', KOTTFARS], { cwd: dir, encoding: 'utf8', timeout: 120000 })
       assert.equal(r.status, 1, 'avslutskod 1')
-      assert.match(r.stdout, /"Färsk basilika" kostar 18 kr i appen men 25 kr enligt oberoende uträkning/)
+      assert.match(r.stdout, /"Färsk basilika" kostar [\d.]+ kr i appen men [\d.]+ kr enligt oberoende uträkning/)
     } finally { fs.rmSync(dir, { recursive: true, force: true }) }
   })
 })

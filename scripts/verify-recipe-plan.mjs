@@ -122,8 +122,12 @@ function independentCheck(label, planLike, focus = null) {
   const occ = new Map() // `${namn}|${familj}` → { names, v, byUnit }
   for (const r of planLike.recipes) {
     for (const ing of r.ingredients) {
-      const key = `${norm(ing.name)}|${ing.priceKey || ''}|${famOf(ing.unit)}`
-      const e = occ.get(key) || { names: new Set(), v: 0, byUnit: {} }
+      // priceKey läses ur RECEPTDATAN (källan), inte ur appens utdata: tappar appen priceKey någonstans på
+      // vägen (skalning, inköpsrader, prissättning) matchar raden inte och felet upptäcks.
+      const source = RECIPES.find((x) => x.id === sel.getBaseRecipeId(r.id))?.ingredients.find((i) => i.name === ing.name)
+      const priceKey = source ? source.priceKey : ing.priceKey
+      const key = `${norm(ing.name)}|${priceKey || ''}|${famOf(ing.unit)}`
+      const e = occ.get(key) || { names: new Set(), v: 0, byUnit: {}, priceKey }
       e.names.add(ing.name)
       e.v += amt(ing.quantity, ing.unit)
       e.byUnit[ing.unit] = (e.byUnit[ing.unit] || 0) + ing.quantity
@@ -148,7 +152,7 @@ function independentCheck(label, planLike, focus = null) {
         errors.push(`${label}: "${it.displayName}" ska enligt recepten vara ${parts} men inköpslistan säger ${it.requiredQuantity} ${it.requiredUnit} (mängd tappad eller felräknad)`)
       }
       if (e && e.names.size > 1 && inFocus(norm(it.displayName))) notes.push(`${label}: ${[...e.names].join(' + ')} slås ihop till en rad "${it.displayName}" (samma normaliserade namn)`)
-      const exp = expectedBuy(it.displayName, categoryKey, baseOf(it.requiredQuantity, it.requiredUnit), it.priceKey)
+      const exp = expectedBuy(it.displayName, categoryKey, baseOf(it.requiredQuantity, it.requiredUnit), e ? e.priceKey : it.priceKey)
       if (Math.abs(exp.cost - it.lineCost) > 0.01) errors.push(`${label}: "${it.displayName}" kostar ${it.lineCost} kr i appen men ${exp.cost} kr enligt oberoende uträkning (${exp.text})`)
       if (exp.packages != null && it.packagesRequired !== exp.packages) errors.push(`${label}: "${it.displayName}" antal förpackningar ${it.packagesRequired} i appen mot ${exp.packages} i uträkningen`)
       if (!!exp.generic !== !!it.isGenericEstimate) errors.push(`${label}: "${it.displayName}" generiskt pris-flagga avviker (appen ${!!it.isGenericEstimate}, uträkning ${!!exp.generic})`)
@@ -245,7 +249,9 @@ for (const ing of recipe.ingredients) {
   const own = qtys.reduce((a, b) => a + b, 0)
   const row = check.rows.find((x) => x.key === `${norm(ing.name)}|${ing.priceKey || ''}|${famOf(ing.unit)}`)
   if (!row) {
-    notes.push(`${ing.name}: finns inte som inköpsrad (borttagen eller sammanslagen)`)
+    const msg = `${ing.name}: finns inte som inköpsrad (borttagen eller sammanslagen)`
+    if (ing.priceKey) errors.push(`${msg}. Receptet har priceKey "${ing.priceKey}", så raden ska finnas med samma nyckel`)
+    else notes.push(msg)
     continue
   }
   const decimals = ing.unit === 'st' && !rule.isCountable && qtys.some((q) => !Number.isInteger(q))
