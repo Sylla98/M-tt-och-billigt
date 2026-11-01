@@ -25,7 +25,8 @@
 //     styrs av steg 2: skillnaden jämförs även mot de oberoende totalsummorna.
 //
 // Delas medvetet med appen: prislistan (REFERENCE_PRICES, GENERIC_CATEGORY_PRICES) och
-// produktmatchningen (findReferenceProduct, normalizeIngredientName). Skriptet visar vilken
+// namnmatchningen (findReferenceProduct, normalizeIngredientName). Uppslag via priceKey görs oberoende
+// direkt i prislistan. Skriptet visar vilken
 // produkt varje ingrediens matchar, men att priserna i sig är rimliga kräver underlag och
 // kontrolleras inte. Skafferifunktionen ("Har hemma") testas inte.
 //
@@ -86,11 +87,13 @@ const r1 = (n) => Math.round(n * 10) / 10
 const norm = normalizeIngredientName
 
 /** Oberoende uträkning av en inköpsrad: förpackningar, kronor och en läsbar formel. */
-function expectedBuy(name, categoryKey, req) {
-  const product = findReferenceProduct(name)
+function expectedBuy(name, categoryKey, req, priceKey) {
+  // priceKey slås upp direkt i prislistan (oberoende av appens resolveReferenceProduct) och faller
+  // aldrig tillbaka på namnmatchning. Utan priceKey används den delade namnmatchningen.
+  const product = priceKey ? REFERENCE_PRICES.find((p) => p.key === priceKey) || null : findReferenceProduct(name)
   if (!product) {
     const price = GENERIC_CATEGORY_PRICES[GENERIC_KEY[categoryKey] || 'ovrigt'].estimatedPrice
-    return { cost: price, text: `generiskt kategoripris (${GENERIC_CATEGORY_PRICES[GENERIC_KEY[categoryKey] || 'ovrigt'].label}) ${price} kr`, generic: true, product: null }
+    return { cost: price, text: `${priceKey ? `priceKey "${priceKey}" saknar produkt i referencePrices.js → ` : ''}generiskt kategoripris (${GENERIC_CATEGORY_PRICES[GENERIC_KEY[categoryKey] || 'ovrigt'].label}) ${price} kr`, generic: true, product: null }
   }
   if (product.purchaseType === 'weight') {
     const kg = req.fam === 'vikt' ? req.v / 1000 : req.fam === 'antal' ? (req.v * 150) / 1000 : 0.5
@@ -119,7 +122,7 @@ function independentCheck(label, planLike, focus = null) {
   const occ = new Map() // `${namn}|${familj}` → { names, v, byUnit }
   for (const r of planLike.recipes) {
     for (const ing of r.ingredients) {
-      const key = `${norm(ing.name)}|${famOf(ing.unit)}`
+      const key = `${norm(ing.name)}|${ing.priceKey || ''}|${famOf(ing.unit)}`
       const e = occ.get(key) || { names: new Set(), v: 0, byUnit: {} }
       e.names.add(ing.name)
       e.v += amt(ing.quantity, ing.unit)
@@ -133,10 +136,11 @@ function independentCheck(label, planLike, focus = null) {
   for (const [categoryKey, cat] of Object.entries(planLike.shoppingList)) {
     for (const it of cat.items) {
       const fam = famOf(it.requiredUnit)
-      const key = `${norm(it.displayName)}|${fam}`
+      const key = `${norm(it.displayName)}|${it.priceKey || ''}|${fam}`
       const e = occ.get(key)
       const reqAmt = amt(it.requiredQuantity, it.requiredUnit)
-      rowsPerName.set(norm(it.displayName), [...(rowsPerName.get(norm(it.displayName)) || []), it.displayName])
+      const nameKey = `${norm(it.displayName)}|${it.priceKey || ''}` // olika produkter (priceKey) är inte "samma vara"
+      rowsPerName.set(nameKey, [...(rowsPerName.get(nameKey) || []), it.displayName])
       if (!e) {
         errors.push(`${label}: raden "${it.displayName}" (${it.requiredQuantity} ${it.requiredUnit}) hör inte till något recept i planen`)
       } else if (Math.abs(e.v - reqAmt) > 0.01) {
@@ -144,7 +148,7 @@ function independentCheck(label, planLike, focus = null) {
         errors.push(`${label}: "${it.displayName}" ska enligt recepten vara ${parts} men inköpslistan säger ${it.requiredQuantity} ${it.requiredUnit} (mängd tappad eller felräknad)`)
       }
       if (e && e.names.size > 1 && inFocus(norm(it.displayName))) notes.push(`${label}: ${[...e.names].join(' + ')} slås ihop till en rad "${it.displayName}" (samma normaliserade namn)`)
-      const exp = expectedBuy(it.displayName, categoryKey, baseOf(it.requiredQuantity, it.requiredUnit))
+      const exp = expectedBuy(it.displayName, categoryKey, baseOf(it.requiredQuantity, it.requiredUnit), it.priceKey)
       if (Math.abs(exp.cost - it.lineCost) > 0.01) errors.push(`${label}: "${it.displayName}" kostar ${it.lineCost} kr i appen men ${exp.cost} kr enligt oberoende uträkning (${exp.text})`)
       if (exp.packages != null && it.packagesRequired !== exp.packages) errors.push(`${label}: "${it.displayName}" antal förpackningar ${it.packagesRequired} i appen mot ${exp.packages} i uträkningen`)
       if (!!exp.generic !== !!it.isGenericEstimate) errors.push(`${label}: "${it.displayName}" generiskt pris-flagga avviker (appen ${!!it.isGenericEstimate}, uträkning ${!!exp.generic})`)
@@ -159,7 +163,8 @@ function independentCheck(label, planLike, focus = null) {
   }
   // Samma vara på flera rader (olika enhetsfamiljer utan säker omräkning): mängderna bevaras, men
   // priset kan räknas som flera inköp av samma produkt.
-  for (const [name, list] of rowsPerName) {
+  for (const [nameKey, list] of rowsPerName) {
+    const name = nameKey.split('|')[0]
     if (list.length > 1 && inFocus(name)) notes.push(`${label}: "${name}" ligger på ${list.length} rader (${list.join(' | ')}) eftersom enheterna inte kan räknas om till varandra utan påhittad densitet. Kontrollera om det är samma produkt (kostnaden kan då räknas som flera inköp)`)
   }
   const totalRounded = Math.round(total)
@@ -238,7 +243,7 @@ for (const ing of recipe.ingredients) {
     }
   })
   const own = qtys.reduce((a, b) => a + b, 0)
-  const row = check.rows.find((x) => x.key === `${norm(ing.name)}|${famOf(ing.unit)}`)
+  const row = check.rows.find((x) => x.key === `${norm(ing.name)}|${ing.priceKey || ''}|${famOf(ing.unit)}`)
   if (!row) {
     notes.push(`${ing.name}: finns inte som inköpsrad (borttagen eller sammanslagen)`)
     continue

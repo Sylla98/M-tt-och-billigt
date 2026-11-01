@@ -94,6 +94,18 @@ export function findReferenceProduct(rawName) {
   return null
 }
 
+/**
+ * Hittar referensprodukten för en ingrediens eller inköpsrad.
+ * En uttrycklig priceKey har ALLTID företräde och faller aldrig tillbaka på namnmatchning:
+ * finns ingen produkt med nyckeln (prisunderlag saknas) returneras null och anroparen
+ * använder ett generiskt kategoripris. Det garanterar t.ex. att färsk basilika aldrig
+ * prissätts som en burk torkad basilika, oavsett hur namnet normaliseras.
+ */
+export function resolveReferenceProduct({ priceKey, searchTerm, displayName, name }) {
+  if (priceKey) return REFERENCE_PRICES.find((p) => p.key === priceKey) || null
+  return findReferenceProduct(searchTerm || name) || findReferenceProduct(displayName || name)
+}
+
 // ── Generiskt kategoripris för okända varor ─────────────────────────────────
 const CATEGORY_KEY_TO_GENERIC = {
   meat: 'protein',
@@ -149,7 +161,7 @@ const EMPTY = {
  * Returnerar alltid ett prissatt resultat (referens, eller generisk uppskattning).
  */
 function calculateLine(item, categoryKey) {
-  const product = findReferenceProduct(item.searchTerm) || findReferenceProduct(item.displayName)
+  const product = resolveReferenceProduct(item)
   const required = toBaseUnit(item.quantity, item.unit)
 
   // ── Ingen känd produkt: generiskt kategoripris ────────────────────────
@@ -263,6 +275,7 @@ export function priceShoppingListWithReference(groupedShoppingList) {
 
       pricedItems.push({
         displayName: item.displayName,
+        ...(item.priceKey ? { priceKey: item.priceKey } : {}),
         requiredQuantity: item.quantity,
         requiredUnit: item.unit,
         packagesRequired: result.packagesRequired,

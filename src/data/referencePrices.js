@@ -8,6 +8,14 @@
 //
 // generiska kategoripriser (GENERIC_CATEGORY_PRICES) används som reservlösning
 // för okända ingredienser – konservativa, avrundade uppskattningar.
+//
+// Uttrycklig koppling: en ingrediens i recipes.js kan ha ett fält `priceKey` som pekar på en produkts
+// `key` här. Det har alltid företräde framför namnmatchning och faller ALDRIG tillbaka på den: finns ingen
+// produkt med nyckeln används ett generiskt kategoripris (flaggas som saknat prisunderlag). Använd priceKey
+// när två varor har samma normaliserade namn men olika produkt (t.ex. färsk och torkad basilika).
+//
+// Produkter får ett valfritt `source`-fält ({ store, url, retrieved, note }) för verifierade referenspriser.
+// Priserna är referenspriser från en viss butik och ett visst datum, inte universella butikspriser.
 
 export const REFERENCE_PRICES = [
   // ── Protein ────────────────────────────────────────────────────────────
@@ -93,7 +101,12 @@ export const REFERENCE_PRICES = [
   { key: 'curry',          displayName: 'Curry',       aliases: ['curry', 'currypulver'],                            packageQuantity: 1,    packageUnit: 'st', estimatedPackagePrice: 20, purchaseType: 'package' },
   { key: 'paprikapulver',  displayName: 'Paprikapulver', aliases: ['paprikapulver'],                                 packageQuantity: 1,    packageUnit: 'st', estimatedPackagePrice: 20, purchaseType: 'package' },
   { key: 'oregano',        displayName: 'Oregano',     aliases: ['oregano'],                                         packageQuantity: 1,    packageUnit: 'st', estimatedPackagePrice: 18, purchaseType: 'package' },
-  { key: 'basilika',       displayName: 'Basilika',    aliases: ['basilika'],                                        packageQuantity: 1,    packageUnit: 'st', estimatedPackagePrice: 18, purchaseType: 'package' },
+  // Torkad basilika (kryddburk). Receptens ingredienser kopplas hit uttryckligt med priceKey: 'torkad-basilika'.
+  // Aliaset 'basilika' finns kvar för ingredienser utan priceKey (namnnormaliseringen tar bort "torkad"/"färsk").
+  // FÄRSK basilika är en annan vara och har priceKey: 'farsk-basilika'. Någon produkt med den nyckeln finns
+  // INTE än: verifierad förpackningsstorlek och pris saknas (se RECEPTFLÖDE.md, avsnitt 1.3). Tills dess prissätts
+  // färsk basilika med ett generiskt kategoripris som redovisas som saknat prisunderlag, aldrig som torkad basilika.
+  { key: 'torkad-basilika', displayName: 'Torkad basilika', aliases: ['basilika'],                                      packageQuantity: 1,    packageUnit: 'st', estimatedPackagePrice: 18, purchaseType: 'package' },
   { key: 'kanel',          displayName: 'Kanel',       aliases: ['kanel'],                                           packageQuantity: 1,    packageUnit: 'st', estimatedPackagePrice: 18, purchaseType: 'package' },
   { key: 'spiskummin',     displayName: 'Spiskummin',  aliases: ['spiskummin', 'kummin'],                            packageQuantity: 1,    packageUnit: 'st', estimatedPackagePrice: 20, purchaseType: 'package' },
   { key: 'gurkmeja',       displayName: 'Gurkmeja',    aliases: ['gurkmeja'],                                        packageQuantity: 1,    packageUnit: 'st', estimatedPackagePrice: 20, purchaseType: 'package' },

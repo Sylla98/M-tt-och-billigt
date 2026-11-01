@@ -77,6 +77,12 @@ for (const [i, r] of RECIPES.entries()) {
       if (!ing.unit) errors.push(`${label}: "${ing.name}" saknar enhet`)
       else if (!VALID_UNITS.includes(ing.unit))
         errors.push(`${label}: "${ing.name}" har ogiltig enhet "${ing.unit}"`)
+      // priceKey: uttrycklig koppling till en produkt i referencePrices.js (se den filen).
+      if (ing.priceKey !== undefined) {
+        if (typeof ing.priceKey !== 'string' || !ing.priceKey) errors.push(`${label}: "${ing.name}" har ogiltig priceKey`)
+        else if (!REFERENCE_PRICES.some((p) => p.key === ing.priceKey))
+          warnings.push(`${label}: "${ing.name}" har priceKey "${ing.priceKey}" men ingen produkt med den nyckeln finns i referencePrices.js (saknat prisunderlag: generiskt kategoripris används)`)
+      }
       if (!ing.category) errors.push(`${label}: "${ing.name}" saknar kategori`)
       else if (!VALID_CATEGORIES.includes(ing.category))
         errors.push(`${label}: "${ing.name}" har ogiltig kategori "${ing.category}"`)
@@ -273,7 +279,7 @@ function findRoughProduct(ingredientName) {
 }
 
 function roughIngredientCost(ing) {
-  const product = findRoughProduct(ing.name)
+  const product = ing.priceKey ? REFERENCE_PRICES.find((p) => p.key === ing.priceKey) : findRoughProduct(ing.name)
   if (!product) return 10
   const u = (ing.unit || '').toLowerCase()
   if (product.purchaseType === 'weight') {

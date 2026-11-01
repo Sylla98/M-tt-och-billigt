@@ -4,7 +4,7 @@
 // inköpslistan. Ingen AI används i detta flöde.
 
 import { RECIPES } from '@/data/recipes'
-import { findReferenceProduct, normalizeIngredientName, priceShoppingListWithReference } from '@/utils/referencePricing'
+import { resolveReferenceProduct, normalizeIngredientName, priceShoppingListWithReference } from '@/utils/referencePricing'
 import { scaleIngredient } from '@/utils/portionScaling'
 
 // ── Kostnadsuppskattning per recept ─────────────────────────────────────────
@@ -15,7 +15,7 @@ const WEIGHT_TO_GRAMS = { g: 1, kg: 1000 }
 const VOLUME_TO_ML = { ml: 1, cl: 10, dl: 100, l: 1000 }
 
 function estimateIngredientCost(ing) {
-  const product = findReferenceProduct(ing.name)
+  const product = resolveReferenceProduct({ priceKey: ing.priceKey, name: ing.name })
   if (!product) return 10 // konservativ schablon för okänd vara
 
   const u = (ing.unit || '').toLowerCase()
@@ -189,21 +189,26 @@ function toBase(quantity, unit) {
  * Returnerar platta rader: { displayName, searchTerm, quantity, unit, category }
  */
 export function buildShoppingItems(scaledRecipes, pantryText) {
-  const pantryTerms = parsePantryTerms(pantryText)
-  const merged = new Map() // normaliserat namn + enhetsfamilj → rad
+  const pantryTerms = parsePantryTermsQualified(pantryText)
+  const merged = new Map() // normaliserat namn + priceKey + enhetsfamilj → rad
 
   for (const recipe of scaledRecipes) {
     for (const ing of recipe.ingredients) {
       const normName = normalizeIngredientName(ing.name)
 
-      // Har användaren varan hemma? Hoppa över.
+      // Har användaren varan hemma? Hoppa över. För varor med priceKey (t.ex. färsk/torkad
+      // basilika) räcker det inte att namnen normaliseras lika: skriver användaren
+      // "torkad basilika" gäller det bara den torkade, och "färsk basilika" bara den färska.
+      // En term utan färsk/torkad-angivelse ("basilika") gäller som förut båda.
+      const ingQualifier = ing.priceKey ? qualifierOf(ing.name) : null
       const inPantry = pantryTerms.some(
-        (t) => normName.includes(t) || t.includes(normName)
+        (t) => (normName.includes(t.term) || t.term.includes(normName)) && !(ing.priceKey && t.qualifier && t.qualifier !== ingQualifier)
       )
       if (inPantry) continue
 
       const base = toBase(ing.quantity, ing.unit)
-      const key = `${normName}|${base.family}`
+      // Olika produkter (priceKey) slås aldrig ihop, även om namn och enhetsfamilj är lika.
+      const key = `${normName}|${ing.priceKey || ''}|${base.family}`
 
       if (merged.has(key)) {
         const row = merged.get(key)
@@ -227,6 +232,7 @@ export function buildShoppingItems(scaledRecipes, pantryText) {
           quantity: base.value,
           unit: base.unit,
           category: ing.category || 'pantry',
+          ...(ing.priceKey ? { priceKey: ing.priceKey } : {}),
           ...(base.family === 'sked' ? { exactMl: base.value * SPOON_TO_ML[base.unit] } : {}),
         })
       }
@@ -235,6 +241,20 @@ export function buildShoppingItems(scaledRecipes, pantryText) {
 
   // exactMl är bara en hjälpsumma för skedmått och ska inte följa med i inköpsraderna
   return [...merged.values()].map(({ exactMl, ...row }) => row)
+}
+
+// "färsk", "torkad" eller "fryst" i skafferitexten. Normaliseringen tar bort orden, så de läses ur
+// originaltexten. Används bara för varor med priceKey (se buildShoppingItems).
+function qualifierOf(text) {
+  const m = (text || '').toLowerCase().match(/\b(färsk|färska|torkad|torkade|fryst|frysta)\b/)
+  return m ? m[1].replace(/e$|a$/, '') : null
+}
+
+export function parsePantryTermsQualified(pantryText) {
+  return (pantryText || '')
+    .split(/[,;\n]+/)
+    .map((raw) => ({ term: normalizeIngredientName(raw), qualifier: qualifierOf(raw) }))
+    .filter((t) => t.term.length >= 2)
 }
 
 export function parsePantryTerms(pantryText) {
@@ -385,7 +405,7 @@ export function buildRecipeOccurrences(scaledRecipes) {
       servedWith: r.servedWith,
       fridgeStorage: r.fridgeStorage,
       freezerStorage: r.freezerStorage,
-      ingredients: r.ingredients.map((ing) => ({ name: ing.name, quantity: ing.quantity, unit: ing.unit })),
+      ingredients: r.ingredients.map((ing) => ({ name: ing.name, quantity: ing.quantity, unit: ing.unit, ...(ing.priceKey ? { priceKey: ing.priceKey } : {}) })),
       instructions: r.instructions,
       image: r.image,
     }

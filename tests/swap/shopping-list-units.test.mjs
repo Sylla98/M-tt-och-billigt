@@ -214,15 +214,18 @@ describe('hela receptbiblioteket och en riktig plan (rebuildPlanData)', () => {
     assertQuantitiesPreserved(Object.values(plan.shoppingList).flatMap((c) => c.items), plan.recipes, [], 'hela biblioteket')
   })
 
-  test('bevarad mängd prissätts: Färsk basilika (st) får en egen rad med kostnad, i stället för att försvinna', () => {
+  test('bevarad mängd prissätts: Färsk basilika (g) får en egen rad, skild från Torkad basilika', () => {
     const plan = rebuildPlanData(specs, '', 4000)
     const items = Object.values(plan.shoppingList).flatMap((c) => c.items)
     const fresh = items.find((i) => i.displayName === 'Färsk basilika')
     assert.ok(fresh, 'rad för Färsk basilika finns')
-    assert.equal(fresh.requiredUnit, 'st')
-    assert.equal(fresh.packagesRequired, Math.ceil(fresh.requiredQuantity), 'hela förpackningar uppåt')
+    assert.equal(fresh.requiredUnit, 'g')
+    assert.equal(fresh.priceKey, 'farsk-basilika')
     assert.ok(fresh.lineCost > 0)
-    assert.ok(items.some((i) => i.displayName === 'Torkad basilika'), 'torkad basilika kvar som egen rad')
+    const dried = items.find((i) => i.displayName === 'Torkad basilika')
+    assert.ok(dried, 'torkad basilika kvar som egen rad')
+    assert.equal(dried.priceKey, 'torkad-basilika')
+    assert.notEqual(fresh.lineCost, undefined)
   })
 
   test('Byt rätt: kostnadsskillnaden är exakt skillnaden mellan oberoende radsummor, med och utan skafferi', () => {
