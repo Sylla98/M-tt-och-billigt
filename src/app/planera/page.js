@@ -1,16 +1,33 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import InputForm from '@/components/InputForm'
 import ResultView from '@/components/ResultView'
 import SiteFooter from '@/components/SiteFooter'
 import { trackEvent } from '@/utils/analytics'
+import { savePlan, loadSavedPlan, updateSavedPlan, clearSavedPlan } from '@/utils/savedPlan'
 
 export default function PlaneraPage() {
   const [state, setState] = useState('idle') // idle | loading | done | error
   const [result, setResult] = useState(null)
   const [errorMessage, setErrorMessage] = useState('')
   const isSubmittingRef = useRef(false) // synkron spärr mot dubbelklick
+
+  // Sparad plan (se utils/savedPlan.js): efter första renderingen läses en ev. sparad plan in
+  // från webbläsarens lokala lagring, så att planen och inköpslistan finns kvar efter
+  // omladdning eller när besökaren kommer tillbaka. Innehållet döljs tills det är avgjort så
+  // att formuläret inte blinkar förbi.
+  const [ready, setReady] = useState(false)
+  const [restoredAt, setRestoredAt] = useState(null)
+  useEffect(() => {
+    const saved = loadSavedPlan()
+    if (saved) {
+      setResult(saved.plan)
+      setRestoredAt(saved.savedAt)
+      setState('done')
+    }
+    setReady(true)
+  }, [])
 
   // QA-fynd: hasTrackedStartRef låg tidigare INNE i InputForm. InputForm
   // avmonteras när state blir 'error' (se ternären längre ner) och
@@ -51,6 +68,8 @@ export default function PlaneraPage() {
       }
 
       setResult(data)
+      setRestoredAt(null)
+      savePlan(data)
       setState('done')
       // Skickas HÄR – efter bekräftat lyckat svar (res.ok) – aldrig vid
       // knapptryck och aldrig vid ett API-fel (se catch-blocket nedan,
@@ -66,6 +85,10 @@ export default function PlaneraPage() {
   }
 
   const handleReset = () => {
+    // En plan med inköpslista är värd att skydda: fråga innan den sparade planen tas bort.
+    if (state === 'done' && !window.confirm('Skapa en ny matplan? Din nuvarande plan och inköpslista tas bort från den här webbläsaren.')) return
+    clearSavedPlan()
+    setRestoredAt(null)
     setResult(null)
     setState('idle')
     setErrorMessage('')
@@ -76,6 +99,7 @@ export default function PlaneraPage() {
   // priset i den BEFINTLIGA planen istället för att generera en ny. Övriga
   // fält (numberOfDays, foodTypes, pantry, childFriendly, ...) rörs inte.
   const handleUpdateResult = (updatedFields) => {
+    updateSavedPlan(updatedFields)
     setResult((prev) => (prev ? { ...prev, ...updatedFields } : prev))
   }
 
@@ -100,7 +124,7 @@ export default function PlaneraPage() {
       </header>
 
       {/* Innehåll */}
-      <div className="flex-1 px-4 pt-6 pb-12">
+      <div className={`flex-1 px-4 pt-6 pb-12 ${ready ? '' : 'invisible'}`}>
         {state === 'idle' || state === 'loading' ? (
           <InputForm onSubmit={handleSubmit} loading={state === 'loading'} onInteraction={trackPlanningStarted} />
         ) : state === 'error' ? (
@@ -122,7 +146,7 @@ export default function PlaneraPage() {
             </div>
           </div>
         ) : (
-          <ResultView data={result} onReset={handleReset} onUpdateResult={handleUpdateResult} />
+          <ResultView data={result} onReset={handleReset} onUpdateResult={handleUpdateResult} restoredAt={restoredAt} />
         )}
       </div>
 

@@ -60,8 +60,10 @@ function validateInput(body) {
   const errors = []
   const { adults, children, duration, budget, foodTypes, pantry, numberOfDishes } = body
 
-  if (!Number.isInteger(adults) || adults < 1 || adults > 20) errors.push('Ogiltigt antal vuxna')
+  // Formuläret tillåter 0 vuxna så länge minst en person är angiven (se InputForm.js), så API:t gör samma sak.
+  if (!Number.isInteger(adults) || adults < 0 || adults > 20) errors.push('Ogiltigt antal vuxna')
   if (!Number.isInteger(children) || children < 0 || children > 20) errors.push('Ogiltigt antal barn')
+  if (Number.isInteger(adults) && Number.isInteger(children) && adults + children < 1) errors.push('Lägg till minst en person')
   if (!['1 vecka', '2 veckor', '1 månad'].includes(duration)) errors.push('Ogiltig period')
   if (!Number.isFinite(budget) || budget < 100 || budget > 100000) errors.push('Ogiltig budget')
   if (!Array.isArray(foodTypes)) errors.push('Ogiltiga matkategorier')

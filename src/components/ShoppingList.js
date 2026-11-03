@@ -1,61 +1,12 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
-import { formatQuantity } from '@/utils/formatQuantity'
-import { packageCountName } from '@/utils/shoppingDisplay'
-import { formatCountableIngredient } from '@/utils/ingredientRules'
+import { buildDisplay, shoppingListText } from '@/utils/shoppingDisplay'
+import { loadChecked, saveChecked } from '@/utils/savedPlan'
 import { trackEvent } from '@/utils/analytics'
 
 function formatSEK(value) {
   if (value == null || isNaN(value)) return null
   return `ca ${Math.round(value).toLocaleString('sv-SE')} kr`
-}
-
-// Volym under 1 liter visas i dl i inköpslistan (t.ex. 800 ml → 8 dl).
-// formatQuantity.js rörs inte – den delen är en delad funktion som även
-// receptvyn använder, så dl-omvandlingen hålls lokal här istället.
-function formatShoppingTotal(quantity, unit) {
-  const u = (unit || '').toLowerCase()
-  if (u === 'ml' && quantity < 1000) {
-    return formatQuantity(quantity / 100, 'dl')
-  }
-  return formatQuantity(quantity, unit)
-}
-
-/**
- * Delar upp raden i namn och mängd så de kan visas på var sin rad i butik.
- * Prisberäkningen (packagesRequired, packageAmount, isWeightBased m.m.)
- * fortsätter beräknas exakt som förut – det är bara PRESENTATIONEN här.
- */
-function buildDisplay(item) {
-  // Produkt med egen inköpsenhet (t.ex. kruka): "Färsk basilika – 2 krukor". Gäller före övriga regler.
-  const packageName = packageCountName(item)
-  if (packageName) return { name: packageName, amount: null }
-
-  // Räknebara varor (lök, vitlök, ägg, citron, buljong ...): visa alltid
-  // det naturliga antalet, oavsett hur priset räknats internt.
-  if (item.requiredUnit === 'st') {
-    return { name: formatCountableIngredient(item.displayName, item.requiredQuantity), amount: null }
-  }
-
-  // Lösviktsvaror: redan en sammanlagd mängd utan förpackningsantal.
-  if (item.isWeightBased) {
-    return {
-      name: item.displayName,
-      amount: `cirka ${formatQuantity(item.purchaseQuantity, item.purchaseUnit)}`,
-    }
-  }
-
-  // Paketbaserade varor: total köpt mängd = antal förpackningar × storlek,
-  // visad som EN sammanlagd mängd istället för "N × storlek".
-  if (item.packagesRequired != null && item.packageAmount != null && item.packageUnit) {
-    const totalQuantity = item.packagesRequired * item.packageAmount
-    return {
-      name: item.displayName,
-      amount: formatShoppingTotal(totalQuantity, item.packageUnit),
-    }
-  }
-
-  return { name: item.displayName, amount: null }
 }
 
 function ShoppingCategory({ category, checked, onToggle, lastItemRef }) {
@@ -128,12 +79,43 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
   const categories = Object.values(shoppingList || {})
   // Avbockningen delas mellan kategorierna så state inte nollställs när
   // layouten går från en till två kolumner.
-  const [checked, setChecked] = useState([])
+  // Avbockningen sparas i webbläsaren tillsammans med planen (se utils/savedPlan.js), så den
+  // finns kvar efter omladdning, t.ex. mitt i handlingen.
+  const [checked, setChecked] = useState(() => loadChecked())
 
   const toggle = (key) => {
-    setChecked((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    )
+    setChecked((prev) => {
+      const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+      saveChecked(next)
+      return next
+    })
+  }
+
+  // Kopierar de varor som inte är avbockade som vanlig text (för anteckningar eller meddelanden).
+  const [copyState, setCopyState] = useState('idle') // idle | done | failed
+  const copyList = async () => {
+    const text = shoppingListText(categories, checked, totalCost)
+    let ok = false
+    try {
+      await navigator.clipboard.writeText(text)
+      ok = true
+    } catch {
+      try {
+        const ta = document.createElement('textarea')
+        ta.value = text
+        ta.setAttribute('readonly', '')
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        ok = document.execCommand('copy')
+        document.body.removeChild(ta)
+      } catch {
+        ok = false
+      }
+    }
+    setCopyState(ok ? 'done' : 'failed')
+    setTimeout(() => setCopyState('idle'), 3000)
   }
 
   const totalItems = categories.reduce((sum, c) => sum + (c.items?.length || 0), 0)
@@ -220,9 +202,23 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
           </div>
         )}
       </div>
-      <p className="text-meta text-ink-light/70 mb-5">
-        {checked.length} av {totalItems} avbockade · tryck för att bocka av
+      <p className="text-meta text-ink-light/70 mb-3">
+        {checked.length} av {totalItems} avbockade · tryck för att bocka av · sparas i den här webbläsaren
       </p>
+      <div className="mb-5">
+        <button
+          type="button"
+          onClick={copyList}
+          className="inline-flex items-center justify-center bg-white border border-line hover:border-ink-light/40
+                     text-ink font-semibold py-2 px-4 rounded-lg text-sm min-h-[44px] transition-colors duration-150"
+        >
+          Kopiera listan
+        </button>
+        <span role="status" aria-live="polite" className="ml-3 text-meta text-ink-light">
+          {copyState === 'done' && 'Kopierad. Avbockade varor är inte med.'}
+          {copyState === 'failed' && 'Kunde inte kopiera. Markera och kopiera listan manuellt.'}
+        </span>
+      </div>
 
       {/* Desktop: två kolumner via CSS-kolumner, så kategorierna flödar
           naturligt utan att någon kategori blir onödigt kort. */}

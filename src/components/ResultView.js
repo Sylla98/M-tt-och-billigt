@@ -1,5 +1,6 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import RecipeCard from './RecipeCard'
 import ShoppingList from './ShoppingList'
 import RecipeSwapSheet from './RecipeSwapSheet'
@@ -25,7 +26,7 @@ function useIsDesktop() {
   return isDesktop
 }
 
-export default function ResultView({ data, onReset, onUpdateResult }) {
+export default function ResultView({ data, onReset, onUpdateResult, restoredAt = null }) {
   const {
     recipes = [],
     shoppingList = {},
@@ -187,6 +188,11 @@ export default function ResultView({ data, onReset, onUpdateResult }) {
           {childFriendly && (
             <p className="text-meta text-forest font-bold mt-1">Familjevänliga recept</p>
           )}
+          {restoredAt && (
+            <p className="text-meta text-ink-light/80 mt-1.5">
+              Din sparade plan från {new Date(restoredAt).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long' })}. Den ligger kvar i den här webbläsaren.
+            </p>
+          )}
         </header>
 
         {/* Budget – produktens kärnlöfte och sidans tydliga tyngdpunkt.
@@ -278,17 +284,15 @@ export default function ResultView({ data, onReset, onUpdateResult }) {
           skild från den skogsgröna primära handlingen (Generera matplan). */}
       <section className="mt-12 pt-8 border-t border-line">
         <div className="max-w-[660px] text-center">
-          <a
-            href="https://forms.gle/M5PvhoAFESmbyxZh7"
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href="/feedback"
             className="inline-flex items-center justify-center bg-terracotta
                        hover:bg-terracotta/80 text-ink font-bold
                        py-2.5 px-6 rounded-lg text-sm min-h-[44px]
                        transition-colors duration-150"
           >
             Lämna feedback
-          </a>
+          </Link>
         </div>
       </section>
 

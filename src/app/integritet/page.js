@@ -14,11 +14,14 @@ export const metadata = {
 //  1. Hur PostHog-projektet hanterar IP-adress (projektinställning, syns inte
 //     i koden) och vad Google Forms-formuläret för feedback samlar in.
 //  2. Hostingplats/loggning hos Vercel (syns inte i koden).
-//  3. Överföringar utanför EU/EES: texten bygger på vårt biträdesavtal med
+//  3. (se nedan) Överföringar utanför EU/EES: texten bygger på vårt biträdesavtal med
 //     PostHog (EU Cloud för lagring; behandling kan ske även utanför EU/EES,
 //     bland annat i USA; EU:s standardavtalsklausuler). Texten påstår medvetet
 //     INGEN DPF-registrering – den är inte verifierad. Ändra bara texten om
 //     avtalet eller PostHogs villkor ändras.
+//  4. Feedbackformuläret i appen skickar svaren till den mottagare ägaren konfigurerat
+//     (FEEDBACK_WEBHOOK_URL, se TESTRUNDA.md). Bekräfta vilken tjänst som används och att
+//     texten nedan stämmer. Planen sparas i webbläsarens lokala lagring (inget skickas).
 // Texten nedan påstår därför inget om dessa punkter utöver det koden och
 // avtalet visar.
 
@@ -134,10 +137,14 @@ export default function IntegritetPage() {
 
         <Section title="Vad appen sparar på din enhet">
           <p>
-            Appen sparar bara ett enda litet värde i din webbläsares lokala lagring: ditt val
-            om statistik (ja eller nej), så att vi inte behöver fråga vid varje besök. Det
-            lämnar inte din enhet. Om du rensar webbläsarens data eller byter webbläsare
-            frågar vi igen. Appen sparar inget annat på din enhet.
+            Appen sparar två saker i din webbläsares lokala lagring. Det första är ditt val om
+            statistik (ja eller nej), så att vi inte behöver fråga vid varje besök. Det andra
+            är din senaste matplan, inköpslistan och vilka varor du har bockat av, så att de
+            finns kvar om du laddar om sidan eller kommer tillbaka för att handla. Planen sparas
+            i högst 30 dagar och tas bort när du väljer att skapa en ny plan. Båda sakerna
+            lämnar inte din enhet och sparas även om du avböjer statistik, eftersom de behövs
+            för att tjänsten ska fungera. Om du rensar webbläsarens data eller byter webbläsare
+            försvinner de. Appen sparar inget annat på din enhet.
           </p>
         </Section>
 
@@ -149,8 +156,8 @@ export default function IntegritetPage() {
             anropas för att skapa planen.
           </p>
           <p>
-            Appens kod sparar inte det du fyller i eller din färdiga plan i någon databas. Planen
-            finns kvar i din webbläsare tills du stänger eller laddar om sidan. För att skydda
+            Appens server sparar inte det du fyller i eller din färdiga plan i någon databas. Planen
+            sparas bara i din webbläsare, enligt beskrivningen ovan. För att skydda
             tjänsten mot överbelastning håller servern en tillfällig räknare per IP-adress i
             minnet, i högst tio minuter.
           </p>
@@ -165,10 +172,14 @@ export default function IntegritetPage() {
               oavsett ditt val om statistik.
             </li>
             <li>
-              <strong className="text-ink">Feedback.</strong> Knappen ”Lämna feedback” öppnar
-              ett Google Formulär i en ny flik. Det är en frivillig extern tjänst; appen
-              skickar inga uppgifter dit själv. Vad som sparas styrs av det du skriver i
-              formuläret och av Googles villkor.
+              <strong className="text-ink">Feedback.</strong> Sidan ”Feedback” har tre korta
+              frågor och kräver varken konto, namn eller e-post. Svaret (dina val och det du
+              skriver, plus tidpunkt, appversion och om du använde mobil eller dator) skickas
+              från appens server till den mottagare ägaren har valt för testomgången, ett
+              Google-kalkylark. Skriv inga personuppgifter i fritextfälten. Svaren skickas aldrig
+              till statistiktjänsten. Om formuläret inte är aktiverat eller inte går att skicka
+              erbjuder sidan i stället ett Google Formulär i en ny flik; vad som sparas där
+              styrs av det du skriver och av Googles villkor.
             </li>
             <li>
               <strong className="text-ink">Drift.</strong> Som alla webbplatser hanterar vår

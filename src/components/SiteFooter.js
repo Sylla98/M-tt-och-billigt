@@ -17,7 +17,10 @@ export default function SiteFooter({ widthClass = 'max-w-[1100px]', className = 
                     flex flex-wrap items-center justify-between gap-x-6 gap-y-2`}
       >
         <p>Mätt &amp; Billigt · Hjälper svenska familjer äta gott för mindre</p>
-        <nav aria-label="Integritet" className="flex flex-wrap items-center gap-x-4 gap-y-1">
+        <nav aria-label="Sidfot" className="flex flex-wrap items-center gap-x-4 gap-y-1">
+          <Link href="/feedback" className={footerLinkClass}>
+            Feedback
+          </Link>
           <Link href="/integritet" className={footerLinkClass}>
             Integritet
           </Link>
