@@ -19,9 +19,10 @@ export const metadata = {
 //     bland annat i USA; EU:s standardavtalsklausuler). Texten påstår medvetet
 //     INGEN DPF-registrering – den är inte verifierad. Ändra bara texten om
 //     avtalet eller PostHogs villkor ändras.
-//  4. Feedbackformuläret i appen skickar svaren till den mottagare ägaren konfigurerat
-//     (FEEDBACK_WEBHOOK_URL, se TESTRUNDA.md). Bekräfta vilken tjänst som används och att
-//     texten nedan stämmer. Planen sparas i webbläsarens lokala lagring (inget skickas).
+//  4. Feedback går via ett Google Formulär (länken ligger i src/utils/feedbackLink.js).
+//     Bekräfta vad formuläret faktiskt samlar in (t.ex. om inloggning eller e-post krävs eller
+//     efterfrågas), var svaren lagras och vem som har åtkomst. Texten nedan beskriver bara att
+//     formuläret är en extern tjänst. Planen sparas i webbläsarens lokala lagring (inget skickas).
 // Texten nedan påstår därför inget om dessa punkter utöver det koden och
 // avtalet visar.
 
@@ -172,14 +173,10 @@ export default function IntegritetPage() {
               oavsett ditt val om statistik.
             </li>
             <li>
-              <strong className="text-ink">Feedback.</strong> Sidan ”Feedback” har tre korta
-              frågor och kräver varken konto, namn eller e-post. Svaret (dina val och det du
-              skriver, plus tidpunkt, appversion och om du använde mobil eller dator) skickas
-              från appens server till den mottagare ägaren har valt för testomgången (planerat:
-              ett Google-kalkylark). Skriv inga personuppgifter i fritextfälten. Svaren skickas aldrig
-              till statistiktjänsten. Om formuläret inte är aktiverat eller inte går att skicka
-              erbjuder sidan i stället ett Google Formulär i en ny flik; vad som sparas där
-              styrs av det du skriver och av Googles villkor.
+              <strong className="text-ink">Feedback.</strong> Knappen ”Lämna feedback” (och
+              länken i sidfoten på planeringssidan) öppnar ett Google Formulär i en ny flik. Det är
+              en frivillig extern tjänst; appen skickar inga uppgifter dit själv och tar inte emot
+              dina svar. Vad som sparas styrs av det du skriver i formuläret och av Googles villkor.
             </li>
             <li>
               <strong className="text-ink">Drift.</strong> Som alla webbplatser hanterar vår

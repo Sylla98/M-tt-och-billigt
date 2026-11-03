@@ -1,18 +1,20 @@
 // Tester för testrundan (extern testomgång): sparad plan och inköpslista i webbläsaren,
-// kopiera inköpslistan, feedbackformulärets API och API-justeringen för 0 vuxna.
+// kopiera inköpslistan, feedbacklänkarna (Google Formulär) och API-justeringen för 0 vuxna.
 //
 // Kör med: npm run test:swap  (kräver alias-laddaren för '@/'-importer)
 
 import { test, describe, beforeEach, afterEach } from 'node:test'
 import assert from 'node:assert/strict'
+import { readFileSync, readdirSync, existsSync } from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const { POST: planPost } = await import('../../src/app/api/meal-plan/route.js')
-const { GET: feedbackGet, POST: feedbackPost } = await import('../../src/app/api/feedback/route.js')
 const saved = await import('../../src/utils/savedPlan.js')
 const sel = await import('../../src/utils/selectRecipes.js')
-const { validateFeedback, MAX_TEXT, MAX_PER_WINDOW } = await import('../../src/utils/feedback.js')
 const { shoppingListText, buildDisplay } = await import('../../src/utils/shoppingDisplay.js')
 const { RECIPES } = await import('../../src/data/recipes.js')
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..')
 
 // ── Hjälpmedel ───────────────────────────────────────────────────────────────
 let ipCounter = 0
@@ -217,131 +219,38 @@ describe('kopiera inköpslistan som text', () => {
   })
 })
 
-describe('feedback: validering', () => {
-  test('godkänner ett kort svar och översätter val till läsbar text', () => {
-    const r = validateFeedback({ used: ['plan', 'inkopslista'], unclear: '  Oklart med portioner ', nextTime: 'kanske', nextTimeWhy: 'Bra men ' })
-    assert.equal(r.ok, true)
-    assert.deepEqual(r.value, { usedKeys: ['plan', 'inkopslista'], used: 'skapa plan, inköpslistan', unclear: 'Oklart med portioner', nextTime: 'kanske', nextTimeWhy: 'Bra men' })
+describe('feedback: enbart det befintliga Google Formuläret (ingen intern mottagare)', () => {
+  const read = (...p) => readFileSync(path.join(root, ...p), 'utf8')
+  const result = read('src', 'components', 'ResultView.js')
+  const footer = read('src', 'components', 'SiteFooter.js')
+  const planera = read('src', 'app', 'planera', 'page.js')
+
+  test('en enda definition av formulärlänken, och den är den kända Google Formulär-länken', async () => {
+    const link = await import('../../src/utils/feedbackLink.js')
+    assert.equal(link.FEEDBACK_FORM_URL, 'https://forms.gle/M5PvhoAFESmbyxZh7')
+    assert.match(link.FEEDBACK_FORM_NOTE, /Google Formulär/)
+    assert.match(link.FEEDBACK_FORM_NOTE, /ny flik/)
+    const hits = []
+    const walk = (dir) => { for (const e of readdirSync(dir, { withFileTypes: true })) { const f = path.join(dir, e.name); if (e.isDirectory()) walk(f); else if (/\.(js|mjs)$/.test(e.name)) { if (readFileSync(f, 'utf8').includes('forms.gle')) hits.push(path.relative(root, f)) } } }
+    walk(path.join(root, 'src'))
+    assert.deepEqual(hits, ['src/utils/feedbackLink.js'], 'länken får bara stå på ett ställe')
   })
-  test('kräver minst ett svar; avvisar okända val; kapar långa texter; tar bort dubbletter', () => {
-    assert.equal(validateFeedback({}).ok, false)
-    assert.equal(validateFeedback({ used: [], unclear: '   ', nextTime: '', nextTimeWhy: '' }).ok, false)
-    assert.equal(validateFeedback({ used: ['hacka'] }).ok, false)
-    assert.equal(validateFeedback({ used: [5] }).ok, false)
-    assert.equal(validateFeedback({ nextTime: 'kanske-inte' }).ok, false)
-    assert.equal(validateFeedback(null).ok, false)
-    assert.equal(validateFeedback('x').ok, false)
-    assert.equal(validateFeedback({ unclear: 'a'.repeat(MAX_TEXT + 500) }).value.unclear.length, MAX_TEXT)
-    assert.deepEqual(validateFeedback({ used: ['plan', 'plan'] }).value.usedKeys, ['plan'])
-    assert.equal(validateFeedback({ unclear: 42 }).ok, false, 'icke-text räknas inte som svar')
+
+  test('knappen i resultatvyn och länken i sidfoten öppnar länken i ny flik med noopener, och sidfotslänken visas bara på planeringssidan', () => {
+    assert.match(result, /href=\{FEEDBACK_FORM_URL\}[\s\S]{0,120}target="_blank"[\s\S]{0,80}rel="noopener noreferrer"/)
+    assert.match(result, /\{FEEDBACK_FORM_NOTE\}/, 'tydlig information om att den går till Google Formulär')
+    assert.match(result, />\s*Lämna feedback\s*</)
+    assert.match(footer, /href=\{FEEDBACK_FORM_URL\}[\s\S]{0,120}target="_blank"[\s\S]{0,80}rel="noopener noreferrer"/)
+    assert.match(footer, /showFeedback = false/, 'av som standard (startsidan och integritetssidan)')
+    assert.match(planera, /<SiteFooter[^>]*showFeedback/)
   })
-  test('prototypnycklar och fel typer släpps inte igenom som val', () => {
-    for (const bad of [{ used: ['constructor'] }, { used: ['toString'] }, { used: ['__proto__'] }, { nextTime: 'toString' }, { nextTime: 'constructor' }, { nextTime: ['ja'] }, { nextTime: { ja: 1 } }, { nextTime: 5 }]) {
-      assert.equal(validateFeedback({ ...bad, unclear: 'x' }).ok, false, JSON.stringify(bad))
+
+  test('ingen intern feedbackmottagare finns kvar: inga routes, sidor, komponenter, miljövariabler eller anrop', () => {
+    for (const gone of [['src', 'app', 'feedback'], ['src', 'app', 'api', 'feedback'], ['src', 'components', 'FeedbackForm.js'], ['src', 'utils', 'feedback.js']]) {
+      assert.equal(existsSync(path.join(root, ...gone)), false, gone.join('/'))
     }
-    assert.equal(validateFeedback({ used: ['plan'], nextTime: 'ja' }).ok, true)
-  })
-})
-
-describe('feedback: API (/api/feedback)', () => {
-  const realFetch = globalThis.fetch
-  const realEnv = process.env.FEEDBACK_WEBHOOK_URL
-  let calls
-  let n = 0
-  const post = (body, ip = `10.30.0.${++n}`, headers = {}) =>
-    feedbackPost(new Request('http://localhost/api/feedback', { method: 'POST', headers: { 'content-type': 'application/json', 'x-forwarded-for': ip, ...headers }, body: typeof body === 'string' ? body : JSON.stringify(body) }))
-  beforeEach(() => {
-    calls = []
-    process.env.FEEDBACK_WEBHOOK_URL = 'https://script.example.test/exec'
-    globalThis.fetch = async (url, init) => { calls.push({ url, init }); return new Response('ok', { status: 200 }) }
-  })
-  afterEach(() => {
-    globalThis.fetch = realFetch
-    if (realEnv === undefined) delete process.env.FEEDBACK_WEBHOOK_URL; else process.env.FEEDBACK_WEBHOOK_URL = realEnv
-  })
-  const ANSWER = { used: ['plan', 'byte'], unclear: 'TESTSVAR – ska raderas', nextTime: 'ja', nextTimeWhy: 'Smidigt' }
-
-  test('GET visar om formuläret är aktiverat (bara https-adress räknas)', async () => {
-    assert.deepEqual(await (await feedbackGet()).json(), { enabled: true })
-    process.env.FEEDBACK_WEBHOOK_URL = ''
-    assert.deepEqual(await (await feedbackGet()).json(), { enabled: false })
-    process.env.FEEDBACK_WEBHOOK_URL = 'http://osakert.example.test'
-    assert.deepEqual(await (await feedbackGet()).json(), { enabled: false })
-    delete process.env.FEEDBACK_WEBHOOK_URL
-    assert.deepEqual(await (await feedbackGet()).json(), { enabled: false })
-  })
-
-  test('utan mottagare: 503 och inget skickas vidare', async () => {
-    delete process.env.FEEDBACK_WEBHOOK_URL
-    const res = await post(ANSWER)
-    assert.equal(res.status, 503)
-    assert.equal(calls.length, 0)
-  })
-
-  test('giltigt svar skickas som JSON till mottagaren med bara de avsedda fälten (ingen IP, ingen användaragent)', async () => {
-    const res = await post(ANSWER, undefined, { 'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17) Mobile Safari' })
-    assert.equal(res.status, 200)
-    assert.deepEqual(await res.json(), { ok: true })
-    assert.equal(calls.length, 1)
-    assert.equal(calls[0].url, 'https://script.example.test/exec')
-    assert.equal(calls[0].init.method, 'POST')
-    const sent = JSON.parse(calls[0].init.body)
-    assert.deepEqual(Object.keys(sent).sort(), ['build', 'device', 'environment', 'nextTime', 'nextTimeWhy', 'receivedAt', 'unclear', 'used', 'usedKeys'])
-    assert.equal(sent.used, 'skapa plan, byta rätt')
-    assert.equal(sent.unclear, 'TESTSVAR – ska raderas')
-    assert.equal(sent.device, 'mobil')
-    assert.equal(sent.environment, 'lokal')
-    assert.ok(!Number.isNaN(Date.parse(sent.receivedAt)))
-    assert.ok(!JSON.stringify(sent).match(/10\.30\.0|iPhone|Mozilla/), 'inga identifierare skickas vidare')
-  })
-
-  test('ogiltigt svar → 400 och inget skickas; ogiltig JSON → 400; för stor kropp → 413', async () => {
-    assert.equal((await post({})).status, 400)
-    assert.equal((await post({ used: ['hacka'] })).status, 400)
-    assert.equal((await post('{trasig')).status, 400)
-    assert.equal((await post({ unclear: 'x'.repeat(20000) })).status, 413)
-    assert.equal(calls.length, 0)
-  })
-
-  test('dolt fält (skriptspärr): svaret ser lyckat ut men skickas inte vidare', async () => {
-    const res = await post({ ...ANSWER, website: 'http://spam.example' })
-    assert.equal(res.status, 200)
-    assert.equal(calls.length, 0)
-  })
-
-  test('mottagaren nere eller felaktig: 502 med begriplig text, och svarstexten loggas inte', async () => {
-    const logged = []
-    const realErr = console.error, realLog = console.log
-    console.error = (...a) => logged.push(a.join(' ')); console.log = (...a) => logged.push(a.join(' '))
-    try {
-      globalThis.fetch = async () => new Response('fel', { status: 500 })
-      let res = await post(ANSWER)
-      assert.equal(res.status, 502)
-      assert.match((await res.json()).error, /Det gick inte att skicka/)
-      globalThis.fetch = async () => { throw new TypeError('nätverksfel') }
-      res = await post(ANSWER)
-      assert.equal(res.status, 502)
-    } finally { console.error = realErr; console.log = realLog }
-    assert.ok(!logged.join('\n').includes('TESTSVAR'), 'fritext ska inte hamna i loggar')
-  })
-
-  test('mottagare som svarar 200 med en HTML-felsida (t.ex. Apps Script som kastat fel) räknas som misslyckat', async () => {
-    for (const html of ['<!DOCTYPE html><html><body>Fel</body></html>', '  <html><head></head></html>']) {
-      globalThis.fetch = async () => new Response(html, { status: 200 })
-      const res = await post(ANSWER)
-      assert.equal(res.status, 502, html.slice(0, 20))
-    }
-    for (const okBody of ['ok', '{"ok":true}', '']) {
-      globalThis.fetch = async () => new Response(okBody, { status: 200 })
-      assert.equal((await post(ANSWER)).status, 200, okBody)
-    }
-  })
-
-  test('frekvensspärr: för många svar från samma IP ger 429, andra IP:n påverkas inte', async () => {
-    const ip = '10.31.0.1'
-    for (let i = 0; i < MAX_PER_WINDOW; i++) assert.equal((await post(ANSWER, ip)).status, 200)
-    assert.equal((await post(ANSWER, ip)).status, 429)
-    assert.equal((await post(ANSWER, '10.31.0.2')).status, 200)
+    const all = [result, footer, planera, read('src', 'app', 'integritet', 'page.js'), read('.env.local.example'), read('TESTRUNDA.md')].join('\n')
+    assert.doesNotMatch(all, /api\/feedback|FEEDBACK_WEBHOOK|Apps Script|href="\/feedback"/)
   })
 })
 

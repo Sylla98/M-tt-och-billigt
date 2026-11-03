@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import Link from 'next/link'
 import RecipeCard from './RecipeCard'
 import ShoppingList from './ShoppingList'
 import RecipeSwapSheet from './RecipeSwapSheet'
@@ -8,6 +7,7 @@ import RecipeDetailModal from './RecipeDetailModal'
 import { RECIPES } from '@/data/recipes'
 import { rebuildPlanData, getBaseRecipeId, buildSwapOccurrenceSpecs, calculateSwapCostDelta } from '@/utils/selectRecipes'
 import { trackEvent } from '@/utils/analytics'
+import { FEEDBACK_FORM_URL, FEEDBACK_FORM_NOTE } from '@/utils/feedbackLink'
 
 // Samma brytpunkt som receptgridens 2-kolumnsläge (`lg:grid-cols-2` nedan)
 // – "desktop" i det här sammanhanget betyder specifikt "griden visar två
@@ -284,15 +284,18 @@ export default function ResultView({ data, onReset, onUpdateResult, restoredAt =
           skild från den skogsgröna primära handlingen (Generera matplan). */}
       <section className="mt-12 pt-8 border-t border-line">
         <div className="max-w-[660px] text-center">
-          <Link
-            href="/feedback"
+          <a
+            href={FEEDBACK_FORM_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex items-center justify-center bg-terracotta
                        hover:bg-terracotta/80 text-ink font-bold
                        py-2.5 px-6 rounded-lg text-sm min-h-[44px]
                        transition-colors duration-150"
           >
             Lämna feedback
-          </Link>
+          </a>
+          <p className="text-meta text-ink-light/70 mt-2">{FEEDBACK_FORM_NOTE}</p>
         </div>
       </section>
 

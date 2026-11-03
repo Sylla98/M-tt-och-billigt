@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import AnalyticsSettingsButton from '@/components/AnalyticsSettingsButton'
+import { FEEDBACK_FORM_URL } from '@/utils/feedbackLink'
 
 const footerLinkClass =
   'text-ink-light hover:text-forest underline underline-offset-2 transition-colors'
@@ -9,7 +10,7 @@ const footerLinkClass =
  * integritetsinformationen och till valet om produktstatistik.
  * widthClass styr innehållets maxbredd så att sidfoten linjerar med sidan.
  */
-export default function SiteFooter({ widthClass = 'max-w-[1100px]', className = '' }) {
+export default function SiteFooter({ widthClass = 'max-w-[1100px]', className = '', showFeedback = false }) {
   return (
     <footer className={`border-t border-line ${className}`}>
       <div
@@ -18,9 +19,17 @@ export default function SiteFooter({ widthClass = 'max-w-[1100px]', className = 
       >
         <p>Mätt &amp; Billigt · Hjälper svenska familjer äta gott för mindre</p>
         <nav aria-label="Sidfot" className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          <Link href="/feedback" className={footerLinkClass}>
-            Feedback
-          </Link>
+          {showFeedback && (
+            <a
+              href={FEEDBACK_FORM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={footerLinkClass}
+              aria-label="Lämna feedback (öppnas i Google Formulär i en ny flik)"
+            >
+              Feedback (Google Formulär)
+            </a>
+          )}
           <Link href="/integritet" className={footerLinkClass}>
             Integritet
           </Link>

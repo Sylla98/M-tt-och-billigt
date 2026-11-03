@@ -182,7 +182,7 @@ export default function PlaneraPage() {
       </div>
 
       {/* Footer */}
-      <SiteFooter widthClass={state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} />
+      <SiteFooter widthClass={state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} showFeedback />
     </main>
   )
 }
