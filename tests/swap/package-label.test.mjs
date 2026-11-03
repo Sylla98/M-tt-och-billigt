@@ -136,6 +136,28 @@ describe('prissatta rader bär inköpsenheten', () => {
     } finally { RECIPES.splice(RECIPES.indexOf(TEST_RECIPE), 1) }
   })
 
+  test('Byt rätt med kruk-produkt: kostnadsskillnaden är exakt skillnaden mellan radsummorna, med och utan skafferi', () => {
+    RECIPES.push(TEST_RECIPE)
+    try {
+      withProduct(() => {
+        const rowSum = (plan) => Math.round(allItems(plan).reduce((s, i) => s + i.lineCost, 0))
+        const specs = [{ baseId: TEST_ID, servings: 7 }, { baseId: TEST_ID, servings: 7 }, { baseId: 'ugnsbakad-gnocchi-mozzarella', servings: 7 }, { baseId: 'kramig-tomatpasta', servings: 7 }]
+        for (const pantry of ['', 'torkad basilika', 'färsk basilika']) {
+          const plan = rebuildPlanData(specs, pantry, 4000)
+          assert.equal(rowSum(plan), plan.pricing.estimatedTotalCost)
+          for (const out of [TEST_ID, 'ugnsbakad-gnocchi-mozzarella']) {
+            const delta = sel.calculateSwapCostDelta({ occurrences: plan.recipes, replacedBaseId: out, newRecipeId: 'kikartscurry', pantryText: pantry, budget: 4000, currentTotalCost: plan.pricing.estimatedTotalCost })
+            const swapped = rebuildPlanData(sel.buildSwapOccurrenceSpecs(plan.recipes, out, 'kikartscurry'), pantry, 4000)
+            assert.equal(delta, rowSum(swapped) - rowSum(plan), `skafferi "${pantry}", ut ${out}`)
+            const fresh = allItems(swapped).find((i) => i.displayName === 'Färsk basilika')
+            assert.equal(Boolean(fresh), out !== TEST_ID && pantry !== 'färsk basilika')
+            if (fresh) assert.equal(fresh.lineCost, fresh.packagesRequired * 40)
+          }
+        }
+      })
+    } finally { RECIPES.splice(RECIPES.indexOf(TEST_RECIPE), 1) }
+  })
+
   test('"Har hemma": färsk basilika hemma tar bort kruk-raden, torkad hemma lämnar den', () => {
     RECIPES.push(TEST_RECIPE)
     try {

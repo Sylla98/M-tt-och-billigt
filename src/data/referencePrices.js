@@ -16,7 +16,7 @@
 //
 // Inköpsenhet i inköpslistan: en förpackad produkt kan ha ett valfritt `packageLabel: { singular, plural }`
 // (t.ex. { singular: 'kruka', plural: 'krukor' }). Inköpslistan visar då antal förpackningar med den enheten
-// ("1 kruka färsk basilika", "2 krukor färsk basilika") i stället för bara namnet eller en vikt.
+// ("Färsk basilika – 1 kruka", "Färsk basilika – 2 krukor") i stället för bara namnet eller en vikt.
 // packageQuantity/packageUnit anger då vad EN sådan förpackning motsvarar (t.ex. gram per kruka).
 //
 // Produkter får ett valfritt `source`-fält ({ store, url, retrieved, note }) för verifierade referenspriser.

@@ -27,7 +27,7 @@ function formatShoppingTotal(quantity, unit) {
  * fortsätter beräknas exakt som förut – det är bara PRESENTATIONEN här.
  */
 function buildDisplay(item) {
-  // Produkt med egen inköpsenhet (t.ex. kruka): "2 krukor färsk basilika". Gäller före övriga regler.
+  // Produkt med egen inköpsenhet (t.ex. kruka): "Färsk basilika – 2 krukor". Gäller före övriga regler.
   const packageName = packageCountName(item)
   if (packageName) return { name: packageName, amount: null }
 

@@ -265,11 +265,11 @@ Bifoga referensbilder: public/recipe-images/butter-chicken.jpg m.fl. (se 3.1).
 Befintliga avvikelser som inte orsakas av en ny receptuppgift. Redovisa dem som "fanns redan" och åtgärda dem bara efter uttrycklig uppgift.
 - `Parmesanost` (i `en-riktigt-god-kottfarssas`) saknar referenspris, och `Parmesan` är en annan rad i inköpslistan.
 - *Åtgärdat 2026-10-30 (`feature/fix-inkopslista-enheter`):* ingredienser med olika enheter tappade mängd i inköpslistan (Salt, Kanel, Oregano, Paprikapulver, Dijonsenap, basilika). Se 1.5. Skedmått slås nu ihop exakt och övriga mängder bevaras på egna rader.
-- Styckevaror som inte är räknebara skalas med decimaler (Tortillabröd, Bröd, Äpple, Gurka, Tomat, Hamburgerbröd). Färsk basilika är inte längre ett recept (se avsnitt 4).
+- Styckevaror som inte är räknebara skalas med decimaler (Tortillabröd, Bröd, Äpple, Gurka, Tomat, Hamburgerbröd). Färsk basilika är inte längre en ingrediens i något recept (se avsnitt 4).
 - Kategoribilderna och `fallback.jpg` finns inte. Två bilder står i stående format (`krispiga-potatistacos-bonor-vitloksyoghurt.jpg`, `kycklingwok-nudlar.jpg`), tre bildfiler används inte (`klassisk-kottfarssas.jpg`, `korv-potatismos.jpg`, `kramig-broccolipasta-citron-parmesan.jpg`) och 47 av 63 bilder är över 500 KB.
 - Fem recept har `familyFriendly: true` men saknar taggen `familjevänlig` (taggen används inte).
 - Tre varningar från `validate:recipes` (vitlök vid 18 portioner) och bara 5 lågprisrecept (< 14 kr/portion).
-- **Osäkerheter i prisunderlaget (kvarstår, ej åtgärdade):** (a) Samma vara på flera rader räknas som flera inköp. Hypotetiskt exempel: Smör 100 g + 2 msk. I nuvarande receptdata gäller det inte längre någon vara. (b) Skedmått kan inte räknas om till vikt, så en vara med viktförpackning (t.ex. `Tomatpuré` 22,5 msk mot 200 g) prissätts alltid som en förpackning. (c) **Färsk basilika saknar verifierat pris och gram per kruka** (se nedan). Inget av detta kan avgöras utan prisunderlag.
+- **Osäkerheter i prisunderlaget (kvarstår, ej åtgärdade):** (a) Samma vara på flera rader räknas som flera inköp (med kruk-visning skulle t.ex. både `Färsk basilika` i g och i tsk visas som "– 1 kruka" och kosta två gånger). Hypotetiskt exempel: Smör 100 g + 2 msk. I nuvarande receptdata gäller det inte längre någon vara. (b) Skedmått kan inte räknas om till vikt, så en vara med viktförpackning (t.ex. `Tomatpuré` 22,5 msk mot 200 g) prissätts alltid som en förpackning. (c) **Färsk basilika saknar verifierat pris och gram per kruka** (se nedan). Inget av detta kan avgöras utan prisunderlag.
 - Prislistans alias `biff av nöt` och `grytbitar av nöt` ger Högrev-priset (se 1.3).
 - `public/recipe-images/README.md` och kommentarerna överst i `recipes.js` är föråldrade.
 
@@ -277,13 +277,13 @@ Befintliga avvikelser som inte orsakas av en ny receptuppgift. Redovisa dem som 
 | Datum | Recept | Ändring | Skäl |
 |---|---|---|---|
 | 2026-11-01 | `en-riktigt-god-kottfarssas` | `Färsk basilika` ändrad från `1 st` till `10 g` per 4 portioner (skalas linjärt: 17,5 g vid 7 portioner, 35 g för två tillfällen à 7). Huvuddelen används i såsen och en mindre del sparas till servering: steg 5 och 6 omformulerade ("Blanda ner det mesta i såsen och spara resten till servering", "toppa … med den sparade basilikan"). Ingrediensen har `priceKey: 'farsk-basilika'`, torkade basilikan `priceKey: 'torkad-basilika'` | Elis beslut 2026-11-01. `st` var odefinierat och gav decimaler vid skalning. Gram ger en mätbar mängd och en förpackningsberäkning. Den exakta fördelningen mellan sås och servering anges inte (receptet säger "det mesta"). Ingen källa finns i projektet |
-| 2026-11-03 | `en-riktigt-god-kottfarssas` | **`Färsk basilika` borttagen helt** (ingrediens, steg "skölj och finhacka" och omnämnanden i `description` och `servedWith`). Receptet har 5 steg och torkad basilika (0,5 tsk) finns kvar. **Ersätter valet 2026-11-01 ovan** | Elis beslut 2026-11-03: färsk basilika behövs inte i köttfärssåsen. `priceKey`-mekanismen för färsk/torkad basilika finns kvar för framtida recept |
+| 2026-11-03 | `en-riktigt-god-kottfarssas` | **`Färsk basilika` borttagen helt** (ingrediens, steg "skölj och finhacka" och omnämnanden i `description` och `servedWith`). Receptet har 5 steg och torkad basilika (0,5 tsk) finns kvar. **Ersätter valet 2026-11-01 ovan.** Receptbilden visar fortfarande färsk basilika och behöver bytas (se bildbriefet nedan) | Elis beslut 2026-11-03: färsk basilika behövs inte i köttfärssåsen. `priceKey`-mekanismen för färsk/torkad basilika finns kvar för framtida recept |
 | 2026-11-01 | `ugnsbakad-gnocchi-mozzarella` | `Basilika` (1 tsk) förtydligad till `Torkad basilika` (ingrediens och steg 3), med `priceKey: 'torkad-basilika'` | Elis beslut 2026-11-01. Enheten (tsk) och kategorin (`pantry`) pekade på torkad, men namnet gjorde att den slogs ihop med färsk basilika i matchningen |
 
 ### Färsk basilika i kruka: regel och underlag
 **Elis krav 2026-11-03.** Färsk basilika visas som hela krukor i inköpslistan, `Färsk basilika – 1 kruka` eller `Färsk basilika – 2 krukor`. Receptet anger mängden i **gram**. Behovet summeras över hela planen, avrundas uppåt till hela krukor, och kostnaden räknas på samma antal krukor som listan visar. En separat produkt (`farsk-basilika`, kruka) används, aldrig priset för en burk torkad basilika, och färsk och torkad hålls åtskilda. Krukans mängd är **användbar mängd basilika**, inte krukans totalvikt med jord. Detta ersätter det tidigare önskemålet att visa gram som inköpsenhet. Befintlig design behålls (en vanlig rad med namn).
 
-**Byggt och testat** (`packageLabel`, se 1.3; `tests/swap/package-label.test.mjs`): summering över flera tillagningar före avrundning (3 tillagningar à 17,5 g = 52,5 g blir 2 krukor à 30 g, inte 3), gränsfall vid hela krukor, kostnad = antal krukor × pris, skafferi, Byt rätt, och att `validate:recipes` och `verify:recipe` kontrollerar enheten. Sett i webbläsare (mobil och desktop) med tillfälliga **testvärden** (30 g per kruka, 40 kr, som inte är data): `Färsk basilika – 2 krukor ca 80 kr` respektive `Färsk basilika – 1 kruka ca 40 kr`.
+**Byggt och testat** (`packageLabel`, se 1.3; `tests/swap/package-label.test.mjs`): summering över flera tillagningar före avrundning (3 tillagningar à 17,5 g = 52,5 g blir 2 krukor à 30 g, inte 3), gränsfall vid hela krukor, kostnad = antal krukor × pris, skafferi, Byt rätt (både i `basil-products.test.mjs` och med kruk-produkt i `package-label.test.mjs`), och att `validate:recipes` och `verify:recipe` kontrollerar enheten. Sett i webbläsare (mobil och desktop) med tillfälliga **testvärden** (30 g per kruka, 40 kr, som inte är data): `Färsk basilika – 2 krukor ca 80 kr` respektive `Färsk basilika – 1 kruka ca 40 kr`.
 
 **Läge.** Inget recept använder färsk basilika (borttagen ur köttfärssåsen 2026-11-03) och produkten `farsk-basilika` finns **inte** i `referencePrices.js`, så regeln syns inte i appen än. Ingen uppgift nedan är inlagd som data.
 
@@ -303,6 +303,34 @@ Befintliga avvikelser som inte orsakas av en ny receptuppgift. Redovisa dem som 
 4. För att läsa produktsidor behöver domänerna `handla.ica.se`, `www.willys.se`, `www.mathem.se` och `www.coop.se` tillåtas under Network access i miljöns inställningar (menyn i sessionens titelrad, Edit).
 
 **Tester som hoppar över sig själva när produkten finns:** fem tester pinnar läget "produkten saknas" (3 i `basil-products.test.mjs`, 2 i `package-label.test.mjs`) och ska då kompletteras med tester av den verkliga krukan. Övriga tester lägger tillfälligt in en TESTprodukt i minnet och tål att en verklig produkt finns.
+
+### Bildbrief: en-riktigt-god-kottfarssas (bilden stämmer inte med receptet)
+**Avvikelse (upptäckt av granskare 2026-11-03, bekräftad):** `public/recipe-images/en-riktigt-god-kottfarssas.jpg` visar färsk basilika (blad på pastan, en basilikakruka uppe till höger och en skål med basilika nere till vänster), men receptet har ingen färsk basilika sedan 2026-11-03. Enligt bildstandarden (3.1, punkt 7) får bilden inte visa ingredienser som saknas i receptet. Bilden är dessutom äldre än bildstandarden (träbord och mörkskaftad gaffel i stället för beige stenyta). **Bilden är inte bytt**: ny bild behöver skapas i bildchatten och godkännas av Elis. Tills dess stämmer bilden inte med receptet.
+
+```
+BILDBRIEF
+Recept:      En riktigt god köttfärssås (id: en-riktigt-god-kottfarssas) → fil: public/recipe-images/en-riktigt-god-kottfarssas.jpg
+Bild finns:  ja, men den visar färsk basilika som inte ingår i receptet (se avvikelsen ovan)
+
+1. Rätten färdig, som den serveras (1 portion på tallriken)
+   Huvudråvara och tillagning: nötfärs, brynt och sedan puttrad ca 20 minuter i krossade tomater med tomatpuré;
+     kornig köttfärssås, djupt röd-brun, glansig, inga stora tomatbitar (krossade tomater)
+   Sås/vätska: tjock köttfärssås som ligger ovanpå pastan, inte rinnande
+   Tillbehör som ingår i måltiden: spaghetti (ca 125 g torr vikt per portion, kokt, med sås)
+   Garnityr: nyriven parmesanost (ingår: Parmesanost). INGA örter
+2. Råvaror som SKA synas igen: köttfärssås (nötfärs, tomat), spaghetti, riven parmesanost
+3. Får INTE synas: färsk basilika eller andra färska örter (blad, kruka, skål), text, extra rätter.
+   Torkad basilika, oregano och övriga kryddor syns inte som egna delar
+4. Uppläggning: spaghetti i en ljus rund tallrik med köttfärssåsen ovanpå och riven parmesan över;
+   parmesan får även ligga som ett block/riven vid sidan bara om det är sparsamt (ingrediensen finns i receptet)
+5. Stil och teknik: enligt bildstandarden i RECEPTFLÖDE.md 3.1 (nästan rakt uppifrån, hela tallriken med lite bord
+   runt men utan stora tomma ytor, varmt naturligt ljus, verklighetstrogen mat, liggande 3:2, 1536×1024, ingen text,
+   viktigt inom mittersta ca 85 % av bredden).
+   Undantag från standarden: inga
+6. Kontroll när bilden finns: jämför ingrediens för ingrediens mot receptet (ingen basilika!), spaghetti och
+   parmesan med, rimlig portion, 3:2, skarp på mobil.
+Bifoga referensbilder: public/recipe-images/butter-chicken.jpg m.fl. (se 3.1).
+```
 
 ### Receptlogg – receptuppdraget
 Biblioteket har 60 recept på `feature/receptflode-dokumentation` och grenar därifrån (`main` har bara 40). Ingen annan gren och inga PR:er innehåller receptarbete som saknas här. **Inga recept har ändrats eller tagits bort än.**
