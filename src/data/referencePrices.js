@@ -14,6 +14,11 @@
 // produkt med nyckeln används ett generiskt kategoripris (flaggas som saknat prisunderlag). Använd priceKey
 // när två varor har samma normaliserade namn men olika produkt (t.ex. färsk och torkad basilika).
 //
+// Inköpsenhet i inköpslistan: en förpackad produkt kan ha ett valfritt `packageLabel: { singular, plural }`
+// (t.ex. { singular: 'kruka', plural: 'krukor' }). Inköpslistan visar då antal förpackningar med den enheten
+// ("1 kruka färsk basilika", "2 krukor färsk basilika") i stället för bara namnet eller en vikt.
+// packageQuantity/packageUnit anger då vad EN sådan förpackning motsvarar (t.ex. gram per kruka).
+//
 // Produkter får ett valfritt `source`-fält ({ store, url, retrieved, note }) för verifierade referenspriser.
 // Priserna är referenspriser från en viss butik och ett visst datum, inte universella butikspriser.
 

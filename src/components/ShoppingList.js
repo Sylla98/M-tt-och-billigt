@@ -1,6 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { formatQuantity } from '@/utils/formatQuantity'
+import { packageCountName } from '@/utils/shoppingDisplay'
 import { formatCountableIngredient } from '@/utils/ingredientRules'
 import { trackEvent } from '@/utils/analytics'
 
@@ -26,6 +27,10 @@ function formatShoppingTotal(quantity, unit) {
  * fortsätter beräknas exakt som förut – det är bara PRESENTATIONEN här.
  */
 function buildDisplay(item) {
+  // Produkt med egen inköpsenhet (t.ex. kruka): "2 krukor färsk basilika". Gäller före övriga regler.
+  const packageName = packageCountName(item)
+  if (packageName) return { name: packageName, amount: null }
+
   // Räknebara varor (lök, vitlök, ägg, citron, buljong ...): visa alltid
   // det naturliga antalet, oavsett hur priset räknats internt.
   if (item.requiredUnit === 'st') {

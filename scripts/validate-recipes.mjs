@@ -29,6 +29,16 @@ const MUST_BE_COUNT = [
 
 const errors = []
 const warnings = []
+
+// Produkter i referencePrices.js: valfritt packageLabel måste ha singular och plural
+for (const product of REFERENCE_PRICES) {
+  if (product.packageLabel !== undefined) {
+    const l = product.packageLabel
+    if (!l || typeof l.singular !== 'string' || !l.singular || typeof l.plural !== 'string' || !l.plural)
+      errors.push(`produkt "${product.key}": packageLabel måste vara { singular, plural } med icke-tomma texter`)
+    if (product.purchaseType !== 'package') errors.push(`produkt "${product.key}": packageLabel kräver purchaseType "package"`)
+  }
+}
 const seenIds = new Set()
 const seenNames = new Set()
 const seenImages = new Set()

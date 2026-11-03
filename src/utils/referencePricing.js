@@ -153,6 +153,7 @@ const EMPTY = {
   purchaseQuantity: null,
   purchaseUnit: null,
   isGenericEstimate: false,
+  packageLabel: null,
 }
 
 /**
@@ -228,6 +229,7 @@ function calculateLine(item, categoryKey) {
       packageUnit: product.packageUnit,
       unitPrice: product.estimatedPackagePrice,
       lineCost: product.estimatedPackagePrice,
+      packageLabel: product.packageLabel || null,
     }
   }
 
@@ -241,6 +243,7 @@ function calculateLine(item, categoryKey) {
       packageUnit: product.packageUnit,
       unitPrice: product.estimatedPackagePrice,
       lineCost: packagesRequired * product.estimatedPackagePrice,
+      packageLabel: product.packageLabel || null,
     }
   }
 
@@ -253,6 +256,7 @@ function calculateLine(item, categoryKey) {
     packageUnit: product.packageUnit,
     unitPrice: product.estimatedPackagePrice,
     lineCost: product.estimatedPackagePrice,
+    packageLabel: product.packageLabel || null,
   }
 }
 
@@ -276,6 +280,7 @@ export function priceShoppingListWithReference(groupedShoppingList) {
       pricedItems.push({
         displayName: item.displayName,
         ...(item.priceKey ? { priceKey: item.priceKey } : {}),
+        ...(result.packageLabel ? { packageLabel: result.packageLabel } : {}),
         requiredQuantity: item.quantity,
         requiredUnit: item.unit,
         packagesRequired: result.packagesRequired,

@@ -155,6 +155,8 @@ function independentCheck(label, planLike, focus = null) {
       const exp = expectedBuy(it.displayName, categoryKey, baseOf(it.requiredQuantity, it.requiredUnit), e ? e.priceKey : it.priceKey)
       if (Math.abs(exp.cost - it.lineCost) > 0.01) errors.push(`${label}: "${it.displayName}" kostar ${it.lineCost} kr i appen men ${exp.cost} kr enligt oberoende uträkning (${exp.text})`)
       if (exp.packages != null && it.packagesRequired !== exp.packages) errors.push(`${label}: "${it.displayName}" antal förpackningar ${it.packagesRequired} i appen mot ${exp.packages} i uträkningen`)
+      const wantLabel = exp.product && exp.product.packageLabel ? JSON.stringify(exp.product.packageLabel) : null
+      if (wantLabel !== (it.packageLabel ? JSON.stringify(it.packageLabel) : null)) errors.push(`${label}: "${it.displayName}" ska ha inköpsenhet ${wantLabel || '(ingen)'} men raden har ${it.packageLabel ? JSON.stringify(it.packageLabel) : '(ingen)'}`)
       if (!!exp.generic !== !!it.isGenericEstimate) errors.push(`${label}: "${it.displayName}" generiskt pris-flagga avviker (appen ${!!it.isGenericEstimate}, uträkning ${!!exp.generic})`)
       total += exp.cost
       rows.push({ it, exp, req: baseOf(it.requiredQuantity, it.requiredUnit), key })

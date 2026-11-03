@@ -191,9 +191,9 @@ describe('hela receptbiblioteket och en riktig plan (rebuildPlanData)', () => {
   const IDS = ['en-riktigt-god-kottfarssas', 'pannkakor-klassiska', 'marockansk-kycklinggryta-citron-oliver', 'kycklingshawarma-bulgur-yoghurtsas', 'grekisk-citronkyckling-ugn-potatis', 'ungersk-gulasch', 'kycklingstroganoff-ris', 'kycklingsallad-spenat-apple-parmesan']
   const specs = IDS.map((baseId) => ({ baseId, servings: 7 }))
 
-  test('planen exercerar verkligen blandade enheter för alla sex ingredienser (annars är testet tomt)', () => {
+  test('planen exercerar verkligen blandade enheter för alla fem ingredienser (annars är testet tomt)', () => {
     const plan = rebuildPlanData(specs, '', 4000)
-    for (const n of ['salt', 'kanel', 'oregano', 'paprikapulver', 'dijonsenap', 'basilika']) {
+    for (const n of ['salt', 'kanel', 'oregano', 'paprikapulver', 'dijonsenap']) { // basilika är inte längre blandad: färsk (g) finns i inget recept
       const units = new Set(plan.recipes.flatMap((r) => r.ingredients).filter((i) => norm(i.name) === n).map((i) => i.unit))
       assert.ok(units.size > 1, `${n} har bara enheten ${[...units]} i planen, så testet skyddar inget längre. Välj recept som blandar enheter`)
     }
@@ -214,18 +214,14 @@ describe('hela receptbiblioteket och en riktig plan (rebuildPlanData)', () => {
     assertQuantitiesPreserved(Object.values(plan.shoppingList).flatMap((c) => c.items), plan.recipes, [], 'hela biblioteket')
   })
 
-  test('bevarad mängd prissätts: Färsk basilika (g) får en egen rad, skild från Torkad basilika', () => {
+  test('torkad basilika är en egen rad med priceKey och torkad-produktens pris; ingen färsk rad när inget recept har färsk basilika', () => {
     const plan = rebuildPlanData(specs, '', 4000)
     const items = Object.values(plan.shoppingList).flatMap((c) => c.items)
-    const fresh = items.find((i) => i.displayName === 'Färsk basilika')
-    assert.ok(fresh, 'rad för Färsk basilika finns')
-    assert.equal(fresh.requiredUnit, 'g')
-    assert.equal(fresh.priceKey, 'farsk-basilika')
-    assert.ok(fresh.lineCost > 0)
+    assert.ok(!items.some((i) => i.displayName === 'Färsk basilika'))
     const dried = items.find((i) => i.displayName === 'Torkad basilika')
-    assert.ok(dried, 'torkad basilika kvar som egen rad')
+    assert.ok(dried, 'torkad basilika är en egen rad')
     assert.equal(dried.priceKey, 'torkad-basilika')
-    assert.notEqual(fresh.lineCost, undefined)
+    assert.equal(dried.isGenericEstimate, false)
   })
 
   test('Byt rätt: kostnadsskillnaden är exakt skillnaden mellan oberoende radsummor, med och utan skafferi', () => {
@@ -310,7 +306,7 @@ describe('verifieringsskriptet (npm run verify:recipe)', () => {
       const r = runScriptIn(dir, 'en-riktigt-god-kottfarssas')
       assert.equal(r.status, 1, 'avslutskod 1 vid tappad mängd')
       assert.match(r.stdout, /mängd tappad eller felräknad/)
-      assert.match(r.stdout, /"Färsk basilika" .* saknar inköpsrad/)
+      assert.match(r.stdout, /"(Salt|Oregano|Dijonsenap|Kanel|Paprikapulver)" ska enligt recepten vara .* men inköpslistan säger/)
     } finally { fs.rmSync(dir, { recursive: true, force: true }) }
   })
 })
