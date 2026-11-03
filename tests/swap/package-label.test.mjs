@@ -45,10 +45,10 @@ const priced = (ings, pantry = '') => Object.values(priceShoppingListWithReferen
 
 describe('packageCountName: texten i inköpslistan', () => {
   const item = (n, label = { singular: 'kruka', plural: 'krukor' }) => ({ displayName: 'Färsk basilika', packagesRequired: n, ...(label ? { packageLabel: label } : {}) })
-  test('1 → singular, 2 och fler → plural, namnet med liten begynnelsebokstav', () => {
-    assert.equal(packageCountName(item(1)), '1 kruka färsk basilika')
-    assert.equal(packageCountName(item(2)), '2 krukor färsk basilika')
-    assert.equal(packageCountName(item(3)), '3 krukor färsk basilika')
+  test('1 → singular, 2 och fler → plural, namnet först och sedan antal (med tankstreck)', () => {
+    assert.equal(packageCountName(item(1)), 'Färsk basilika – 1 kruka')
+    assert.equal(packageCountName(item(2)), 'Färsk basilika – 2 krukor')
+    assert.equal(packageCountName(item(3)), 'Färsk basilika – 3 krukor')
   })
   test('ingen inköpsenhet eller okänt antal förpackningar → null (raden visas som förut)', () => {
     assert.equal(packageCountName(item(2, null)), null)
@@ -57,14 +57,14 @@ describe('packageCountName: texten i inköpslistan', () => {
     assert.equal(packageCountName({}), null)
   })
   test('generell regel: gäller vilken enhet en produkt anger (t.ex. knippe/knippen)', () => {
-    assert.equal(packageCountName({ displayName: 'Dill', packagesRequired: 2, packageLabel: { singular: 'knippe', plural: 'knippen' } }), '2 knippen dill')
+    assert.equal(packageCountName({ displayName: 'Dill', packagesRequired: 2, packageLabel: { singular: 'knippe', plural: 'knippen' } }), 'Dill – 2 knippen')
   })
 })
 
 describe('prissatta rader bär inköpsenheten', () => {
   test('antal förpackningar följer mängden: 7 g och 30 g → 1 kruka, 30,1 g och 60 g → 2 krukor, 61 g → 3 krukor', () => {
     withProduct(() => {
-      for (const [g, n, text] of [[7, 1, '1 kruka färsk basilika'], [30, 1, '1 kruka färsk basilika'], [30.1, 2, '2 krukor färsk basilika'], [60, 2, '2 krukor färsk basilika'], [61, 3, '3 krukor färsk basilika']]) {
+      for (const [g, n, text] of [[7, 1, 'Färsk basilika – 1 kruka'], [30, 1, 'Färsk basilika – 1 kruka'], [30.1, 2, 'Färsk basilika – 2 krukor'], [60, 2, 'Färsk basilika – 2 krukor'], [61, 3, 'Färsk basilika – 3 krukor']]) {
         const [row] = priced([['Färsk basilika', g, 'g', 'vegetables', 'farsk-basilika']])
         assert.equal(row.packagesRequired, n, `${g} g`)
         assert.equal(row.lineCost, n * 40)
@@ -102,11 +102,36 @@ describe('prissatta rader bär inköpsenheten', () => {
         const plan = rebuildPlanData([{ baseId: TEST_ID, servings: 7 }, { baseId: TEST_ID, servings: 7 }, { baseId: 'ugnsbakad-gnocchi-mozzarella', servings: 7 }], '', 4000)
         const fresh = allItems(plan).find((i) => i.displayName === 'Färsk basilika')
         assert.equal(fresh.requiredQuantity, 35)
-        assert.equal(packageCountName(fresh), '2 krukor färsk basilika')
+        assert.equal(packageCountName(fresh), 'Färsk basilika – 2 krukor')
         const dried = allItems(plan).find((i) => i.displayName === 'Torkad basilika')
         assert.ok(!('packageLabel' in dried))
         const sum = Math.round(allItems(plan).reduce((s, i) => s + i.lineCost, 0))
         assert.equal(sum, plan.pricing.estimatedTotalCost)
+      })
+    } finally { RECIPES.splice(RECIPES.indexOf(TEST_RECIPE), 1) }
+  })
+
+  test('behovet summeras över HELA planen innan det avrundas uppåt till hela krukor, och kostnaden följer samma antal', () => {
+    RECIPES.push(TEST_RECIPE)
+    try {
+      withProduct(() => {
+        // 3 tillagningar à 7 portioner = 3 × 17,5 g = 52,5 g. Per tillfälle avrundat uppåt vore det 3 krukor (30 g/kruka);
+        // summerat först blir det 52,5 / 30 = 1,75 → 2 krukor.
+        const specs = [1, 2, 3].map(() => ({ baseId: TEST_ID, servings: 7 }))
+        const plan = rebuildPlanData(specs, '', 4000)
+        const fresh = allItems(plan).find((i) => i.displayName === 'Färsk basilika')
+        assert.equal(fresh.requiredQuantity, 52.5)
+        assert.equal(fresh.packagesRequired, Math.ceil(52.5 / 30))
+        assert.equal(fresh.packagesRequired, 2)
+        assert.equal(packageCountName(fresh), 'Färsk basilika – 2 krukor')
+        assert.equal(fresh.lineCost, fresh.packagesRequired * 40, 'kostnaden bygger på samma antal krukor som listan visar')
+        // Gränsfall (2,5 g per portion, 30 g per TESTkruka): 12 portioner = 30 g → 1, 13 = 32,5 g → 2, 24 = 60 g → 2, 25 = 62,5 g → 3
+        for (const [servings, krukor] of [[4, 1], [12, 1], [13, 2], [24, 2], [25, 3]]) {
+          const p = rebuildPlanData([{ baseId: TEST_ID, servings }], '', 4000)
+          const row = allItems(p).find((i) => i.displayName === 'Färsk basilika')
+          assert.equal(row.packagesRequired, krukor, `${servings} portioner = ${row.requiredQuantity} g`)
+          assert.equal(row.lineCost, krukor * 40)
+        }
       })
     } finally { RECIPES.splice(RECIPES.indexOf(TEST_RECIPE), 1) }
   })
