@@ -175,8 +175,8 @@ export default function IntegritetPage() {
               <strong className="text-ink">Feedback.</strong> Sidan ”Feedback” har tre korta
               frågor och kräver varken konto, namn eller e-post. Svaret (dina val och det du
               skriver, plus tidpunkt, appversion och om du använde mobil eller dator) skickas
-              från appens server till den mottagare ägaren har valt för testomgången, ett
-              Google-kalkylark. Skriv inga personuppgifter i fritextfälten. Svaren skickas aldrig
+              från appens server till den mottagare ägaren har valt för testomgången (planerat:
+              ett Google-kalkylark). Skriv inga personuppgifter i fritextfälten. Svaren skickas aldrig
               till statistiktjänsten. Om formuläret inte är aktiverat eller inte går att skicka
               erbjuder sidan i stället ett Google Formulär i en ny flik; vad som sparas där
               styrs av det du skriver och av Googles villkor.

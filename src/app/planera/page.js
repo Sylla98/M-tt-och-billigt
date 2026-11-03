@@ -84,9 +84,15 @@ export default function PlaneraPage() {
     }
   }
 
+  // En plan med inköpslista är värd att skydda: fråga innan den sparade planen tas bort. Bekräftelsen
+  // visas i sidan (inte med window.confirm, som kan vara spärrad i appars inbyggda webbläsare).
+  const [confirmingReset, setConfirmingReset] = useState(false)
   const handleReset = () => {
-    // En plan med inköpslista är värd att skydda: fråga innan den sparade planen tas bort.
-    if (state === 'done' && !window.confirm('Skapa en ny matplan? Din nuvarande plan och inköpslista tas bort från den här webbläsaren.')) return
+    if (state === 'done' && !confirmingReset) {
+      setConfirmingReset(true)
+      return
+    }
+    setConfirmingReset(false)
     clearSavedPlan()
     setRestoredAt(null)
     setResult(null)
@@ -121,6 +127,31 @@ export default function PlaneraPage() {
             </button>
           )}
         </div>
+        {confirmingReset && state === 'done' && (
+          <div role="alertdialog" aria-label="Skapa ny matplan" className="border-t border-line bg-white">
+            <div className="max-w-[1100px] mx-auto px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <p className="text-sm text-ink flex-1 min-w-[220px]">
+                Skapa en ny matplan? Din nuvarande plan och inköpslista tas bort från den här webbläsaren.
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="bg-forest hover:bg-forest-dark text-white font-bold py-2 px-4 rounded-lg text-sm min-h-[44px] transition-colors duration-150"
+                >
+                  Skapa ny plan
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConfirmingReset(false)}
+                  className="bg-white border border-line hover:border-ink-light/40 text-ink font-semibold py-2 px-4 rounded-lg text-sm min-h-[44px] transition-colors duration-150"
+                >
+                  Behåll min plan
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Innehåll */}

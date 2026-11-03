@@ -18,7 +18,7 @@ Allt fungerar även om testaren avböjer statistik.
 - Planen, inköpslistan, bytena och avbockningarna sparas **i testarens webbläsare** (`localStorage`, nyckeln `mb_saved_plan_v1`). Inget skickas till servern. Det fungerar även när statistik är avböjd.
 - Om testaren laddar om sidan, stänger fliken eller kommer tillbaka via startsidan → **Skapa min matplan** visas samma plan igen, med en rad "Din sparade plan från …". Avbockningarna finns kvar.
 - Planen finns **bara i den webbläsaren på den enheten** och sparas i högst 30 dagar. Den följer inte med till en annan telefon, och försvinner om webbläsarens data rensas, i privat läge när fliken stängs, eller om webbläsaren blockerar lagring. För att flytta listan mellan enheter: **Kopiera listan** och skicka texten.
-- **Ny plan** frågar först ("Skapa en ny matplan? …") och tar sedan bort den sparade planen.
+- **Ny plan** frågar först med en bekräftelse i sidan ("Skapa en ny matplan? …", knapparna "Skapa ny plan" och "Behåll min plan") och tar sedan bort den sparade planen. Två flikar i samma webbläsare delar samma sparade plan och kan skriva över varandra.
 - Vid inläsning byggs planen om med den version av appen som körs (samma beräkning som "Byt rätt"), så summor och kostnadsskillnader stämmer. Hänvisar en sparad plan till ett recept som inte finns längre, eller är den för gammal eller trasig, visas formuläret i stället.
 
 ## 3. Feedback: var svaren hamnar
@@ -33,7 +33,7 @@ Sidan `/feedback` har tre frågor (vad hann du använda, var något oklart/fel/s
    // Tar emot feedback från Mätt & Billigt och lägger en rad i bladet "Svar".
    function safe(v) {
      v = (v === null || v === undefined) ? '' : String(v);
-     return /^[=+\-@]/.test(v) ? "'" + v : v; // hindrar att fritext tolkas som kalkylarksformel
+     return /^[=+\-@\t\r]/.test(v) ? "'" + v : v; // hindrar att fritext tolkas som kalkylarksformel
    }
    function doPost(e) {
      var d = JSON.parse(e.postData.contents);
@@ -51,7 +51,7 @@ Sidan `/feedback` har tre frågor (vad hann du använda, var något oklart/fel/s
 5. **Testa:** öppna `/feedback` på den nya deployen och skicka ett svar där du skriver `TESTSVAR` i fritextfältet. Raden ska dyka upp i kalkylarkets blad "Svar" inom några sekunder. Radera testraden efteråt.
 - **Var du läser svaren:** i kalkylarket, bladet "Svar". Kolumnen "Version" är de sju första tecknen i commit-id:t för den deploy som svaret kom ifrån, "Miljö" är `preview` eller `production`, "Enhet" är `mobil` eller `dator`.
 - Går det inte att skicka (mottagaren nere, fel URL) visar formuläret ett felmeddelande med en länk till Google Formuläret, och inget går förlorat för testaren.
-- Svar skickas inte vidare om ett dolt skriptfält är ifyllt, och en IP-adress får högst 8 svar per tio minuter.
+- Svar skickas inte vidare om ett dolt skriptfält är ifyllt. En enkel frekvensspärr (högst 8 svar per tio minuter och IP-adress) finns, men den gäller per serverinstans och är en bästa-möjliga-spärr, inte en garanti. Ett Apps Script som svarar med en HTML-felsida räknas som misslyckat (testaren får då felmeddelandet och Google Formuläret som reserv).
 - Vill du använda en annan mottagare (t.ex. en e-posttjänst): `FEEDBACK_WEBHOOK_URL` tar emot vilken https-adress som helst som accepterar en JSON-POST med fälten `receivedAt, build, environment, device, used, usedKeys, unclear, nextTime, nextTimeWhy`. Lägg inte till ett betalt verktyg utan att bestämma det först.
 
 ## 4. Preview och åtkomst för externa testare

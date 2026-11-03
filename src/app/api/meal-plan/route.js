@@ -113,6 +113,11 @@ export async function POST(request) {
     const days = durationToDays(duration)
     const requiredServings = calculateRequiredServings(adults, children, days)
 
+    // Fler rätter än portioner ger rätter med 0 portioner (t.ex. 0 vuxna + 1 barn, 1 vecka, 10 rätter).
+    if (Math.round(requiredServings) < numberOfDishes) {
+      return Response.json({ error: 'Det blir för få portioner för så många rätter. Välj färre rätter eller fler personer.' }, { status: 400 })
+    }
+
     // ── 1. Välj recept lokalt ──────────────────────────────────────────────
     const selection = selectRecipes({ foodTypes, numberOfDishes, pantry, budget, requiredServings })
     if (!selection.ok) {

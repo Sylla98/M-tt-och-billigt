@@ -59,8 +59,10 @@ export async function POST(request) {
       redirect: 'follow',
       signal: AbortSignal.timeout(8000),
     })
-    if (!res.ok) {
-      console.error(`[feedback] mottagaren svarade ${res.status}`)
+    // Ett Google Apps Script som kastar fel svarar ofta 200 med en HTML-felsida: räkna det som misslyckat.
+    const reply = await res.text().catch(() => '')
+    if (!res.ok || /^\s*<(!doctype|html)/i.test(reply)) {
+      console.error(`[feedback] mottagaren svarade ${res.ok ? 'med en felsida' : res.status}`)
       return Response.json({ error: 'Det gick inte att skicka just nu. Försök igen om en stund.' }, { status: 502 })
     }
     console.log('[feedback] svar skickat vidare')

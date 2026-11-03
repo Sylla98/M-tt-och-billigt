@@ -37,10 +37,10 @@ export function limited(ip) {
 export function validateFeedback(body) {
   if (!body || typeof body !== 'object') return { ok: false, error: 'Ogiltigt svar.' }
   const usedKeys = Array.isArray(body.used) ? body.used : []
-  if (usedKeys.some((k) => typeof k !== 'string' || !(k in FEEDBACK_USED))) return { ok: false, error: 'Ogiltigt val.' }
+  if (usedKeys.some((k) => typeof k !== 'string' || !Object.hasOwn(FEEDBACK_USED, k))) return { ok: false, error: 'Ogiltigt val.' }
   const used = [...new Set(usedKeys)]
   const text = (v) => (typeof v === 'string' ? v.trim().slice(0, MAX_TEXT) : '')
-  if (body.nextTime !== undefined && body.nextTime !== '' && !(body.nextTime in NEXT_TIME)) return { ok: false, error: 'Ogiltigt val.' }
+  if (body.nextTime !== undefined && body.nextTime !== '' && (typeof body.nextTime !== 'string' || !Object.hasOwn(NEXT_TIME, body.nextTime))) return { ok: false, error: 'Ogiltigt val.' }
   const value = {
     usedKeys: used,
     used: used.map((k) => FEEDBACK_USED[k]).join(', '),

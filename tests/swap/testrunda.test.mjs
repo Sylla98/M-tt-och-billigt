@@ -151,6 +151,18 @@ describe('sparad plan: planen och inköpslistan finns kvar när besökaren komme
     }
   })
 
+  test('misslyckad sparning (full lagring) lämnar inte kvar en äldre plans avbockningar', async () => {
+    saved.savePlan(await makePlan(), 1)
+    saved.saveChecked(['gammal::avbockning'])
+    const ls = globalThis.window.localStorage
+    const realSet = ls.setItem
+    ls.setItem = () => { throw new Error('QuotaExceededError') }
+    assert.equal(saved.savePlan(await makePlan(), 2), false)
+    ls.setItem = realSet
+    assert.deepEqual(saved.loadChecked(), [])
+    assert.equal(saved.loadSavedPlan(3), null, 'ingen gammal plan kvar att återställa')
+  })
+
   test('"Ny plan" tar bort allt sparat', async () => {
     saved.savePlan(await makePlan(), 1)
     saved.saveChecked(['a'])
@@ -222,6 +234,12 @@ describe('feedback: validering', () => {
     assert.equal(validateFeedback({ unclear: 'a'.repeat(MAX_TEXT + 500) }).value.unclear.length, MAX_TEXT)
     assert.deepEqual(validateFeedback({ used: ['plan', 'plan'] }).value.usedKeys, ['plan'])
     assert.equal(validateFeedback({ unclear: 42 }).ok, false, 'icke-text räknas inte som svar')
+  })
+  test('prototypnycklar och fel typer släpps inte igenom som val', () => {
+    for (const bad of [{ used: ['constructor'] }, { used: ['toString'] }, { used: ['__proto__'] }, { nextTime: 'toString' }, { nextTime: 'constructor' }, { nextTime: ['ja'] }, { nextTime: { ja: 1 } }, { nextTime: 5 }]) {
+      assert.equal(validateFeedback({ ...bad, unclear: 'x' }).ok, false, JSON.stringify(bad))
+    }
+    assert.equal(validateFeedback({ used: ['plan'], nextTime: 'ja' }).ok, true)
   })
 })
 
@@ -307,6 +325,18 @@ describe('feedback: API (/api/feedback)', () => {
     assert.ok(!logged.join('\n').includes('TESTSVAR'), 'fritext ska inte hamna i loggar')
   })
 
+  test('mottagare som svarar 200 med en HTML-felsida (t.ex. Apps Script som kastat fel) räknas som misslyckat', async () => {
+    for (const html of ['<!DOCTYPE html><html><body>Fel</body></html>', '  <html><head></head></html>']) {
+      globalThis.fetch = async () => new Response(html, { status: 200 })
+      const res = await post(ANSWER)
+      assert.equal(res.status, 502, html.slice(0, 20))
+    }
+    for (const okBody of ['ok', '{"ok":true}', '']) {
+      globalThis.fetch = async () => new Response(okBody, { status: 200 })
+      assert.equal((await post(ANSWER)).status, 200, okBody)
+    }
+  })
+
   test('frekvensspärr: för många svar från samma IP ger 429, andra IP:n påverkas inte', async () => {
     const ip = '10.31.0.1'
     for (let i = 0; i < MAX_PER_WINDOW; i++) assert.equal((await post(ANSWER, ip)).status, 200)
@@ -325,6 +355,9 @@ describe('plan-API: 0 vuxna (formuläret tillåter det) och orimliga värden', (
     const none = await generate({ ...INPUT, adults: 0, children: 0 })
     assert.equal(none.status, 400)
     assert.match((await none.json()).error, /minst en person/)
+    const tooMany = await generate({ ...INPUT, adults: 0, children: 1, duration: '1 vecka', budget: 1000, numberOfDishes: 10 })
+    assert.equal(tooMany.status, 400)
+    assert.match((await tooMany.json()).error, /för få portioner/)
     for (const bad of [{ adults: -1 }, { adults: 21 }, { adults: 1.5 }, { children: -1 }, { budget: 50 }, { numberOfDishes: 6 }, { duration: 'en dag' }]) {
       assert.equal((await generate({ ...INPUT, ...bad })).status, 400, JSON.stringify(bad))
     }

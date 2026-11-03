@@ -67,7 +67,9 @@ export function clearSavedPlan() {
 
 /** Sparar en nyskapad plan. Avbockningarna nollställs. */
 export function savePlan(plan, now = Date.now()) {
-  return writeEntry({ v: VERSION, savedAt: now, plan, checked: [] })
+  const ok = writeEntry({ v: VERSION, savedAt: now, plan, checked: [] })
+  if (!ok) clearSavedPlan() // lagringen full/blockerad: lämna inte kvar en äldre plans avbockningar
+  return ok
 }
 
 /** Slår ihop ändrade fält (t.ex. efter "Byt rätt") i den sparade planen. Behåller tidpunkt och avbockningar. */

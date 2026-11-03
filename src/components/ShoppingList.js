@@ -119,6 +119,9 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
   }
 
   const totalItems = categories.reduce((sum, c) => sum + (c.items?.length || 0), 0)
+  // Räkna bara avbockningar som hör till varor som finns kvar (efter "Byt rätt" kan nycklar ha blivit föräldralösa).
+  const currentKeys = new Set(categories.flatMap((c) => (c.items || []).map((i) => `${c.label}::${i.displayName}`)))
+  const checkedCount = checked.filter((k) => currentKeys.has(k)).length
 
   // Index för den sista kategorin som faktiskt har minst en vara – dit (och
   // bara dit) skickas endRef, se ShoppingCategory ovan.
@@ -203,7 +206,7 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
         )}
       </div>
       <p className="text-meta text-ink-light/70 mb-3">
-        {checked.length} av {totalItems} avbockade · tryck för att bocka av · sparas i den här webbläsaren
+        {checkedCount} av {totalItems} avbockade · tryck för att bocka av · sparas i den här webbläsaren
       </p>
       <div className="mb-5">
         <button
