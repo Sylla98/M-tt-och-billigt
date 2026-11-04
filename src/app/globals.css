@@ -211,3 +211,25 @@
 html[data-consent='open'] .footer-above-consent {
   padding-bottom: 22rem;
 }
+
+/* Fast feedbackknapp (FeedbackFab.js). Ligger över innehåll och dimmade bakgrunder (z-index
+   över modalerna, som använder z-50). --fab-bottom sätts av komponenten när den fasta
+   statistikpanelen skulle ligga i vägen. På smal skärm blir "Byt rätt" ett bottenark som
+   täcker nederkanten, så medan en modal är öppen flyttas knappen till övre högra hörnet. */
+.feedback-fab {
+  position: fixed;
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: var(--fab-bottom, max(0.75rem, env(safe-area-inset-bottom)));
+  z-index: 60;
+}
+@media (max-width: 767px) {
+  body:has([aria-modal='true']) .feedback-fab {
+    bottom: auto;
+    top: max(0.75rem, env(safe-area-inset-top));
+  }
+}
+
+/* Sidor med fast feedbackknapp lämnar plats under sidfoten så att knappen inte döljer sista raden. */
+.footer-clear-fab {
+  padding-bottom: 3.5rem;
+}

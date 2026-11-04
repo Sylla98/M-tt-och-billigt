@@ -1,5 +1,6 @@
 import TrackedLink from '@/components/TrackedLink'
 import SiteFooter from '@/components/SiteFooter'
+import FeedbackFab from '@/components/FeedbackFab'
 
 // Receptnamn som exempel på bredden i receptbiblioteket (riktiga recept ur
 // biblioteket, inte en påstådd plan) och två exempelnamn för bytet.
@@ -108,7 +109,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      <SiteFooter className="mt-auto" />
+      <SiteFooter className="mt-auto footer-clear-fab" />
+      <FeedbackFab />
     </main>
   )
 }

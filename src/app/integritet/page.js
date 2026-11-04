@@ -173,8 +173,8 @@ export default function IntegritetPage() {
               oavsett ditt val om statistik.
             </li>
             <li>
-              <strong className="text-ink">Feedback.</strong> Knappen ”Lämna feedback” (och
-              länken i sidfoten på planeringssidan) öppnar ett Google Formulär i en ny flik. Det är
+              <strong className="text-ink">Feedback.</strong> Knapparna och länkarna ”Lämna feedback” (en fast knapp
+              på startsidan och planeringen, en knapp i resultatet och en länk i sidfoten) öppnar ett Google Formulär i en ny flik. Det är
               en frivillig extern tjänst; appen skickar inga uppgifter dit själv och tar inte emot
               dina svar. Vad som sparas styrs av det du skriver i formuläret och av Googles villkor.
             </li>

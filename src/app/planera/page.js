@@ -4,6 +4,7 @@ import Link from 'next/link'
 import InputForm from '@/components/InputForm'
 import ResultView from '@/components/ResultView'
 import SiteFooter from '@/components/SiteFooter'
+import FeedbackFab from '@/components/FeedbackFab'
 import { trackEvent } from '@/utils/analytics'
 import { savePlan, loadSavedPlan, updateSavedPlan, clearSavedPlan } from '@/utils/savedPlan'
 
@@ -182,7 +183,8 @@ export default function PlaneraPage() {
       </div>
 
       {/* Footer */}
-      <SiteFooter widthClass={state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} showFeedback />
+      <SiteFooter className="footer-clear-fab" widthClass={state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} showFeedback />
+      <FeedbackFab />
     </main>
   )
 }
