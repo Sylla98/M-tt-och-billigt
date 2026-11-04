@@ -212,13 +212,30 @@ html[data-consent='open'] .footer-above-consent {
   padding-bottom: 22rem;
 }
 
-/* Fast feedbackknapp (FeedbackFab.js): längst upp, horisontellt centrerad, över innehåll och över
-   dimmade bakgrunder (modalerna använder z-50). Ligger i toppradens höjd mellan logotyp och
-   "Ny plan". Följer mobilens safe area (env(safe-area-inset-top)). */
+/* Fast feedbackknapp (FeedbackFab.js): längst upp, över innehåll och över dimmade bakgrunder
+   (modalerna använder z-50). Ligger i toppradens höjd och följer mobilens safe area
+   (env(safe-area-inset-top)). Centrerad på bredare skärmar. */
 .feedback-fab {
   position: fixed;
   top: max(0.25rem, env(safe-area-inset-top));
   left: 50%;
   transform: translateX(-50%);
   z-index: 60;
+}
+
+/* Smal skärm (mobil): knappen är visuellt liten och ligger förskjuten åt höger, strax till vänster
+   om "Ny plan" (ca 4 rem bred plus sidmarginal), så att den får luft mot logotypen även med
+   bredare typsnitt. Tryckytan görs större än knappen med en osynlig ::after (ca 44 px hög). */
+@media (max-width: 599px) {
+  .feedback-fab {
+    left: auto;
+    right: calc(5.75rem + env(safe-area-inset-right));
+    top: max(0.5rem, env(safe-area-inset-top));
+    transform: none;
+  }
+  .feedback-fab::after {
+    content: '';
+    position: absolute;
+    inset: -7px -2px;
+  }
 }
