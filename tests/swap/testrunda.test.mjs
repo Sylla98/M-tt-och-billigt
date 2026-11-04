@@ -227,7 +227,7 @@ describe('feedback: enbart det befintliga Google Formuläret (ingen intern motta
 
   test('en enda definition av formulärlänken, och den är den kända Google Formulär-länken', async () => {
     const link = await import('../../src/utils/feedbackLink.js')
-    assert.equal(link.FEEDBACK_FORM_URL, 'https://forms.gle/M5PvhoAFESmbyxZh7')
+    assert.equal(link.FEEDBACK_FORM_URL, 'https://forms.gle/GEG39fV4MtKDkPbs5')
     assert.match(link.FEEDBACK_FORM_NOTE, /Google Formulär/)
     assert.match(link.FEEDBACK_FORM_NOTE, /ny flik/)
     const hits = []
@@ -243,6 +243,12 @@ describe('feedback: enbart det befintliga Google Formuläret (ingen intern motta
     assert.match(footer, /href=\{FEEDBACK_FORM_URL\}[\s\S]{0,120}target="_blank"[\s\S]{0,80}rel="noopener noreferrer"/)
     assert.match(footer, /showFeedback = false/, 'av som standard (startsidan och integritetssidan)')
     assert.match(planera, /<SiteFooter[^>]*showFeedback/)
+  })
+
+  test('sidfotslänken döljs inte bakom den fasta statistikpanelen: sidfoten lämnar plats under sig medan första valet visas', () => {
+    const css = readFileSync(path.join(root, 'src', 'app', 'globals.css'), 'utf8')
+    assert.match(footer, /showFeedback \? 'footer-above-consent'/, 'klassen sitter bara på sidfoten med feedbacklänk')
+    assert.match(css, /html\[data-consent='open'\] \.footer-above-consent\s*\{\s*padding-bottom:\s*22rem/)
   })
 
   test('ingen intern feedbackmottagare finns kvar: inga routes, sidor, komponenter, miljövariabler eller anrop', () => {

@@ -203,3 +203,11 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Planeringssidans sidfot ligger längst ned på sidan, precis där det första statistikvalet
+   (fast panel, ca 250–350 px hög) visas, och blev då helt dold. Medan valet visas
+   (html[data-consent='open']) lämnas därför plats under sidfoten så att länkarna går att
+   scrolla fram ovanför panelen. Gäller bara sidfoten med feedbacklänk. */
+html[data-consent='open'] .footer-above-consent {
+  padding-bottom: 22rem;
+}

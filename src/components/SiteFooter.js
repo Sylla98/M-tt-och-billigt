@@ -9,10 +9,13 @@ const footerLinkClass =
  * Gemensam sidfot. Samma text och stil som tidigare, plus länkar till
  * integritetsinformationen och till valet om produktstatistik.
  * widthClass styr innehållets maxbredd så att sidfoten linjerar med sidan.
+ * showFeedback visar länken till feedbackformuläret (används på planeringssidan) och
+ * lämnar plats under sidfoten medan det första statistikvalet visas (se globals.css),
+ * annars döljs länken bakom den fasta panelen.
  */
 export default function SiteFooter({ widthClass = 'max-w-[1100px]', className = '', showFeedback = false }) {
   return (
-    <footer className={`border-t border-line ${className}`}>
+    <footer className={`border-t border-line ${showFeedback ? 'footer-above-consent' : ''} ${className}`}>
       <div
         className={`${widthClass} mx-auto px-4 py-5 text-xs text-ink-light/70
                     flex flex-wrap items-center justify-between gap-x-6 gap-y-2`}

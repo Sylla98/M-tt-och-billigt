@@ -22,7 +22,8 @@ Allt fungerar även om testaren avböjer statistik.
 - Vid inläsning byggs planen om med den version av appen som körs (samma beräkning som "Byt rätt"), så summor och kostnadsskillnader stämmer. Hänvisar en sparad plan till ett recept som inte finns längre, eller är den för gammal eller trasig, visas formuläret i stället.
 
 ## 3. Feedback
-- Feedback lämnas **enbart via det befintliga Google Formuläret** (`https://forms.gle/M5PvhoAFESmbyxZh7`, definierat i `src/utils/feedbackLink.js`). Länken öppnas i en ny flik och är märkt "Öppnas i Google Formulär i en ny flik".
+- Feedback lämnas **enbart via det befintliga Google Formuläret** (`https://forms.gle/GEG39fV4MtKDkPbs5`, definierat i `src/utils/feedbackLink.js`). Länken öppnas i en ny flik och är märkt "Öppnas i Google Formulär i en ny flik".
+- På mobil ligger sidfotslänken längst ned på planeringssidan. Medan det första statistikvalet visas (fast panel längst ned) lämnar sidan extra plats under sidfoten, så länken går att scrolla fram ovanför panelen. Knappen "Lämna feedback" i resultatvyn är den mest synliga vägen.
 - Appen tar inte emot, sparar eller skickar vidare några feedbacksvar själv, och inget går till statistiktjänsten. Det finns ingen mottagare att konfigurera i appen eller i Vercel.
 - Svaren läser du i Google Formulär (fliken Svar) med det Google-konto som äger formuläret.
 - Formulärets innehåll (frågor och tackmeddelande) styr du i Google Formulär. Enligt dig har det uppdaterats till fem frågor och ett tackmeddelande. Jag har inte kunnat öppna formuläret härifrån och har inte verifierat dess frågor, inställningar eller att svar kommer fram.
