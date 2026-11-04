@@ -57,6 +57,7 @@ export default function FeedbackFab() {
     const measure = () => {
       const p = panel.getBoundingClientRect()
       const f = fab.getBoundingClientRect()
+      if (f.width === 0) return // dold (tangentbord uppe): behåll senaste läget i stället för att nollställa
       const overlapsHorizontally = p.left < f.right && p.right > f.left
       setLift(overlapsHorizontally ? Math.max(0, Math.round(window.innerHeight - p.top + GAP_ABOVE_PANEL)) : 0)
     }
