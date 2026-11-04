@@ -7,7 +7,7 @@ Den här filen beskriver hur den första externa testomgången av Mätt & Billig
 2. Läsa planen och trycka **Visa recept** (öppnas under kortet på mobil och i en ruta på desktop).
 3. Trycka **Byt rätt**, se kostnadsskillnaden för hela planen och välja ett annat recept.
 4. Använda **Inköpslistan**: bocka av varor, och **Kopiera listan** (kopierar de varor som inte är avbockade som text, för anteckningar eller ett meddelande).
-5. Lämna feedback när som helst via den fasta knappen **Lämna feedback ↗** (nere till höger på startsidan och genom hela planeringen: stegen, resultatet, recepten, Byt rätt och inköpslistan). Den finns kvar och är tryckbar även med receptvyn eller Byt rätt öppen. Dessutom finns knappen **Lämna feedback** längst ned på planen och länken **Feedback (Google Formulär)** i sidfoten på planeringssidan.
+5. Lämna feedback när som helst via den fasta knappen **Lämna feedback ↗** längst upp i mitten (startsidan och genom hela planeringen: stegen, resultatet, recepten, Byt rätt och inköpslistan). Den följer med vid scroll och är tryckbar även med receptvyn eller Byt rätt öppen. Dessutom finns knappen **Lämna feedback** längst ned på planen och länken **Feedback (Google Formulär)** i sidfoten på planeringssidan.
 
 Allt fungerar även om testaren avböjer statistik.
 
@@ -23,7 +23,7 @@ Allt fungerar även om testaren avböjer statistik.
 
 ## 3. Feedback
 - Feedback lämnas **enbart via det befintliga Google Formuläret** (`https://forms.gle/GEG39fV4MtKDkPbs5`, definierat i `src/utils/feedbackLink.js`). Länken öppnas i en ny flik och är märkt "Öppnas i Google Formulär i en ny flik".
-- Den fasta knappen är liten och ska inte ta över: den har sekundär stil, öppnar inget av sig själv och skickar inget till statistik. Den flyttar sig av sig själv för att inte krocka: ovanför statistikpanelen medan första valet visas, till övre högra hörnet på smal skärm när Byt rätt (bottenark) är öppet, och den döljs på pekskärmar medan ett textfält har fokus (skärmtangentbordet uppe). Sidorna lämnar plats under sidfoten så att den inte döljer sista raden.
+- Den fasta knappen är liten och ska inte ta över: sekundär stil, den öppnar inget av sig själv och skickar inget till statistik. Den ligger i toppradens höjd, centrerad mellan logotypen och "Ny plan" (med hänsyn till mobilens safe area), alltid på samma plats. Modalerna lämnar fritt ovanför sig. På pekskärmar döljs den medan ett textfält har fokus (tangentbordet uppe) och visas igen när fokus lämnar fältet. På mycket smala skärmar (320 px) är avståndet till logotypen bara någon pixel och pilen är dold.
 - På mobil ligger sidfotslänken längst ned på planeringssidan. Medan det första statistikvalet visas (fast panel längst ned) lämnar sidan extra plats under sidfoten, så länken går att scrolla fram ovanför panelen. Knappen "Lämna feedback" i resultatvyn är den mest synliga vägen.
 - Appen tar inte emot, sparar eller skickar vidare några feedbacksvar själv, och inget går till statistiktjänsten. Det finns ingen mottagare att konfigurera i appen eller i Vercel.
 - Svaren läser du i Google Formulär (fliken Svar) med det Google-konto som äger formuläret.

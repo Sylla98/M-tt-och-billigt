@@ -116,7 +116,7 @@ export default function PlaneraPage() {
           Logotypen länkar tillbaka till startsidan. */}
       <header className="border-b border-line bg-cream/90 backdrop-blur-sm sticky top-0 z-20">
         <div className={`${state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} mx-auto px-4 py-3.5 flex items-center justify-between transition-[max-width] duration-200`}>
-          <Link href="/" className="font-display font-semibold text-ink text-[1.0625rem] tracking-tight">
+          <Link href="/" className="font-display font-semibold text-ink text-[1.0625rem] max-[339px]:text-[0.9375rem] tracking-tight">
             Mätt &amp; Billigt
           </Link>
           {(state === 'done' || state === 'error') && (
@@ -183,7 +183,7 @@ export default function PlaneraPage() {
       </div>
 
       {/* Footer */}
-      <SiteFooter className="footer-clear-fab" widthClass={state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} showFeedback />
+      <SiteFooter widthClass={state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} showFeedback />
       <FeedbackFab />
     </main>
   )

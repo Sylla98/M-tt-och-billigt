@@ -245,19 +245,26 @@ describe('feedback: enbart det befintliga Google Formuläret (ingen intern motta
     assert.match(planera, /<SiteFooter[^>]*showFeedback/)
   })
 
-  test('fast feedbackknapp: samma länk i ny flik, på startsidan och planeringssidan, utanför det som är gated, med plats under sidfoten', () => {
+  test('fast feedbackknapp: samma länk i ny flik, fast längst upp i mitten på startsidan och planeringssidan, ingen växling eller extra sidfotsplats', () => {
     const fab = readFileSync(path.join(root, 'src', 'components', 'FeedbackFab.js'), 'utf8')
     const home = readFileSync(path.join(root, 'src', 'app', 'page.js'), 'utf8')
     const css = readFileSync(path.join(root, 'src', 'app', 'globals.css'), 'utf8')
     assert.match(fab, /href=\{FEEDBACK_FORM_URL\}[\s\S]{0,80}target="_blank"[\s\S]{0,60}rel="noopener noreferrer"/)
+    assert.match(fab, /Lämna feedback\s*<span[^>]*>↗<\/span>/, 'texten "Lämna feedback ↗"')
     assert.doesNotMatch(fab, /posthog|track|capture|localStorage|fetch\(/i, 'knappen skickar och sparar inget')
     assert.match(home, /<FeedbackFab \/>/)
     assert.match(planera, /<FeedbackFab \/>/)
     assert.match(planera, /<\/div>\s*\{\/\* Footer \*\/\}[\s\S]*<FeedbackFab \/>/, 'ligger utanför innehållet som döljs tills sparad plan lästs in')
-    assert.match(css, /\.feedback-fab\s*\{[^}]*position:\s*fixed[^}]*z-index:\s*60/, 'över modalerna (z-50)')
-    assert.match(css, /body:has\(\[aria-modal='true'\]\) \.feedback-fab/, 'flyttas när en modal är öppen på smal skärm')
-    assert.match(css, /\.footer-clear-fab\s*\{\s*padding-bottom/)
-    assert.match(home, /footer-clear-fab/); assert.match(planera, /footer-clear-fab/)
+    const rule = css.match(/\.feedback-fab\s*\{([^}]*)\}/)
+    assert.ok(rule, 'regel för .feedback-fab finns')
+    assert.match(rule[1], /position:\s*fixed/)
+    assert.match(rule[1], /top:\s*max\([^)]*env\(safe-area-inset-top\)\)/, 'följer safe area')
+    assert.match(rule[1], /left:\s*50%/); assert.match(rule[1], /translateX\(-50%\)/)
+    assert.match(rule[1], /z-index:\s*60/, 'över modalerna (z-50)')
+    assert.doesNotMatch(rule[1], /bottom|right\s*:/, 'inget nedre eller högra läge')
+    assert.doesNotMatch(css, /:has\(\[aria-modal/, 'ingen växling när modal öppnas')
+    assert.doesNotMatch(css, /footer-clear-fab|--fab-bottom/, 'ingen extra sidfotsplats eller lyft för tidigare placering')
+    assert.doesNotMatch(fab + home + planera, /footer-clear-fab|PANEL_SELECTOR|ResizeObserver/)
   })
 
   test('sidfotslänken döljs inte bakom den fasta statistikpanelen: sidfoten lämnar plats under sig medan första valet visas', () => {

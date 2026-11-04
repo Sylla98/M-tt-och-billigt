@@ -11,7 +11,7 @@ export default function HomePage() {
     <main className="min-h-screen flex flex-col">
       <header className="border-b border-line">
         <div className="max-w-[1100px] mx-auto px-4 py-[var(--land-header-py)] md:py-4 flex items-center justify-between">
-          <span className="font-display font-semibold text-ink text-[1.0625rem] tracking-tight">
+          <span className="font-display font-semibold text-ink text-[1.0625rem] max-[339px]:text-[0.9375rem] tracking-tight">
             Mätt &amp; Billigt
           </span>
         </div>
@@ -109,7 +109,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <SiteFooter className="mt-auto footer-clear-fab" />
+      <SiteFooter className="mt-auto" />
       <FeedbackFab />
     </main>
   )
