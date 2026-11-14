@@ -18,7 +18,11 @@ const CONSENT_LAYOUT_SCRIPT =
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="sv" suppressHydrationWarning>
+    // data-scroll-behavior="smooth": globals.css har scroll-behavior: smooth på
+    // html. Utan attributet låter Next 16 den gälla även vid sidbyte, så nya
+    // sidan animeras upp från förra scrollpositionen. Med attributet stänger
+    // Next av den under navigeringen, som i Next 14.
+    <html lang="sv" data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         {process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true' && (
           <script dangerouslySetInnerHTML={{ __html: CONSENT_LAYOUT_SCRIPT }} />
