@@ -81,7 +81,7 @@ export default function HomePage() {
                 det riktiga budgetreglaget i formuläret, rent illustrativt. */}
             <li className="rounded-2xl bg-butter-light border border-butter p-[var(--land-pad)] md:p-6 lg:p-5 xl:p-6">
               <h2 className="font-display font-semibold text-[length:var(--land-title)] md:text-xl text-ink leading-snug text-balance">
-                Håller sig till din budget
+                Planerad efter din budget
               </h2>
               <div aria-hidden="true" className="mt-[var(--land-slider-mt)] md:mt-6 relative h-1.5 rounded-full bg-butter">
                 <div className="absolute inset-y-0 left-0 w-[55%] rounded-full bg-forest" />

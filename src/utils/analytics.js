@@ -232,6 +232,17 @@ const URL_PROPERTIES_TO_SANITIZE = ['$current_url', '$initial_current_url', '$se
 // användbar statistik om varifrån trafiken kommer.
 const REFERRER_PROPERTIES_TO_REMOVE = ['$referrer', '$initial_referrer', '$session_entry_referrer']
 
+// Kampanj- och klick-parametrar ur sidadressens query (t.ex. ?utm_source=... eller ?fbclid=...) läser
+// PostHog-SDK:n av och bifogar som egna egenskaper på varje händelse, trots att $current_url är
+// trimmad (verifierat mot installerad version 1.434.15). Vi använder dem inte och tar bort dem, så att
+// ingenting ur en sidadress skickas, i linje med integritetssidan. Listan är den som SDK:n själv
+// läser (CAMPAIGN_PARAMS); ett eventuellt "$initial_"-prefix tas bort på samma sätt.
+const CAMPAIGN_PROPERTIES_TO_REMOVE = [
+  'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term', 'gad_source', 'mc_cid', 'gclid',
+  'gclsrc', 'dclid', 'gbraid', 'wbraid', 'fbclid', 'msclkid', 'twclid', 'li_fat_id', 'igshid', 'ttclid',
+  'rdt_cid', 'epik', 'qclid', 'sccid', 'irclid', '_kx',
+]
+
 /**
  * PostHogs dokumenterade sanitize_properties-hook (kopplas in i
  * providers.js:s posthog.init). Körs på VARJE event PostHog fångar –
@@ -250,6 +261,11 @@ export function sanitizeAnalyticsProperties(properties) {
 
   for (const key of REFERRER_PROPERTIES_TO_REMOVE) {
     delete properties[key]
+  }
+
+  for (const key of CAMPAIGN_PROPERTIES_TO_REMOVE) {
+    delete properties[key]
+    delete properties[`$initial_${key}`]
   }
 
   // Om SDK:n någonsin skulle bifoga query-strängen som en egen egenskap

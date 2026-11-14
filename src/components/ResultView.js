@@ -220,7 +220,7 @@ export default function ResultView({ data, onReset, onUpdateResult, restoredAt =
               </div>
             </div>
             <p className="text-xs text-ink-light/80 mt-3.5 pt-3.5 border-t border-line">
-              {totalServings} portioner planerade · uppskattning utifrån generella svenska matpriser
+              {totalServings} portioner planerade · uppskattning utifrån generella svenska matpriser och hela förpackningar
             </p>
           </div>
         )}

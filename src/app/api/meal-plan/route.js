@@ -153,7 +153,6 @@ export async function POST(request) {
     if (priced.estimatedTotalCost > budget) {
       const swaps = swapForBudget(selected, remaining, 3)
       if (swaps.length > 0) {
-        console.log(`[meal-plan] Budgetbyten: ${swaps.map((s) => `${s.out} → ${s.in}`).join(', ')}`)
         ;({ scaled, priced, occurrences, batchSizes } = scaleAndPrice(selected))
       }
     }
@@ -163,10 +162,8 @@ export async function POST(request) {
     // tillagningstillfällena, vilket per konstruktion är exakt lika med
     // totalServingsTarget.
     const totalServings = scaled.reduce((sum, r) => sum + r.servings, 0)
-    console.log(
-      `[meal-plan] Batchplan: ${selected.length} unika recept → ${occurrences} tillagningstillfällen, ` +
-      `batchstorlekar [${batchSizes.join(', ')}] (min ${Math.min(...batchSizes)}, max ${Math.max(...batchSizes)})`
-    )
+    // Loggar medvetet inga värden som härleds från besökarens indata (portioner, budget,
+    // kostnad), se integritetssidan: servern sparar inte det besökaren fyller i.
     const estimatedTotalCost = priced.estimatedTotalCost
     const budgetDifference = estimatedTotalCost - budget
     const isWithinBudget = estimatedTotalCost <= budget
@@ -200,7 +197,7 @@ export async function POST(request) {
     }
 
     const elapsedMs = Date.now() - startTime
-    console.log(`[meal-plan] Lokal matplan skapad på ${elapsedMs} ms – ${scaled.length} recept, ${totalServings} portioner, ${estimatedTotalCost} kr`)
+    console.log(`[meal-plan] Lokal matplan skapad på ${elapsedMs} ms`)
 
     return Response.json(responseData)
   } catch (err) {

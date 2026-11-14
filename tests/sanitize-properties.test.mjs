@@ -27,6 +27,20 @@ describe('sanitizeAnalyticsProperties()', () => {
     assert.equal(result.$session_entry_url, 'https://example.se/planera')
   })
 
+  test('tar bort kampanj- och klick-parametrar ur sidadressen som SDK:n bifogar som egna egenskaper (utm_*, fbclid, gclid ...)', () => {
+    const result = sanitizeAnalyticsProperties({
+      $current_url: 'https://example.se/planera?utm_source=x&fbclid=abc',
+      utm_source: 'x', utm_medium: null, utm_campaign: 'sommar', utm_term: 'mat', gclid: 'g1', fbclid: 'abc',
+      msclkid: 'm', li_fat_id: 'l', _kx: 'k', $initial_utm_source: 'x', $initial_gclid: 'g1',
+      $browser: 'Chrome', $pathname: '/planera', $screen_width: 390,
+    })
+    for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'gclid', 'fbclid', 'msclkid', 'li_fat_id', '_kx', '$initial_utm_source', '$initial_gclid']) {
+      assert.equal(key in result, false, `${key} ska vara borttagen`)
+    }
+    assert.equal(result.$current_url, 'https://example.se/planera')
+    assert.deepEqual([result.$browser, result.$pathname, result.$screen_width], ['Chrome', '/planera', 390], 'övriga egenskaper rörs inte')
+  })
+
   test('en URL utan query-sträng lämnas oförändrad', () => {
     const result = sanitizeAnalyticsProperties({ $current_url: 'https://example.se/planera' })
     assert.equal(result.$current_url, 'https://example.se/planera')

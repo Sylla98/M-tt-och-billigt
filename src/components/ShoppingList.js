@@ -251,7 +251,7 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
       )}
 
       <p className="text-xs text-ink-light/70 mt-5">
-        Prisuppskattningen bygger på generella svenska matpriser och kan variera mellan butiker.
+        Prisuppskattningen bygger på generella svenska matpriser och räknas på hela förpackningar. Priset i din butik kan skilja sig.
       </p>
     </div>
   )
