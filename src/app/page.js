@@ -1,112 +1,149 @@
 import TrackedLink from '@/components/TrackedLink'
 import SiteFooter from '@/components/SiteFooter'
 import FeedbackFab from '@/components/FeedbackFab'
+import styles from './landing.module.css'
 
-// Receptnamn som exempel på bredden i receptbiblioteket (riktiga recept ur
-// biblioteket, inte en påstådd plan) och två exempelnamn för bytet.
-const EXAMPLE_RECIPES = ['Butter chicken', 'Kikärtscurry', 'Ungersk gulasch', 'Skagen-räkpasta']
+// ─── Startsida ──────────────────────────────────────────────────────────────
+// Design: se DESIGN.md. Terrakottasektion med sidhuvud, rubrik, introduktion,
+// huvudknapp, grytfigur och en stor matbild med välvd överkant; under den en
+// ljus rad med tre korta fördelar. Desktop (md och uppåt): text till vänster,
+// bild till höger, fördelarna på en rad. Mobil: allt i en kolumn, texten och
+// knappen före bilden, fördelarna som tre enkla rader.
+//
+// Färger och övriga startsidestilar ligger i landing.module.css (gäller bara
+// den här sidan). Matbilden är receptbilden för "Köttbullar med potatis och
+// gräddsås" och visas här som stämningsbild, inte som ett receptförslag.
+
+const HERO_IMAGE = '/recipe-images/kottbullar-potatis-graddsas.jpg'
+
+// Enkla linjeikoner för fördelarna (dekorativa; texten bär innehållet).
+function IconCalendar(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...props}>
+      <rect x="3" y="4.5" width="18" height="16.5" rx="3" />
+      <path d="M3 9.5h18M8 2.75v3.5M16 2.75v3.5" />
+      <path d="M7.5 13h.01M12 13h.01M16.5 13h.01M7.5 17h.01M12 17h.01M16.5 17h.01" strokeWidth="2.4" />
+    </svg>
+  )
+}
+
+function IconCoins(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...props}>
+      <ellipse cx="14.5" cy="6.5" rx="6.5" ry="3" />
+      <path d="M8 6.5v3.5c0 1.66 2.91 3 6.5 3s6.5-1.34 6.5-3V6.5" />
+      <ellipse cx="9.5" cy="14" rx="6.5" ry="3" />
+      <path d="M3 14v3.5c0 1.66 2.91 3 6.5 3s6.5-1.34 6.5-3V14" />
+    </svg>
+  )
+}
+
+function IconSwap(props) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...props}>
+      <path d="M20 11a8 8 0 0 0-14.3-4.9L4 8" />
+      <path d="M4 3.5V8h4.5" />
+      <path d="M4 13a8 8 0 0 0 14.3 4.9L20 16" />
+      <path d="M20 20.5V16h-4.5" />
+    </svg>
+  )
+}
+
+const BENEFITS = [
+  { text: 'Recept för varje vardag', Icon: IconCalendar },
+  { text: 'Planerad efter din budget', Icon: IconCoins },
+  { text: 'Byt ut det du inte gillar', Icon: IconSwap },
+]
+
+// Grytfiguren (dekorativ) med en kort linje under, som i designunderlaget.
+function Pot({ className = '' }) {
+  return (
+    <div className={className} aria-hidden="true">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/landing/gryta.svg" alt="" width="850" height="769" className="block w-full h-auto" />
+      <span className={`${styles.ground} w-[38%] mx-auto mt-2`} />
+    </div>
+  )
+}
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen flex flex-col">
-      <header className="border-b border-line">
-        <div className="max-w-[1100px] mx-auto px-4 py-[var(--land-header-py)] md:py-4 flex items-center justify-between">
-          <span className="font-display font-semibold text-ink text-[1.0625rem] max-[339px]:text-[0.9375rem] tracking-tight">
+    <main className={`${styles.landing} min-h-screen flex flex-col`}>
+      <div className={styles.hero}>
+        <header className="max-w-[75rem] mx-auto px-5 md:px-8 pt-3.5 md:pt-6 pr-[9rem] md:pr-[12rem]">
+          {/* Höger sida lämnas fri för den fasta feedbackknappen. */}
+          <span className="block font-display font-semibold tracking-tight whitespace-nowrap leading-[1.9rem] md:leading-[2.5rem] lg:leading-[3rem] text-[1.625rem] max-[359px]:text-[1.375rem] md:text-[2.25rem] lg:text-[2.625rem]">
             Mätt &amp; Billigt
           </span>
-        </div>
-      </header>
+        </header>
 
-      {/* ── Hero + fördelar ───────────────────────────────────────────────
-          Rubrik och knapp till vänster, de tre fördelarna som tre tonade
-          rutor till höger (desktop); rubrik, knapp och tre rutor i en kolumn
-          (mobil). Varje ruta har sin ursprungliga rubrik och bär fördelen med
-          en liten bild av själva funktionen – receptnamn, budgetreglage,
-          receptbyte. Typsnitt, vikter och rubrikstilar är oförändrade.
-          Mobilens avstånd styrs av variablerna --land-* i globals.css: luftigt
-          när statistikvalet inte visas (sidan fyller skärmen), kompakt när det
-          visas (html[data-consent="open"]) så att rubrik, knapp och alla tre
-          rutor ryms ovanför valet på vanliga stora mobiler. På lägre
-          mobilskärmar (t.ex. 360x740, 375x667) täcker valet delar av rutorna
-          tills besökaren valt. Dekorationen är borttagen för enkelhetens skull.
-          */}
-      <section className="max-w-[1100px] w-full mx-auto px-4 pt-[var(--land-pt)] pb-8 md:pt-14 md:pb-16 lg:pt-8 xl:pt-14">
-        <div className="grid lg:grid-cols-[1fr_1.2fr] gap-[var(--land-sec-gap)] md:gap-8 lg:gap-12 items-center">
-          <div>
-            <h1 className="font-display font-semibold text-ink text-[length:var(--land-h1)] leading-[1.05] sm:text-[3rem] sm:leading-[1.02] md:text-[3.5rem] lg:text-[2.5rem] xl:text-[3rem] text-balance mb-[var(--land-h1-mb)] md:mb-5">
-              Veckans mat.
-              <br />
-              Smartare planerad.
+        <section className={`${styles.heroInner} max-w-[75rem] mx-auto px-5 md:px-8 pt-6 md:pt-6 grid md:grid-cols-[minmax(0,1fr)_minmax(0,0.85fr)] md:gap-10 lg:gap-16 items-end`}>
+          {/* Text, knapp och figur */}
+          <div className="text-center md:text-left md:self-center md:pb-14">
+            <h1 className={`${styles.title} font-display font-bold leading-[1.02] tracking-tight text-[2.25rem] max-[359px]:text-[2rem] md:text-[3.25rem] lg:text-[4rem] xl:text-[4.5rem] mb-3 md:mb-6`}>
+              <span className="block">Veckans mat.</span>{' '}
+              <span className="block">Smartare</span>{' '}
+              <span className="block">planerad.</span>
             </h1>
-            <p className="text-ink-light text-base md:text-lg leading-snug max-w-md mb-[var(--land-lead-mb)] md:mb-7">
+            <p className={`${styles.lead} text-[1.0625rem] leading-snug md:text-xl lg:text-[1.375rem] max-w-[17rem] md:max-w-[22rem] mx-auto md:mx-0 mb-5 md:mb-4`}>
               Planera vardagsmat och få en färdig inköpslista.
             </p>
-            <TrackedLink
-              href="/planera"
-              eventName="landing_cta_clicked"
-              className="inline-flex items-center justify-center gap-2.5 bg-forest hover:bg-forest-dark
-                         text-white font-bold py-[var(--land-cta-py)] md:py-3.5 pl-7 pr-6 rounded-full text-base
-                         transition-colors duration-150"
-            >
-              Skapa min matplan
-              <span aria-hidden="true">→</span>
-            </TrackedLink>
-            <p className="text-sm text-ink-light/70 mt-2 md:mt-3">Gratis · Ingen inloggning</p>
+
+            <div className="md:flex md:items-center md:gap-8 lg:gap-12">
+              <div className="flex flex-col items-center md:items-start">
+                <TrackedLink
+                  href="/planera"
+                  eventName="landing_cta_clicked"
+                  className={`${styles.cta} inline-flex items-center justify-center gap-2.5 w-full max-w-[17.5rem] md:w-auto md:max-w-none
+                             font-bold rounded-full min-h-[3rem] md:min-h-[3.75rem] px-7 md:px-10 text-[1.0625rem] md:text-[1.25rem]
+                             transition-colors duration-150`}
+                >
+                  Skapa min matplan
+                  <span aria-hidden="true">→</span>
+                </TrackedLink>
+                <p className="text-sm md:text-[0.9375rem] mt-2.5 md:mt-3 md:pl-10 opacity-90">Gratis · Ingen inloggning</p>
+              </div>
+              <Pot className="hidden md:block w-[7.5rem] lg:w-[8.5rem] shrink-0" />
+            </div>
+            <Pot className="md:hidden w-[5.25rem] mx-auto mt-5" />
           </div>
 
-          <ul className="grid gap-[var(--land-gap)] md:gap-3 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            {/* Recept efter hushållet – aprikos. Breda rutan på desktop. */}
-            <li className="md:col-span-2 lg:col-span-1 xl:col-span-2 rounded-2xl bg-terracotta-light border border-terracotta p-[var(--land-pad)] md:p-6 lg:p-5 xl:p-6">
-              <h2 className="font-display font-semibold text-[length:var(--land-title)] md:text-xl text-ink leading-snug text-balance">
-                Recept för varje vardag
-              </h2>
-              <p className="sr-only">Exempel på recept:</p>
-              <div className="mt-[var(--land-vis-mt)] md:mt-4 flex flex-wrap gap-2 md:gap-2">
-                {EXAMPLE_RECIPES.map((name, i) => (
-                  <span
-                    key={name}
-                    className={`bg-surface text-ink text-[length:var(--land-chip-fs)] md:text-sm lg:text-xs xl:text-sm font-medium
-                                px-[var(--land-chip-px)] py-[var(--land-chip-py)] md:px-3 md:py-1.5
-                                rounded-full border border-terracotta/60 inline-block
-                                ${i === 3 ? 'max-sm:[html[data-consent=open]_&]:hidden' : ''}`}
-                    style={{ transform: `rotate(${i % 2 === 0 ? '-1.5deg' : '1.5deg'})` }}
-                  >
-                    {name}
-                  </span>
-                ))}
-              </div>
-            </li>
+          {/* Matbild med välvd överkant */}
+          <div className="relative mt-6 md:mt-0 mx-auto w-full max-w-[22rem] md:max-w-[30rem]">
+            <svg className={styles.arc} viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+              <path className="hidden md:block" d="M -10.2 62.1 A 58 58 0 0 1 71.5 -0.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+              <path className="md:hidden" d="M 61.6 -4.8 A 56 56 0 0 1 104.1 35.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+            </svg>
+            <div className={`${styles.arch} ${styles.archBox} relative overflow-hidden h-[15rem] min-[400px]:h-[16.5rem]`}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={HERO_IMAGE}
+                alt=""
+                width="1448"
+                height="1086"
+                fetchPriority="high"
+                decoding="async"
+                className="absolute inset-0 w-full h-full object-cover object-[50%_38%] md:object-[57%_50%]"
+              />
+            </div>
+          </div>
+        </section>
+      </div>
 
-            {/* Uppskattad kostnad mot budget – smör. Samma visuella språk som
-                det riktiga budgetreglaget i formuläret, rent illustrativt. */}
-            <li className="rounded-2xl bg-butter-light border border-butter p-[var(--land-pad)] md:p-6 lg:p-5 xl:p-6">
-              <h2 className="font-display font-semibold text-[length:var(--land-title)] md:text-xl text-ink leading-snug text-balance">
-                Planerad efter din budget
-              </h2>
-              <div aria-hidden="true" className="mt-[var(--land-slider-mt)] md:mt-6 relative h-1.5 rounded-full bg-butter">
-                <div className="absolute inset-y-0 left-0 w-[55%] rounded-full bg-forest" />
-                <div className="absolute top-1/2 left-[55%] -translate-y-1/2 -translate-x-1/2 w-5 h-5 rounded-full bg-surface border-2 border-forest" />
-              </div>
+      {/* Tre korta fördelar */}
+      <section aria-label="Fördelar" className={`${styles.benefits} md:flex-1 md:flex md:items-center`}>
+        <ul className="max-w-[75rem] md:w-full mx-auto px-5 md:px-8 py-6 md:py-9 flex flex-col items-start w-fit md:flex-row md:items-center md:justify-between gap-3.5 md:gap-6">
+          {BENEFITS.map(({ text, Icon }, i) => (
+            <li
+              key={text}
+              className={`flex items-center gap-3 md:gap-4 font-medium text-[1.0625rem] lg:text-[1.25rem] md:flex-1 md:justify-center
+                          ${i > 0 ? 'md:border-l md:border-[#793528]/35' : ''}`}
+            >
+              <Icon className="w-7 h-7 md:w-9 md:h-9 shrink-0" />
+              {text}
             </li>
-
-            {/* Byt en rätt – himmelsblått. */}
-            <li className="rounded-2xl bg-sky border border-sky-dark/25 p-[var(--land-pad)] md:p-6 lg:p-5 xl:p-6">
-              <h2 className="font-display font-semibold text-[length:var(--land-title)] md:text-xl text-ink leading-snug text-balance">
-                Byt ut det du inte gillar
-              </h2>
-              <p className="sr-only">Exempel: Fiskgratäng byts mot Butter chicken.</p>
-              <div aria-hidden="true" className="mt-[var(--land-vis-mt)] md:mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                <span className="bg-surface text-ink-light text-[length:var(--land-chip-fs)] md:text-xs font-medium px-[var(--land-chip-px)] py-[var(--land-chip-py)] md:px-2.5 md:py-1.5 rounded-lg border border-sky-dark/25 line-through decoration-sky-dark/50">
-                  Fiskgratäng
-                </span>
-                <span className="text-sky-dark font-bold">→</span>
-                <span className="bg-forest text-white text-[length:var(--land-chip-fs)] md:text-xs font-bold px-[var(--land-chip-px)] py-[var(--land-chip-py)] md:px-2.5 md:py-1.5 rounded-lg">
-                  Butter chicken
-                </span>
-              </div>
-            </li>
-          </ul>
-        </div>
+          ))}
+        </ul>
       </section>
 
       <SiteFooter className="mt-auto" />
