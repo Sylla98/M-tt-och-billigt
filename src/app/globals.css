@@ -3,23 +3,47 @@
 @tailwind utilities;
 
 @layer base {
+  /* ── Gemensam färgpalett: oliv och smörgult (se DESIGN.md) ──────────────
+     Alla färger i appen kommer härifrån, per roll. Tailwind-färgerna i
+     tailwind.config.js pekar på variablerna (bg-primary, text-ink-light/70
+     osv.). Värdena är RGB-kanaler så att opacitet fungerar:
+     rgb(var(--color-primary) / 0.5). */
+  :root {
+    --color-page: 251 245 234; /* #FBF5EA – sidbakgrund (varm gräddvit) */
+    --color-surface: 255 252 245; /* #FFFCF5 – kort, fält, paneler */
+    --color-surface-alt: 246 232 202; /* #F6E8CA – varm gräddvit yta, t.ex. startsidans fördelsrad */
+    --color-ink: 42 44 28; /* #2A2C1C – text */
+    --color-ink-muted: 89 91 66; /* #595B42 – sekundär text */
+    --color-primary: 79 82 41; /* #4F5229 – oliv: primära knappar, valda och avbockade tillstånd, fokus, startsidans bakgrund */
+    --color-primary-hover: 63 66 32; /* #3F4220 – oliv, hover */
+    --color-primary-soft: 233 234 211; /* #E9EAD3 – tonad oliv: positivt/valt i lugn form */
+    --color-on-primary: 253 247 227; /* #FDF7E3 – gräddvit text och ikoner på oliv */
+    --color-accent: 244 210 100; /* #F4D264 – smörgult: startsidans huvudknapp, feedbackknappen i resultatet */
+    --color-accent-hover: 247 220 133; /* #F7DC85 – smörgult, hover */
+    --color-accent-soft: 250 236 192; /* #FAECC0 – tonat smörgult */
+    --color-line: 230 223 201; /* #E6DFC9 – kantlinjer */
+    --color-line-strong: 211 202 170; /* #D3CAAA – tydligare kantlinjer */
+    --color-danger: 168 67 43; /* #A8432B – fel och "över budget" */
+    --color-danger-soft: 246 225 214; /* #F6E1D6 – tonad yta för fel/över budget */
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
   }
 
   body {
-    background-color: #FAF8F3;
-    color: #302D29;
+    background-color: rgb(var(--color-page));
+    color: rgb(var(--color-ink));
     -webkit-font-smoothing: antialiased;
   }
 
   /* Synlig tangentbordsfokus på alla interaktiva element.
      :focus-visible gör att fokusringen bara syns vid tangentbords-
-     navigering, inte vid musklick. Kobolt (volt) – appens digitala
-     accentfärg – ger fokusmarkeringen en tydligt "teknisk" karaktär. */
+     navigering, inte vid musklick. Oliv (primärfärgen); på oliv bakgrund
+     används gräddvit i stället (startsidan, se landing.module.css). */
   :focus-visible {
-    outline: 2px solid #244735;
+    outline: 2px solid rgb(var(--color-primary));
     outline-offset: 2px;
     border-radius: 4px;
   }
@@ -32,7 +56,7 @@
 
   /* Hårfin avdelare mellan formulärsektioner – ersätter separata kort */
   .divide-hairline > * + * {
-    border-top: 1px solid #E8E0D2;
+    border-top: 1px solid rgb(var(--color-line));
   }
 
   .animate-fade-in {
@@ -112,12 +136,12 @@
 .budget-slider::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: #E8E0D2;
+  background: rgb(var(--color-line));
 }
 .budget-slider::-moz-range-track {
   height: 6px;
   border-radius: 999px;
-  background: #E8E0D2;
+  background: rgb(var(--color-line));
 }
 
 /* Handtag */
@@ -128,26 +152,26 @@
   height: 26px;
   margin-top: -10px; /* centrera mot det 6px höga spåret */
   border-radius: 50%;
-  background: #244735;
-  border: 3px solid #FFFFFF;
-  box-shadow: 0 1px 3px rgba(48, 45, 41, 0.25);
+  background: rgb(var(--color-primary));
+  border: 3px solid rgb(var(--color-surface));
+  box-shadow: 0 1px 3px rgb(var(--color-ink) / 0.25);
 }
 .budget-slider::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #244735;
-  border: 3px solid #FFFFFF;
-  box-shadow: 0 1px 3px rgba(48, 45, 41, 0.25);
+  background: rgb(var(--color-primary));
+  border: 3px solid rgb(var(--color-surface));
+  box-shadow: 0 1px 3px rgb(var(--color-ink) / 0.25);
 }
 
 /* Tydlig tangentbordsfokus på handtaget */
 .budget-slider:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid #244735;
+  outline: 2px solid rgb(var(--color-primary));
   outline-offset: 2px;
 }
 .budget-slider:focus-visible::-moz-range-thumb {
-  outline: 2px solid #244735;
+  outline: 2px solid rgb(var(--color-primary));
   outline-offset: 2px;
 }
 

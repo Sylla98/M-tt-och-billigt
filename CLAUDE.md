@@ -4,7 +4,7 @@
 - Prioritera användbara matplaner, kompletta recept och tillförlitliga kostnader.
 - Bygg inte nya funktioner eller utöka receptbiblioteket utan en konkret uppgift.
 - Ändra inte etablerad design utifrån personlig smak. Motivera designändringar med ett användarproblem eller testfeedback.
-- Startsidans genomförda design (färger, typografi, layout, grytfigur, matbild, feedbackknappens läge): [DESIGN.md](DESIGN.md). Appen heter Mätt & Billigt.
+- Appens färgpalett (oliv och smörgult, gemensamma färgvariabler per roll) och startsidans genomförda design (typografi, layout, grytfigur, matbild, feedbackknappens läge): [DESIGN.md](DESIGN.md). Använd färgrollerna, inte egna hexkoder. Appen heter Mätt & Billigt.
 - Beskriv uppskattad receptkostnad som en uppskattning, inte som priset för en faktisk varukorg.
 
 ## Känsliga flöden

@@ -114,7 +114,7 @@ export default function PlaneraPage() {
     <main className="min-h-screen flex flex-col">
       {/* Topprad – hårfin avdelare istället för dekorativ bakgrund.
           Logotypen länkar tillbaka till startsidan. */}
-      <header className="border-b border-line bg-cream/90 backdrop-blur-sm sticky top-0 z-20">
+      <header className="border-b border-line bg-page/90 backdrop-blur-sm sticky top-0 z-20">
         <div className={`${state === 'done' ? 'max-w-[1100px]' : 'max-w-[660px]'} mx-auto px-4 py-3.5 flex items-center justify-between transition-[max-width] duration-200`}>
           <Link href="/" className="font-display font-semibold text-ink text-[1.0625rem] max-[339px]:text-[0.9375rem] tracking-tight">
             Mätt &amp; Billigt
@@ -122,14 +122,14 @@ export default function PlaneraPage() {
           {(state === 'done' || state === 'error') && (
             <button
               onClick={handleReset}
-              className="text-sm font-medium text-ink-light hover:text-forest transition-colors py-1.5 px-2"
+              className="text-sm font-medium text-ink-light hover:text-primary transition-colors py-1.5 px-2"
             >
               Ny plan
             </button>
           )}
         </div>
         {confirmingReset && state === 'done' && (
-          <div role="alertdialog" aria-label="Skapa ny matplan" className="border-t border-line bg-white">
+          <div role="alertdialog" aria-label="Skapa ny matplan" className="border-t border-line bg-surface">
             <div className="max-w-[1100px] mx-auto px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2">
               <p className="text-sm text-ink flex-1 min-w-[220px]">
                 Skapa en ny matplan? Din nuvarande plan och inköpslista tas bort från den här webbläsaren.
@@ -138,14 +138,14 @@ export default function PlaneraPage() {
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="bg-forest hover:bg-forest-dark text-white font-bold py-2 px-4 rounded-lg text-sm min-h-[44px] transition-colors duration-150"
+                  className="bg-primary hover:bg-primary-hover text-on-primary font-bold py-2 px-4 rounded-lg text-sm min-h-[44px] transition-colors duration-150"
                 >
                   Skapa ny plan
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmingReset(false)}
-                  className="bg-white border border-line hover:border-ink-light/40 text-ink font-semibold py-2 px-4 rounded-lg text-sm min-h-[44px] transition-colors duration-150"
+                  className="bg-surface border border-line hover:border-ink-light/40 text-ink font-semibold py-2 px-4 rounded-lg text-sm min-h-[44px] transition-colors duration-150"
                 >
                   Behåll min plan
                 </button>
@@ -161,7 +161,7 @@ export default function PlaneraPage() {
           <InputForm onSubmit={handleSubmit} loading={state === 'loading'} onInteraction={trackPlanningStarted} />
         ) : state === 'error' ? (
           <div className="w-full max-w-[660px] mx-auto">
-            <div className="bg-white rounded-xl border border-line p-6">
+            <div className="bg-surface rounded-xl border border-line p-6">
               <h1 className="text-lg font-bold text-ink mb-2">
                 Matplanen kunde inte skapas
               </h1>
@@ -170,7 +170,7 @@ export default function PlaneraPage() {
               </p>
               <button
                 onClick={handleReset}
-                className="bg-forest hover:bg-forest-dark text-white font-bold
+                className="bg-primary hover:bg-primary-hover text-on-primary font-bold
                            py-3 px-6 rounded-lg text-sm min-h-[44px] transition-colors duration-150"
               >
                 Försök igen

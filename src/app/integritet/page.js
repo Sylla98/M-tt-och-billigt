@@ -38,12 +38,12 @@ function Section({ title, children }) {
 export default function IntegritetPage() {
   return (
     <main className="min-h-screen flex flex-col">
-      <header className="border-b border-line bg-cream/90">
+      <header className="border-b border-line bg-page/90">
         <div className="max-w-[660px] mx-auto px-4 py-3.5 flex items-center justify-between">
           <Link href="/" className="font-display font-semibold text-ink text-[1.0625rem] tracking-tight">
             Mätt &amp; Billigt
           </Link>
-          <Link href="/planera" className="text-sm font-medium text-ink-light hover:text-forest transition-colors py-1.5 px-2">
+          <Link href="/planera" className="text-sm font-medium text-ink-light hover:text-primary transition-colors py-1.5 px-2">
             Till planeringen
           </Link>
         </div>
@@ -73,7 +73,7 @@ export default function IntegritetPage() {
             tar tillbaka ditt ja slutar appen skicka nya händelser direkt.
           </p>
           <p>
-            <AnalyticsSettingsButton className="text-forest font-bold underline underline-offset-4 hover:text-forest-dark" />
+            <AnalyticsSettingsButton className="text-primary font-bold underline underline-offset-4 hover:text-primary-hover" />
           </p>
         </Section>
 
@@ -197,7 +197,7 @@ export default function IntegritetPage() {
             frågor om integritet, hör av dig till{' '}
             <a
               href="mailto:kontakt.mattochbilligt@gmail.com"
-              className="text-forest font-bold underline underline-offset-2 hover:text-forest-dark"
+              className="text-primary font-bold underline underline-offset-2 hover:text-primary-hover"
             >
               kontakt.mattochbilligt@gmail.com
             </a>

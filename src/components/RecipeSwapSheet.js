@@ -12,7 +12,7 @@ function AlternativeThumb({ recipe }) {
   const imageSrc = imgState === 'primary' ? primaryImage : FALLBACK_IMAGE
 
   return (
-    <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-cream">
+    <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-page">
       {imgState !== 'none' ? (
         <img
           src={imageSrc}
@@ -153,7 +153,7 @@ export default function RecipeSwapSheet({
               onClick={onClose}
               aria-label="Stäng"
               className="flex-shrink-0 w-9 h-9 -mr-1.5 -mt-1 flex items-center justify-center
-                         rounded-lg text-ink-light/70 hover:text-ink hover:bg-cream
+                         rounded-lg text-ink-light/70 hover:text-ink hover:bg-page
                          transition-colors text-lg leading-none
                          [-webkit-tap-highlight-color:transparent]"
             >
@@ -184,7 +184,7 @@ export default function RecipeSwapSheet({
                   onClick={() => handlePick(recipe.id)}
                   disabled={selecting}
                   className="w-full flex items-center gap-3 p-2.5 rounded-xl border border-line
-                             hover:border-forest/40 active:bg-cream/60 transition-colors
+                             hover:border-primary/40 active:bg-page/60 transition-colors
                              text-left disabled:opacity-50 disabled:pointer-events-none
                              min-h-[76px]
                              [-webkit-tap-highlight-color:transparent]"
@@ -200,7 +200,7 @@ export default function RecipeSwapSheet({
                     {costDeltaText.get(recipe.id) && (
                       <div
                         className={`text-sm font-semibold mt-1 tabular-nums
-                          ${costDeltaText.get(recipe.id).startsWith('\u2212') ? 'text-forest' : 'text-ink'}`}
+                          ${costDeltaText.get(recipe.id).startsWith('\u2212') ? 'text-primary' : 'text-ink'}`}
                       >
                         {costDeltaText.get(recipe.id)}
                       </div>

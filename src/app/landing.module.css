@@ -1,37 +1,29 @@
 /* ── Startsidans design (se DESIGN.md) ────────────────────────────────────
    CSS-modul: alla klasser här får unika namn och gäller bara startsidan
    (src/app/page.js). Planeringssidan, recepten, inköpslistan och övriga
-   delade komponenter påverkas inte. Färgerna finns som variabler på .landing
-   och används inte någon annanstans i appen. */
+   delade komponenter påverkas inte. Färgerna kommer från appens gemensamma
+   färgvariabler (--color-* i globals.css): oliv, smörgult och varm gräddvit. */
 
-.landing {
-  --l-terracotta: #93412f;
-  --l-cream: #fff3dc;
-  --l-butter: #f4cf78;
-  --l-butter-ink: #44291f;
-  --l-rust: #793528;
-}
-
-/* Terrakottasektionen (sidhuvud + hero). overflow-x: clip hindrar att den
+/* Olivsektionen (sidhuvud + hero). overflow-x: clip hindrar att den
    dekorativa bågen ger sidledsöverflöd. */
 .hero {
-  background-color: var(--l-terracotta);
-  color: var(--l-cream);
+  background-color: rgb(var(--color-primary));
+  color: rgb(var(--color-on-primary));
   overflow-x: clip;
 }
 
-/* Tangentbordsfokus: appens gröna fokusring syns dåligt mot terrakotta. */
+/* Tangentbordsfokus: appens olivfärgade fokusring syns inte mot oliv. */
 .hero :focus-visible {
-  outline-color: var(--l-cream);
+  outline-color: rgb(var(--color-on-primary));
 }
 
-/* Huvudknappen. */
+/* Huvudknappen: smörgul med mörk text. */
 .cta {
-  background-color: var(--l-butter);
-  color: var(--l-butter-ink);
+  background-color: rgb(var(--color-accent));
+  color: rgb(var(--color-ink));
 }
 .cta:hover {
-  background-color: #f7da93;
+  background-color: rgb(var(--color-accent-hover));
 }
 
 /* Matbilden med välvd överkant: överkanten är en halvcirkel med bildens bredd
@@ -58,13 +50,13 @@
   display: block;
   height: 3px;
   border-radius: 9999px;
-  background-color: var(--l-cream);
+  background-color: rgb(var(--color-on-primary));
 }
 
-/* Nedre informationsraden. */
+/* Nedre informationsraden: varm gräddvit med mörk text och ikoner. */
 .benefits {
-  background-color: var(--l-cream);
-  color: var(--l-rust);
+  background-color: rgb(var(--color-surface-alt));
+  color: rgb(var(--color-ink));
 }
 
 /* Låga mobilskärmar medan första statistikvalet visas (html[data-consent='open']
@@ -121,14 +113,14 @@
 
 /* ── Fast feedbackknapp på startsidan ──────────────────────────────────────
    Samma komponent och länk som i resten av flödet (FeedbackFab.js, fast läge
-   i globals.css). Här ändras bara färg och vågrätt läge: terrakotta med
-   gräddvit text, i linje med sidhuvudets högerkant. Knappen är fortsatt fast
-   längst upp och följer med vid scroll. Terrakottafyllningen gör den tydlig
-   även när den hamnar över den ljusa informationsraden eller sidfoten. */
+   i globals.css). Här ändras bara färg och vågrätt läge: oliv med gräddvit
+   text, i linje med sidhuvudets högerkant. Knappen är fortsatt fast längst
+   upp och följer med vid scroll. Olivfyllningen gör den tydlig även när den
+   hamnar över den ljusa informationsraden eller sidfoten. */
 .landing a:global(.feedback-fab) {
-  background-color: var(--l-terracotta);
-  border-color: rgba(255, 243, 220, 0.55);
-  color: var(--l-cream);
+  background-color: rgb(var(--color-primary));
+  border-color: rgb(var(--color-on-primary) / 0.55);
+  color: rgb(var(--color-on-primary));
   box-shadow: none;
   left: auto;
   transform: none;
@@ -152,12 +144,12 @@
   }
 }
 .landing a:global(.feedback-fab):hover {
-  border-color: var(--l-cream);
+  border-color: rgb(var(--color-on-primary));
 }
 .landing a:global(.feedback-fab) span {
   color: inherit;
 }
 .landing a:global(.feedback-fab):focus-visible {
-  outline-color: var(--l-cream);
-  box-shadow: 0 0 0 6px var(--l-butter-ink);
+  outline-color: rgb(var(--color-on-primary));
+  box-shadow: 0 0 0 6px rgb(var(--color-ink));
 }

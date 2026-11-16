@@ -140,7 +140,7 @@ export default function RecipeDetailModal({ recipe, onClose, returnFocusRef }) {
             onClick={onClose}
             aria-label="Stäng recept"
             className="flex-shrink-0 w-9 h-9 -mr-1.5 -mt-1 flex items-center justify-center
-                       rounded-lg text-ink-light hover:text-ink hover:bg-cream
+                       rounded-lg text-ink-light hover:text-ink hover:bg-page
                        transition-colors text-lg leading-none
                        [-webkit-tap-highlight-color:transparent]"
           >
@@ -183,7 +183,7 @@ export default function RecipeDetailModal({ recipe, onClose, returnFocusRef }) {
               <ol className="space-y-3.5">
                 {instructions.map((step, i) => (
                   <li key={i} className="flex gap-3 text-sm text-ink-light">
-                    <span className="flex-shrink-0 w-5 text-forest font-semibold tabular-nums">
+                    <span className="flex-shrink-0 w-5 text-primary font-semibold tabular-nums">
                       {i + 1}.
                     </span>
                     <span className="leading-relaxed max-w-[60ch]">{step}</span>

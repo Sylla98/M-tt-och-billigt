@@ -35,7 +35,7 @@ function ShoppingCategory({ category, checked, onToggle, lastItemRef }) {
                 onClick={() => onToggle(key)}
                 aria-pressed={done}
                 className="w-full flex items-center gap-3 py-2.5 text-left min-h-[48px]
-                           hover:bg-cream/60 -mx-2 px-2 rounded transition-colors"
+                           hover:bg-page/60 -mx-2 px-2 rounded transition-colors"
               >
                 {/* Checkbox – tydligt läge via både form, bock och genomstrykning */}
                 <span
@@ -43,8 +43,8 @@ function ShoppingCategory({ category, checked, onToggle, lastItemRef }) {
                   className={`w-[22px] h-[22px] rounded border-2 flex-shrink-0
                               flex items-center justify-center text-xs transition-colors
                     ${done
-                      ? 'bg-forest border-forest text-white'
-                      : 'border-ink-light/40 bg-white'}`}
+                      ? 'bg-primary border-primary text-on-primary'
+                      : 'border-ink-light/40 bg-surface'}`}
                 >
                   {done && '✓'}
                 </span>
@@ -212,7 +212,7 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
         <button
           type="button"
           onClick={copyList}
-          className="inline-flex items-center justify-center bg-white border border-line hover:border-ink-light/40
+          className="inline-flex items-center justify-center bg-surface border border-line hover:border-ink-light/40
                      text-ink font-semibold py-2 px-4 rounded-lg text-sm min-h-[44px] transition-colors duration-150"
         >
           Kopiera listan

@@ -35,7 +35,7 @@ function imageCategoryLabel(imageSrc) {
 // riktig receptfotografi, inte av platshållaren, så den här hålls
 // medvetet tillbakadragen: en mjuk, ljus tematon och receptnamnet i
 // vanlig text – inget stort typografiskt statement.
-const PLACEHOLDER_TONES = ['bg-terracotta-light', 'bg-butter-light', 'bg-sky']
+const PLACEHOLDER_TONES = ['bg-primary-soft', 'bg-accent-soft', 'bg-surface-alt']
 function placeholderTone(title) {
   const sum = (title || '').split('').reduce((s, c) => s + c.charCodeAt(0), 0)
   return PLACEHOLDER_TONES[sum % PLACEHOLDER_TONES.length]
@@ -169,7 +169,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
     // höger kolumn.
     <article
       ref={articleRef}
-      className="bg-white rounded-xl border border-line overflow-hidden
+      className="bg-surface rounded-xl border border-line overflow-hidden
                  transition-shadow duration-150 hover:shadow-md w-full
                  scroll-mt-20 animate-fade-in-fast"
     >
@@ -178,7 +178,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
           istället en fast, responsiv höjd (inte aspect ratio) så bilden
           inte blir orimligt stor på breda desktop-kort: ca 240px på mobil,
           upp mot 340px på desktop. object-cover behåller samma beskärning. */}
-      <div className={`relative bg-cream ${open ? 'h-[240px] md:h-[320px] lg:h-[380px]' : 'h-[240px] md:h-auto md:aspect-[4/3]'}`}>
+      <div className={`relative bg-page ${open ? 'h-[240px] md:h-[320px] lg:h-[380px]' : 'h-[240px] md:h-auto md:aspect-[4/3]'}`}>
         {imgState !== 'none' ? (
           <img
             src={imageSrc}
@@ -228,7 +228,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
         <div className="mt-6 flex flex-wrap items-center gap-3">
           {recipe.childFriendly && showFamilyFriendlyBadge && (
             <p className="inline-flex items-center gap-1 text-xs font-medium
-                          text-forest bg-forest-light border border-forest/20
+                          text-primary bg-primary-soft border border-primary/20
                           rounded px-2 py-0.5">
               <span aria-hidden="true">✓</span> Barnvänligt
             </p>
@@ -265,7 +265,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
               aria-label={`Byt rätt: ersätt ${title}`}
               className="ml-auto inline-flex items-center gap-1.5 text-sm font-semibold text-ink
                          border border-line-strong rounded-lg px-3
-                         hover:border-forest/50 hover:bg-cream
+                         hover:border-primary/50 hover:bg-page
                          min-h-[44px] transition-colors
                          [-webkit-tap-highlight-color:transparent]"
             >
@@ -301,7 +301,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
               <ol className="space-y-3.5">
                 {instructions.map((step, i) => (
                   <li key={i} className="flex gap-3 text-sm text-ink-light">
-                    <span className="flex-shrink-0 w-5 text-forest font-semibold tabular-nums">
+                    <span className="flex-shrink-0 w-5 text-primary font-semibold tabular-nums">
                       {i + 1}.
                     </span>
                     <span className="leading-relaxed max-w-[60ch]">{step}</span>

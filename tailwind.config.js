@@ -19,55 +19,37 @@ module.exports = {
         body: ['Satoshi', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
         sans: ['Satoshi', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
+      // Färger: ALLA kommer från de gemensamma färgvariablerna i
+      // src/app/globals.css (:root, --color-*), uppdelade efter roll. Paletten
+      // är oliv och smörgult med varm gräddvit (se DESIGN.md). Formatet
+      // rgb(var(--…) / <alpha-value>) gör att opacitetsvarianter som
+      // text-ink-light/70 fungerar. Lägg inte till egna hexkoder i komponenter.
       colors: {
-        // Bakgrund och rena ytor
-        cream: '#FAF8F3',
-        surface: '#FFFDF9',
-
-        // Text – mörk grafit
-        ink: '#302D29',
-        'ink-light': '#6B6862',
-
-        // Varumärke – skogsgrön. Nu appens PRIMÄRA interaktionsfärg (CTA:er,
-        // valda tillstånd, progress, fokus) OCH identitet – till skillnad
-        // från Koncept C där en separat kobolt bar interaktionen. Se till
-        // att inte falla tillbaka i "allt är grönt" (Koncept A 1.0:s
-        // problem): apricot/butter/sky ska bära lika mycket verklig yta.
-        forest: '#244735',
-        'forest-dark': '#1A3327',
-        'forest-light': '#E4EAE5',
-
-        // Varm kontrastfärg – bränd terrakotta/orange. Bytt från en tidigare,
-        // för rosa/aprikosa ton (#F2B493) som gjorde designen väl "snäll".
-        // ACCENT, inte en fjärde huvudyta: används sparsamt (en knapp, en
-        // dekorativ hero-form, ljusa tinter i funktionssektionen) – den
-        // huvudsakliga identiteten bärs fortsatt av cream/grafit/skogsgrönt/
-        // smör/himmelsblått.
-        terracotta: '#D9855B',
-        'terracotta-light': '#F5E7DC',
-        butter: '#F7DC90',
-        'butter-light': '#FCF3D9',
-        sky: '#D7E7EB',
-        'sky-dark': '#4A7C89',
-
-        // Funktionell varning – ENDAST "över budget". Egen, från de tre
-        // identitetsfärgerna fristående nyans så de aldrig läses som en
-        // varning i andra sammanhang.
-        rust: '#C1502E',
-        'rust-light': '#F5DEDA',
-
-        // Linjer – varm ton härledd ur cream, inte grå
-        line: '#E8E0D2',
-        'line-strong': '#DDD2BD',
+        page: 'rgb(var(--color-page) / <alpha-value>)',             // sidbakgrund
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',       // kort, fält, paneler
+        'surface-alt': 'rgb(var(--color-surface-alt) / <alpha-value>)', // varm gräddvit yta (startsidans fördelsrad m.m.)
+        ink: 'rgb(var(--color-ink) / <alpha-value>)',               // text
+        'ink-light': 'rgb(var(--color-ink-muted) / <alpha-value>)', // sekundär text
+        primary: 'rgb(var(--color-primary) / <alpha-value>)',       // oliv: primära knappar, valda tillstånd, fokus
+        'primary-hover': 'rgb(var(--color-primary-hover) / <alpha-value>)',
+        'primary-soft': 'rgb(var(--color-primary-soft) / <alpha-value>)', // tonad yta för valt/positivt
+        'on-primary': 'rgb(var(--color-on-primary) / <alpha-value>)', // gräddvit text på oliv
+        accent: 'rgb(var(--color-accent) / <alpha-value>)',         // smörgult
+        'accent-hover': 'rgb(var(--color-accent-hover) / <alpha-value>)',
+        'accent-soft': 'rgb(var(--color-accent-soft) / <alpha-value>)',
+        line: 'rgb(var(--color-line) / <alpha-value>)',             // kantlinjer
+        'line-strong': 'rgb(var(--color-line-strong) / <alpha-value>)',
+        danger: 'rgb(var(--color-danger) / <alpha-value>)',         // fel och "över budget"
+        'danger-soft': 'rgb(var(--color-danger-soft) / <alpha-value>)',
       },
       borderRadius: {
         '2xl': '1rem',
         '3xl': '1.25rem',
       },
       boxShadow: {
-        'sm': '0 1px 2px rgba(48, 45, 41, 0.05)',
-        'md': '0 1px 3px rgba(48, 45, 41, 0.07)',
-        'lg': '0 4px 16px rgba(48, 45, 41, 0.08)',
+        'sm': '0 1px 2px rgb(var(--color-ink) / 0.05)',
+        'md': '0 1px 3px rgb(var(--color-ink) / 0.07)',
+        'lg': '0 4px 16px rgb(var(--color-ink) / 0.08)',
       },
       fontSize: {
         'label': ['0.8125rem', { lineHeight: '1.2', letterSpacing: '0.01em' }],

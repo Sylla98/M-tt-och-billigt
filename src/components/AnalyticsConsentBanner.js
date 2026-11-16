@@ -24,8 +24,8 @@ const SERVER_SNAPSHOT = 'loading'
 // Båda valen har exakt samma stil och storlek. På mobil ligger de bredvid
 // varandra med något mindre text så att panelen inte täcker halva skärmen.
 const choiceButtonClass =
-  'flex-1 inline-flex items-center justify-center text-center bg-forest hover:bg-forest-dark ' +
-  'text-white font-bold py-2 px-2 sm:py-3 sm:px-5 rounded-lg text-[13px] leading-tight sm:text-sm ' +
+  'flex-1 inline-flex items-center justify-center text-center bg-primary hover:bg-primary-hover ' +
+  'text-on-primary font-bold py-2 px-2 sm:py-3 sm:px-5 rounded-lg text-[13px] leading-tight sm:text-sm ' +
   'sm:leading-normal min-h-[44px] transition-colors duration-150'
 
 export default function AnalyticsConsentBanner() {
@@ -109,7 +109,7 @@ export default function AnalyticsConsentBanner() {
           <p>
             Vi mäter aldrig vad du skriver in, som budget, hushåll eller skafferi. Verktyget
             (PostHog) tar dock emot teknisk information om din webbläsare och enhet.{' '}
-            <Link href="/integritet" className="underline underline-offset-2 hover:text-forest">
+            <Link href="/integritet" className="underline underline-offset-2 hover:text-primary">
               Läs mer om hur vi hanterar statistiken
             </Link>
             .
@@ -135,7 +135,7 @@ export default function AnalyticsConsentBanner() {
           <button
             type="button"
             onClick={close}
-            className="mt-3 text-sm text-ink-light hover:text-forest underline underline-offset-4 py-1"
+            className="mt-3 text-sm text-ink-light hover:text-primary underline underline-offset-4 py-1"
           >
             Stäng utan att ändra
           </button>

@@ -61,8 +61,8 @@ function ChoiceButton({ selected, onClick, children }) {
       className={`relative py-2.5 px-3 rounded-lg text-sm font-medium text-center
                   border transition-colors duration-150 min-h-[44px]
         ${selected
-          ? 'bg-forest text-white border-forest'
-          : 'bg-white text-ink border-line hover:border-ink-light/40'}`}
+          ? 'bg-primary text-on-primary border-primary'
+          : 'bg-surface text-ink border-line hover:border-ink-light/40'}`}
     >
       {selected && <span aria-hidden="true" className="mr-1.5">✓</span>}
       {children}
@@ -80,7 +80,7 @@ function StepperField({ label, value, onChange, min = 0 }) {
           onClick={() => onChange(Math.max(min, value - 1))}
           aria-label={`Minska ${label.toLowerCase()}`}
           disabled={value <= min}
-          className="w-11 h-11 rounded-lg border border-line bg-white text-ink text-lg
+          className="w-11 h-11 rounded-lg border border-line bg-surface text-ink text-lg
                      hover:border-ink-light/40 disabled:opacity-35 disabled:cursor-not-allowed
                      transition-colors flex items-center justify-center"
         >
@@ -93,7 +93,7 @@ function StepperField({ label, value, onChange, min = 0 }) {
           type="button"
           onClick={() => onChange(value + 1)}
           aria-label={`Öka ${label.toLowerCase()}`}
-          className="w-11 h-11 rounded-lg border border-line bg-white text-ink text-lg
+          className="w-11 h-11 rounded-lg border border-line bg-surface text-ink text-lg
                      hover:border-ink-light/40 transition-colors flex items-center justify-center"
         >
           +
@@ -112,7 +112,7 @@ function StepProgress({ step }) {
           <div
             key={i}
             className={`h-1 flex-1 rounded-full transition-colors duration-200
-              ${i < step ? 'bg-forest' : 'bg-line'}`}
+              ${i < step ? 'bg-primary' : 'bg-line'}`}
           />
         ))}
       </div>
@@ -151,7 +151,7 @@ function SummaryRow({ label, value, onEdit }) {
       <button
         type="button"
         onClick={onEdit}
-        className="text-xs text-forest hover:text-forest-dark underline underline-offset-4
+        className="text-xs text-primary hover:text-primary-hover underline underline-offset-4
                    flex-shrink-0 py-1 px-1 transition-colors"
       >
         Ändra
@@ -305,8 +305,8 @@ export default function InputForm({ onSubmit, loading, onInteraction }) {
   }
 
   const inputClass =
-    'w-full rounded-lg border border-line bg-white text-ink placeholder-ink-light/60 ' +
-    'px-3.5 py-3 text-base focus:outline-none focus:border-forest transition-colors'
+    'w-full rounded-lg border border-line bg-surface text-ink placeholder-ink-light/60 ' +
+    'px-3.5 py-3 text-base focus:outline-none focus:border-primary transition-colors'
 
   const selectedFoodLabels = foodTypes
     .map((id) => ALL_FOOD_TYPES.find((t) => t.id === id)?.label)
@@ -333,7 +333,7 @@ export default function InputForm({ onSubmit, loading, onInteraction }) {
         </p>
       </header>
 
-      <div className="bg-white rounded-xl border border-line p-4 md:p-6">
+      <div className="bg-surface rounded-xl border border-line p-4 md:p-6">
         <div className="flex items-start gap-1">
           {step > 1 && <BackButton onClick={goBack} />}
           <div className="flex-1 min-w-0">
@@ -496,7 +496,7 @@ export default function InputForm({ onSubmit, loading, onInteraction }) {
 
           {/* Inline-fel nära relevant fält, läsbart för hjälpmedel */}
           {error && (
-            <p role="alert" className="text-sm font-medium text-rust mt-4">
+            <p role="alert" className="text-sm font-medium text-danger mt-4">
               {error}
             </p>
           )}
@@ -508,7 +508,7 @@ export default function InputForm({ onSubmit, loading, onInteraction }) {
             <button
               type="button"
               onClick={goNext}
-              className="w-full bg-forest hover:bg-forest-dark text-white font-bold
+              className="w-full bg-primary hover:bg-primary-hover text-on-primary font-bold
                          py-3.5 px-6 rounded-lg text-base min-h-[52px]
                          transition-colors duration-150"
             >
@@ -519,15 +519,15 @@ export default function InputForm({ onSubmit, loading, onInteraction }) {
               type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full bg-forest hover:bg-forest-dark text-white font-bold
+              className="w-full bg-primary hover:bg-primary-hover text-on-primary font-bold
                          py-3.5 px-6 rounded-lg text-base min-h-[52px]
-                         disabled:opacity-45 disabled:cursor-not-allowed
+                         disabled:opacity-80 disabled:cursor-not-allowed
                          transition-colors duration-150
                          flex items-center justify-center gap-2.5"
             >
               {loading ? (
                 <>
-                  <span className="loading-spinner inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
+                  <span className="loading-spinner inline-block w-4 h-4 border-2 border-on-primary border-t-transparent rounded-full" />
                   Skapar din matplan…
                 </>
               ) : (

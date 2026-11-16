@@ -186,7 +186,7 @@ export default function ResultView({ data, onReset, onUpdateResult, restoredAt =
             {summaryParts.join(' · ')}
           </p>
           {childFriendly && (
-            <p className="text-meta text-forest font-bold mt-1">Familjevänliga recept</p>
+            <p className="text-meta text-primary font-bold mt-1">Familjevänliga recept</p>
           )}
           {restoredAt && (
             <p className="text-meta text-ink-light/80 mt-1.5">
@@ -212,7 +212,7 @@ export default function ResultView({ data, onReset, onUpdateResult, restoredAt =
               </div>
               <div
                 className={`text-sm font-bold px-3 py-1.5 rounded-full
-                  ${withinBudget ? 'text-forest bg-forest-light' : 'text-rust bg-rust-light'}`}
+                  ${withinBudget ? 'text-primary bg-primary-soft' : 'text-danger bg-danger-soft'}`}
               >
                 {withinBudget
                   ? `${diff.toLocaleString('sv-SE')} kr kvar`
@@ -279,17 +279,17 @@ export default function ResultView({ data, onReset, onUpdateResult, restoredAt =
         />
       </section>
 
-      {/* Feedback – enbart knappen, ingen extra rubrik/text. Aprikos som
-          fyllnadsfärg – ger en personlig, varm touch åt just detta steg,
-          skild från den skogsgröna primära handlingen (Generera matplan). */}
+      {/* Feedback – enbart knappen, ingen extra rubrik/text. Smörgult (accent)
+          som fyllnadsfärg – en varm touch åt just detta steg, skild från den
+          olivfärgade primära handlingen (Generera matplan). */}
       <section className="mt-12 pt-8 border-t border-line">
         <div className="max-w-[660px] text-center">
           <a
             href={FEEDBACK_FORM_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center bg-terracotta
-                       hover:bg-terracotta/80 text-ink font-bold
+            className="inline-flex items-center justify-center bg-accent
+                       hover:bg-accent-hover text-ink font-bold
                        py-2.5 px-6 rounded-lg text-sm min-h-[44px]
                        transition-colors duration-150"
           >
@@ -303,7 +303,7 @@ export default function ResultView({ data, onReset, onUpdateResult, restoredAt =
       <div className="mt-8 pb-4">
         <button
           onClick={onReset}
-          className="text-ink-light hover:text-forest transition-colors text-sm
+          className="text-ink-light hover:text-primary transition-colors text-sm
                      underline underline-offset-4 py-2"
         >
           Skapa en ny matplan

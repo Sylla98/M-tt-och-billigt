@@ -3,7 +3,7 @@ import AnalyticsSettingsButton from '@/components/AnalyticsSettingsButton'
 import { FEEDBACK_FORM_URL } from '@/utils/feedbackLink'
 
 const footerLinkClass =
-  'text-ink-light hover:text-forest underline underline-offset-2 transition-colors'
+  'text-ink-light hover:text-primary underline underline-offset-2 transition-colors'
 
 /**
  * Gemensam sidfot. Samma text och stil som tidigare, plus länkar till

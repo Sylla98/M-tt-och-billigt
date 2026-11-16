@@ -4,7 +4,7 @@ import FeedbackFab from '@/components/FeedbackFab'
 import styles from './landing.module.css'
 
 // ─── Startsida ──────────────────────────────────────────────────────────────
-// Design: se DESIGN.md. Terrakottasektion med sidhuvud, rubrik, introduktion,
+// Design: se DESIGN.md. Olivsektion med sidhuvud, rubrik, introduktion,
 // huvudknapp, grytfigur och en stor matbild med välvd överkant; under den en
 // ljus rad med tre korta fördelar. Desktop (md och uppåt): text till vänster,
 // bild till höger, fördelarna på en rad. Mobil: allt i en kolumn, texten och
@@ -137,7 +137,7 @@ export default function HomePage() {
             <li
               key={text}
               className={`flex items-center gap-3 md:gap-2.5 lg:gap-4 font-medium text-[1.0625rem] md:text-[0.9375rem] lg:text-[1.25rem] md:flex-1 md:justify-center md:px-2 lg:px-3 lg:whitespace-nowrap
-                          ${i > 0 ? 'md:border-l md:border-[#793528]/35' : ''}`}
+                          ${i > 0 ? 'md:border-l md:border-ink/25' : ''}`}
             >
               <Icon className="w-7 h-7 md:w-7 md:h-7 lg:w-9 lg:h-9 shrink-0" />
               {text}

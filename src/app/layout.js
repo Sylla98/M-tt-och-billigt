@@ -40,7 +40,7 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body className="bg-cream min-h-screen font-body antialiased">
+      <body className="bg-page min-h-screen font-body antialiased">
         <PostHogProvider>{children}</PostHogProvider>
       </body>
     </html>
