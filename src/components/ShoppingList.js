@@ -44,7 +44,7 @@ function ShoppingCategory({ category, checked, onToggle, lastItemRef }) {
                               flex items-center justify-center text-xs transition-colors
                     ${done
                       ? 'bg-primary border-primary text-on-primary'
-                      : 'border-ink-light/40 bg-surface'}`}
+                      : 'border-ink-light/70 bg-surface'}`}
                 >
                   {done && '✓'}
                 </span>

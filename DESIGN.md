@@ -55,7 +55,11 @@ Appen heter **Mätt & Billigt** överallt. Designunderlaget använde ett övergi
 | "över budget" | 4,8:1 |
 | Startsidans fördelsrad | 11,7:1 |
 
-- Sekundär text med 70 % opacitet (`text-ink-light/70`, till exempel sidfot och metadata på receptkort) har 3,3:1. Med den tidigare paletten var det 2,9:1.
+- Två varianter av sekundär text ligger under 4,5:1, liksom med den tidigare paletten:
+  - 80 % opacitet (`text-ink-light/80`, till exempel datumet för sparad plan och portionsnoten i resultatet): 4,1–4,2:1. Tidigare 3,5–3,6:1.
+  - 70 % opacitet (`text-ink-light/70`, till exempel sidfot och metadata på receptkort): 3,3:1. Tidigare 2,9:1.
+- Kanten på en omarkerad kryssruta i inköpslistan är `ink-light/70` (3,3:1 mot ytan; tidigare 1,8:1), så att rutan syns som en kontroll.
+- Billigare och dyrare byte ligger nära varandra i färg (oliv respektive textfärg). Betydelsen bärs av tecknet och texten.
 - Knappen "Generera matplan" visas med 80 % opacitet medan planen skapas, så att texten "Skapar din matplan…" går att läsa (4,6:1).
 - Fokusringen är oliv på ljusa ytor och gräddvit på oliv.
 
