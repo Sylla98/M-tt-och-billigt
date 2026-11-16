@@ -67,10 +67,11 @@
   color: var(--l-rust);
 }
 
-/* Låga mobilskärmar (t.ex. 320x568, 320x640), medan första statistikvalet
-   visas (html[data-consent='open'] sätts före första målningen): tätare
-   avstånd så att huvudknappen syns ovanför panelen. Vanliga och stora
-   mobiler påverkas inte, och inte heller desktop. */
+/* Låga mobilskärmar medan första statistikvalet visas (html[data-consent='open']
+   sätts före första målningen): tätare avstånd så att huvudknappen syns ovanför
+   panelen. Upp till 700 px höjd (t.ex. 320x640) räcker tätare avstånd; upp till
+   600 px (t.ex. 320x568) ligger rubriken dessutom på två rader. Vanliga och
+   stora mobiler påverkas inte, och inte heller desktop. */
 @media (max-width: 767px) and (max-height: 700px) {
   :global(html[data-consent='open']) .heroInner {
     padding-top: 0.75rem;
@@ -81,6 +82,23 @@
   }
   :global(html[data-consent='open']) .lead {
     margin-bottom: 0.875rem;
+  }
+}
+@media (max-width: 767px) and (max-height: 600px) {
+  :global(html[data-consent='open']) .header {
+    padding-top: 0.625rem;
+  }
+  :global(html[data-consent='open']) .heroInner {
+    padding-top: 0.25rem;
+  }
+  :global(html[data-consent='open']) .title {
+    font-size: 1.75rem;
+  }
+  :global(html[data-consent='open']) .title > span:not(:first-child) {
+    display: inline;
+  }
+  :global(html[data-consent='open']) .lead {
+    margin-bottom: 0.625rem;
   }
 }
 
@@ -95,7 +113,7 @@
 
 /* Desktop med lågt fönster (t.ex. 1280x800): något mindre rubrik, så att
    huvudknappen hamnar ovanför statistikpanelen. */
-@media (min-width: 768px) and (max-height: 860px) {
+@media (min-width: 1024px) and (max-height: 860px) {
   h1.title {
     font-size: 3.5rem;
   }

@@ -245,7 +245,7 @@ describe('feedback: enbart det befintliga Google Formuläret (ingen intern motta
     assert.match(planera, /<SiteFooter[^>]*showFeedback/)
   })
 
-  test('fast feedbackknapp: samma länk i ny flik, fast längst upp i mitten på startsidan och planeringssidan, ingen växling eller extra sidfotsplats', () => {
+  test('fast feedbackknapp: samma länk i ny flik, fast längst upp på startsidan och planeringssidan (i mitten på bredare skärmar; startsidans eget läge i landing.module.css), ingen växling eller extra sidfotsplats', () => {
     const fab = readFileSync(path.join(root, 'src', 'components', 'FeedbackFab.js'), 'utf8')
     const home = readFileSync(path.join(root, 'src', 'app', 'page.js'), 'utf8')
     const css = readFileSync(path.join(root, 'src', 'app', 'globals.css'), 'utf8')

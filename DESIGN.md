@@ -34,7 +34,7 @@ Bara de befintliga typsnitten från Fontshare används:
 - **Boska** (`font-display`): varumärket "Mätt & Billigt" (halvfet, tight spärrning, som tidigare) och rubriken (fet).
 - **Satoshi**: övrig text.
 
-Rubriken har alltid tre rader: "Veckans mat." / "Smartare" / "planerad." Raderna är block i `<h1>`, så skärmläsare läser "Veckans mat. Smartare planerad."
+Rubriken har tre rader: "Veckans mat." / "Smartare" / "planerad." Undantaget är mycket låga mobilskärmar medan statistikpanelen visas (se Layout). Raderna är block i `<h1>`, så skärmläsare läser "Veckans mat. Smartare planerad."
 
 Storlekar för varumärke och rubrik:
 
@@ -44,16 +44,16 @@ Storlekar för varumärke och rubrik:
 | md | 2,25rem | 3,25rem |
 | lg | 2,625rem | 4rem |
 | xl | 2,625rem | 4,5rem |
-| Desktopfönster högst 860 px högt | – | 3,5rem |
+| Från 1024 px, fönster högst 860 px högt | – | 3,5rem |
 
 ### Layout
 **Desktop (från 768 px):**
 - Sidhuvud med varumärket till vänster och feedbackknappen till höger.
 - Två kolumner:
-  - Vänster: rubrik, introduktion, huvudknapp med "Gratis · Ingen inloggning", och grytfiguren bredvid knappen.
+  - Vänster: rubrik, introduktion, huvudknapp med "Gratis · Ingen inloggning", och grytfiguren. Figuren står bredvid knappen från 1024 px och under knappen vid 768–1023 px. Knapptexten radbryts aldrig.
   - Höger: matbild med välvd överkant och en tunn dekorativ båge runt bildens vänstra och övre kant.
 - Bilden når ned till informationsraden. Dess höjd följer fönstrets höjd (28–40rem), så att sidan med sidfot ryms i ett vanligt fönster.
-- Informationsraden har tre fördelar med linjeikoner, åtskilda av tunna lodräta linjer. Den fyller ut till sidfoten.
+- Informationsraden har tre fördelar med linjeikoner, åtskilda av tunna lodräta linjer. Den fyller ut till sidfoten. Vid 768–1023 px är texten något mindre och får radbrytas i stället för att ge sidledsöverflöd.
 - Innehållet är högst 75rem brett och har 2rem sidmarginal.
 
 **Mobil:**
@@ -65,7 +65,9 @@ Storlekar för varumärke och rubrik:
 
 **Statistikpanelen:**
 - Den visas med samma innehåll och likvärdiga val som förut.
-- På låga mobilskärmar (högst 700 px höga) blir avstånden tätare och rubriken mindre medan första valet visas (`html[data-consent='open']`), så att huvudknappen syns ovanför panelen.
+- På låga mobilskärmar blir avstånden tätare och rubriken mindre medan första valet visas (`html[data-consent='open']`), så att huvudknappen syns ovanför panelen:
+  - Högst 700 px höga skärmar, till exempel 320×640: tätare avstånd.
+  - Högst 600 px höga skärmar, till exempel 320×568: rubriken ligger dessutom på två rader, "Veckans mat." / "Smartare planerad."
 - Vanliga mobiler och desktop har samma layout med och utan panel.
 
 ### Grytfiguren och bilden

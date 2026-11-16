@@ -70,7 +70,7 @@ export default function HomePage() {
   return (
     <main className={`${styles.landing} min-h-screen flex flex-col`}>
       <div className={styles.hero}>
-        <header className="max-w-[75rem] mx-auto px-5 md:px-8 pt-3.5 md:pt-6 pr-[9rem] md:pr-[12rem]">
+        <header className={`${styles.header} max-w-[75rem] mx-auto px-5 md:px-8 pt-3.5 md:pt-6 pr-[9rem] md:pr-[12rem]`}>
           {/* Höger sida lämnas fri för den fasta feedbackknappen. */}
           <span className="block font-display font-semibold tracking-tight whitespace-nowrap leading-[1.9rem] md:leading-[2.5rem] lg:leading-[3rem] text-[1.625rem] max-[359px]:text-[1.375rem] md:text-[2.25rem] lg:text-[2.625rem]">
             Mätt &amp; Billigt
@@ -89,23 +89,23 @@ export default function HomePage() {
               Planera vardagsmat och få en färdig inköpslista.
             </p>
 
-            <div className="md:flex md:items-center md:gap-8 lg:gap-12">
+            <div className="lg:flex lg:items-center lg:gap-12">
               <div className="flex flex-col items-center md:items-start">
                 <TrackedLink
                   href="/planera"
                   eventName="landing_cta_clicked"
-                  className={`${styles.cta} inline-flex items-center justify-center gap-2.5 w-full max-w-[17.5rem] md:w-auto md:max-w-none
+                  className={`${styles.cta} inline-flex items-center justify-center gap-2.5 whitespace-nowrap w-full max-w-[17.5rem] md:w-auto md:max-w-none
                              font-bold rounded-full min-h-[3rem] md:min-h-[3.75rem] px-7 md:px-10 text-[1.0625rem] md:text-[1.25rem]
                              transition-colors duration-150`}
                 >
                   Skapa min matplan
                   <span aria-hidden="true">→</span>
                 </TrackedLink>
-                <p className="text-sm md:text-[0.9375rem] mt-2.5 md:mt-3 md:pl-10 opacity-90">Gratis · Ingen inloggning</p>
+                <p className="whitespace-nowrap text-sm md:text-[0.9375rem] mt-2.5 md:mt-3 md:pl-10 opacity-90">Gratis · Ingen inloggning</p>
               </div>
-              <Pot className="hidden md:block w-[7.5rem] lg:w-[8.5rem] shrink-0" />
+              <Pot className="hidden lg:block w-[8.5rem] shrink-0" />
             </div>
-            <Pot className="md:hidden w-[5.25rem] mx-auto mt-5" />
+            <Pot className="lg:hidden w-[5.25rem] md:w-[6.5rem] mx-auto md:ml-10 mt-5 md:mt-6" />
           </div>
 
           {/* Matbild med välvd överkant */}
@@ -132,14 +132,14 @@ export default function HomePage() {
 
       {/* Tre korta fördelar */}
       <section aria-label="Fördelar" className={`${styles.benefits} md:flex-1 md:flex md:items-center`}>
-        <ul className="max-w-[75rem] md:w-full mx-auto px-5 md:px-8 py-6 md:py-9 flex flex-col items-start w-fit md:flex-row md:items-center md:justify-between gap-3.5 md:gap-6">
+        <ul className="max-w-[75rem] md:w-full mx-auto px-5 md:px-8 py-6 md:py-9 flex flex-col items-start w-fit md:flex-row md:items-center md:justify-between gap-3.5 md:gap-0">
           {BENEFITS.map(({ text, Icon }, i) => (
             <li
               key={text}
-              className={`flex items-center gap-3 md:gap-4 font-medium text-[1.0625rem] lg:text-[1.25rem] md:flex-1 md:justify-center
+              className={`flex items-center gap-3 md:gap-2.5 lg:gap-4 font-medium text-[1.0625rem] md:text-[0.9375rem] lg:text-[1.25rem] md:flex-1 md:justify-center md:px-2 lg:px-3 lg:whitespace-nowrap
                           ${i > 0 ? 'md:border-l md:border-[#793528]/35' : ''}`}
             >
-              <Icon className="w-7 h-7 md:w-9 md:h-9 shrink-0" />
+              <Icon className="w-7 h-7 md:w-7 md:h-7 lg:w-9 lg:h-9 shrink-0" />
               {text}
             </li>
           ))}
