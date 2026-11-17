@@ -23,7 +23,7 @@ function AlternativeThumb({ recipe }) {
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center px-1">
-          <span className="text-[9px] text-ink-light/70 text-center leading-tight">{recipe.name}</span>
+          <span className="text-[9px] text-ink-light text-center leading-tight">{recipe.name}</span>
         </div>
       )}
     </div>
@@ -153,7 +153,7 @@ export default function RecipeSwapSheet({
               onClick={onClose}
               aria-label="Stäng"
               className="flex-shrink-0 w-9 h-9 -mr-1.5 -mt-1 flex items-center justify-center
-                         rounded-lg text-ink-light/70 hover:text-ink hover:bg-page
+                         rounded-lg text-ink-light hover:text-ink hover:bg-page
                          transition-colors text-lg leading-none
                          [-webkit-tap-highlight-color:transparent]"
             >
@@ -167,7 +167,7 @@ export default function RecipeSwapSheet({
             </p>
           )}
           {getCostDelta && (
-            <p className="text-meta text-ink-light/80 mb-4">
+            <p className="text-meta text-ink-light mb-4">
               Visar hur planens uppskattade inköpskostnad ändras jämfört med nu.
             </p>
           )}
@@ -194,7 +194,7 @@ export default function RecipeSwapSheet({
                     <div className="text-sm font-semibold text-ink leading-snug">
                       {recipe.name}
                     </div>
-                    <div className="text-meta text-ink-light/70 mt-0.5">
+                    <div className="text-meta text-ink-light mt-0.5">
                       {recipe.totalTimeMinutes} min · ca {Math.round(costPerServing)} kr/portion
                     </div>
                     {costDeltaText.get(recipe.id) && (
@@ -224,7 +224,7 @@ export default function RecipeSwapSheet({
 
           <button
             onClick={onClose}
-            className="mt-4 w-full text-center text-sm text-ink-light/70
+            className="mt-4 w-full text-center text-sm text-ink-light
                        hover:text-ink transition-colors min-h-[44px]
                        [-webkit-tap-highlight-color:transparent]"
           >

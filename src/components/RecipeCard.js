@@ -192,7 +192,7 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
           // receptnamnet i vanlig text. Ingen del av produktens visuella
           // identitet vilar på detta läge; det ska bara aldrig se trasigt ut.
           <div className={`w-full h-full flex items-center justify-center px-6 ${placeholderTone(title)}`}>
-            <span className="text-sm font-semibold text-ink/70 text-center leading-snug">
+            <span className="text-sm font-semibold text-ink-light text-center leading-snug">
               {title}
             </span>
           </div>
@@ -211,12 +211,12 @@ export default function RecipeCard({ recipe, index, showFamilyFriendlyBadge = fa
         )}
 
         {/* Metadata som ren text – inga färgade pills */}
-        <p className="text-meta text-ink-light/70">
+        <p className="text-meta text-ink-light">
           {metaParts.join(' · ')}
         </p>
 
         {servedWith && (
-          <p className="text-meta text-ink-light/70 mt-0.5">{servedWith}</p>
+          <p className="text-meta text-ink-light mt-0.5">{servedWith}</p>
         )}
 
         {/* Action-rad: Barnvänligt + Visa/Dölj recept hör visuellt ihop som

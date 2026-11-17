@@ -55,9 +55,15 @@ Appen heter **Mätt & Billigt** överallt. Designunderlaget använde ett övergi
 | "över budget" | 4,8:1 |
 | Startsidans fördelsrad | 11,7:1 |
 
-- Två varianter av sekundär text ligger under 4,5:1, liksom med den tidigare paletten:
-  - 80 % opacitet (`text-ink-light/80`, till exempel datumet för sparad plan och portionsnoten i resultatet): 4,1–4,2:1. Tidigare 3,5–3,6:1.
-  - 70 % opacitet (`text-ink-light/70`, till exempel sidfot och metadata på receptkort): 3,3:1. Tidigare 2,9:1.
+- All text når minst 4,5:1 mot sin faktiska bakgrund. Sekundär text använder alltid hela `ink-light` (`#595B42`, 5,5–6,8:1 mot sida, yta, tonad oliv, tonat smörgult, tonad fel-yta och fördelsraden), aldrig en genomskinlig variant. Använd inte `text-ink-light/70`, `/80` eller liknande på text.
+- Ändrat från `ink-light/70` och `/80` till full `ink-light`:
+  - Sidfot (`SiteFooter.js`).
+  - Inköpslista (`ShoppingList.js`): rubrikens hjälptext, avbockade varor (genomstrykningen och bocken bär läget), mängd, pris och notisen längst ned.
+  - Receptkort och receptvy (`RecipeCard.js`, `RecipeDetailModal.js`): tid, portioner och "serveras med". Platshållartexten i receptbilden gick från `text-ink/70` till `ink-light`.
+  - Byt rätt (`RecipeSwapSheet.js`): förklaringen, tid och pris per portion, "Avbryt", stängknappen och miniatyrens text.
+  - Resultatet (`ResultView.js`): datum för sparad plan, portionsnoten och formulärnotisen.
+  - Planeringsformuläret (`InputForm.js`): hjälptexter, stegtext, reglagets ändpunkter, summeringens etiketter, "Gratis · Ingen inloggning" och platshållartexten i fälten (`placeholder-ink-light`).
+- Startsidans "Gratis · Ingen inloggning" på oliv har 90 % opacitet av gräddvit (6,5:1) och behålls.
 - Kanten på en omarkerad kryssruta i inköpslistan är `ink-light/70` (3,3:1 mot ytan; tidigare 1,8:1), så att rutan syns som en kontroll.
 - Billigare och dyrare byte ligger nära varandra i färg (oliv respektive textfärg). Betydelsen bärs av tecknet och texten.
 - Knappen "Generera matplan" visas med 80 % opacitet medan planen skapas, så att texten "Skapar din matplan…" går att läsa (4,6:1).

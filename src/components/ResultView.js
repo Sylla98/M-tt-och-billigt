@@ -189,7 +189,7 @@ export default function ResultView({ data, onReset, onUpdateResult, restoredAt =
             <p className="text-meta text-primary font-bold mt-1">Familjevänliga recept</p>
           )}
           {restoredAt && (
-            <p className="text-meta text-ink-light/80 mt-1.5">
+            <p className="text-meta text-ink-light mt-1.5">
               Din sparade plan från {new Date(restoredAt).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long' })}. Den ligger kvar i den här webbläsaren.
             </p>
           )}
@@ -219,7 +219,7 @@ export default function ResultView({ data, onReset, onUpdateResult, restoredAt =
                   : `${diff.toLocaleString('sv-SE')} kr över budget`}
               </div>
             </div>
-            <p className="text-xs text-ink-light/80 mt-3.5 pt-3.5 border-t border-line">
+            <p className="text-xs text-ink-light mt-3.5 pt-3.5 border-t border-line">
               {totalServings} portioner planerade · uppskattning utifrån generella svenska matpriser och hela förpackningar
             </p>
           </div>
@@ -295,7 +295,7 @@ export default function ResultView({ data, onReset, onUpdateResult, restoredAt =
           >
             Lämna feedback
           </a>
-          <p className="text-meta text-ink-light/70 mt-2">{FEEDBACK_FORM_NOTE}</p>
+          <p className="text-meta text-ink-light mt-2">{FEEDBACK_FORM_NOTE}</p>
         </div>
       </section>
 

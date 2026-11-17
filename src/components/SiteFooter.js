@@ -17,7 +17,7 @@ export default function SiteFooter({ widthClass = 'max-w-[1100px]', className = 
   return (
     <footer className={`border-t border-line ${showFeedback ? 'footer-above-consent' : ''} ${className}`}>
       <div
-        className={`${widthClass} mx-auto px-4 py-5 text-xs text-ink-light/70
+        className={`${widthClass} mx-auto px-4 py-5 text-xs text-ink-light
                     flex flex-wrap items-center justify-between gap-x-6 gap-y-2`}
       >
         <p>Mätt &amp; Billigt · Hjälper svenska familjer äta gott för mindre</p>

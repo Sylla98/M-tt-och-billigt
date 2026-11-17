@@ -155,11 +155,11 @@ export default function RecipeDetailModal({ recipe, onClose, returnFocusRef }) {
             </p>
           )}
 
-          <p className="text-meta text-ink-light/70">
+          <p className="text-meta text-ink-light">
             {metaParts.join(' · ')}
           </p>
           {servedWith && (
-            <p className="text-meta text-ink-light/70 mt-0.5">{servedWith}</p>
+            <p className="text-meta text-ink-light mt-0.5">{servedWith}</p>
           )}
 
           <div className="grid gap-6 md:grid-cols-12 mt-6 pt-5 border-t border-line">

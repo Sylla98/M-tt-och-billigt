@@ -51,19 +51,19 @@ function ShoppingCategory({ category, checked, onToggle, lastItemRef }) {
 
                 <span className="flex-1 min-w-0">
                   <span className={`block text-sm leading-snug transition-colors
-                    ${done ? 'line-through text-ink-light/70' : 'text-ink font-medium'}`}>
+                    ${done ? 'line-through text-ink-light' : 'text-ink font-medium'}`}>
                     {name}
                   </span>
                   {amount && (
                     <span className={`block text-meta transition-colors
-                      ${done ? 'text-ink-light/70' : 'text-ink-light'}`}>
+                      ${done ? 'text-ink-light' : 'text-ink-light'}`}>
                       {amount}
                     </span>
                   )}
                 </span>
 
                 <span className={`text-sm tabular-nums flex-shrink-0 transition-colors
-                  ${done ? 'text-ink-light/70' : 'text-ink-light'}`}>
+                  ${done ? 'text-ink-light' : 'text-ink-light'}`}>
                   {formatSEK(item.lineCost)}
                 </span>
               </button>
@@ -205,7 +205,7 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
           </div>
         )}
       </div>
-      <p className="text-meta text-ink-light/70 mb-3">
+      <p className="text-meta text-ink-light mb-3">
         {checkedCount} av {totalItems} avbockade · tryck för att bocka av · sparas i den här webbläsaren
       </p>
       <div className="mb-5">
@@ -250,7 +250,7 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
         </div>
       )}
 
-      <p className="text-xs text-ink-light/70 mt-5">
+      <p className="text-xs text-ink-light mt-5">
         Prisuppskattningen bygger på generella svenska matpriser och räknas på hela förpackningar. Priset i din butik kan skilja sig.
       </p>
     </div>

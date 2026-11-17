@@ -45,7 +45,7 @@ function FieldLabel({ children, hint }) {
   return (
     <div className="flex items-baseline justify-between gap-3 mb-2.5">
       <span className="text-label font-semibold text-ink">{children}</span>
-      {hint && <span className="text-xs text-ink-light/70 font-normal">{hint}</span>}
+      {hint && <span className="text-xs text-ink-light font-normal">{hint}</span>}
     </div>
   )
 }
@@ -116,7 +116,7 @@ function StepProgress({ step }) {
           />
         ))}
       </div>
-      <p className="text-xs text-ink-light/70" aria-live="polite">
+      <p className="text-xs text-ink-light" aria-live="polite">
         Steg {step} av {TOTAL_STEPS}
       </p>
     </div>
@@ -145,7 +145,7 @@ function SummaryRow({ label, value, onEdit }) {
   return (
     <div className="flex items-baseline justify-between gap-4 py-2.5">
       <div className="min-w-0">
-        <div className="text-xs text-ink-light/70 mb-0.5">{label}</div>
+        <div className="text-xs text-ink-light mb-0.5">{label}</div>
         <div className="text-sm text-ink break-words">{value}</div>
       </div>
       <button
@@ -305,7 +305,7 @@ export default function InputForm({ onSubmit, loading, onInteraction }) {
   }
 
   const inputClass =
-    'w-full rounded-lg border border-line bg-surface text-ink placeholder-ink-light/60 ' +
+    'w-full rounded-lg border border-line bg-surface text-ink placeholder-ink-light ' +
     'px-3.5 py-3 text-base focus:outline-none focus:border-primary transition-colors'
 
   const selectedFoodLabels = foodTypes
@@ -391,7 +391,7 @@ export default function InputForm({ onSubmit, loading, onInteraction }) {
                   className="budget-slider w-full"
                 />
 
-                <div className="flex justify-between mt-2 text-xs text-ink-light/70 tabular-nums">
+                <div className="flex justify-between mt-2 text-xs text-ink-light tabular-nums">
                   <span>{budgetRange.min.toLocaleString('sv-SE')} kr</span>
                   <span>{budgetRange.max.toLocaleString('sv-SE')} kr</span>
                 </div>
@@ -404,7 +404,7 @@ export default function InputForm({ onSubmit, loading, onInteraction }) {
             <div>
               <div className="flex items-baseline justify-between gap-3 mb-3.5">
                 <span className="text-xs text-ink-light">Välj det som passar er bäst</span>
-                <span className="text-xs text-ink-light/70 tabular-nums" aria-live="polite">
+                <span className="text-xs text-ink-light tabular-nums" aria-live="polite">
                   {foodTypes.length} av {MAX_FOOD_TYPES} valda
                 </span>
               </div>
@@ -461,7 +461,7 @@ export default function InputForm({ onSubmit, loading, onInteraction }) {
                   aria-label="Varor du redan har hemma"
                   className={inputClass}
                 />
-                <p className="text-xs text-ink-light/70 mt-2">
+                <p className="text-xs text-ink-light mt-2">
                   Det du har hemma tas bort från inköpslistan.
                 </p>
               </div>
@@ -538,7 +538,7 @@ export default function InputForm({ onSubmit, loading, onInteraction }) {
         </div>
       </div>
 
-      <p className="text-center text-xs text-ink-light/70 mt-3">
+      <p className="text-center text-xs text-ink-light mt-3">
         Gratis · Ingen inloggning
       </p>
     </div>
