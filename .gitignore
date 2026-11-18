@@ -1,0 +1,17 @@
+# Hemligheter – lägg ALDRIG in dessa i Git
+.env.local
+.env
+
+# Next.js bygge
+.next/
+out/
+
+# Beroenden
+node_modules/
+
+# Mac
+.DS_Store
+
+# Satoshi hämtas från Fontshare vid bygget (scripts/fetch-fonts.mjs) och får enligt
+# ITF Free Font License inte ligga i det publika repot.
+public/fonts/

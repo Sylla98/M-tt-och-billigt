@@ -8,60 +8,48 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // Serif används MEDVETET sparsamt: bara logotyp och hero-rubrik.
-        // All funktionell UI-text (formulär, knappar, siffror, metadata)
-        // sätts i sans för att appen ska kännas som ett verktyg, inte en blogg.
-        display: ['Georgia', 'Cambria', 'serif'],
-        body: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
-        sans: ['system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        // display: rubriker, varumärke och receptnamn. Georgia är det
+        // godkända utseendet (systemtypsnitt; Boska laddas inte, se DESIGN.md).
+        // Saknas Georgia (t.ex. på Android) används enhetens serif-typsnitt.
+        // body/sans: Satoshi för allt funktionellt UI, serverat från appens egen domän
+        // (@font-face i src/app/globals.css, filerna hämtas vid bygget).
+        display: ['Georgia', 'serif'],
+        body: ['Satoshi', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['Satoshi', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
+      // Färger: ALLA kommer från de gemensamma färgvariablerna i
+      // src/app/globals.css (:root, --color-*), uppdelade efter roll. Paletten
+      // är oliv och smörgult med varm gräddvit (se DESIGN.md). Formatet
+      // rgb(var(--…) / <alpha-value>) gör att opacitetsvarianter som
+      // text-ink-light/70 fungerar. Lägg inte till egna hexkoder i komponenter.
       colors: {
-        // Bakgrunder – varm off-white, mindre gul än tidigare
-        cream: '#FBF8F4',
-        warm: '#F5EFE7',
-
-        // Terrakotta – något djupare än förut för att klara AA-kontrast
-        // mot vitt i knappar och som textfärg
-        terracotta: '#BE5A3E',
-        'terracotta-light': '#D9795C',
-        'terracotta-dark': '#9C4630',
-
-        // Dämpad grön – används ENDAST för positiv budgetstatus.
-        // Mörkad så den fungerar som läsbar text, inte bara som yta.
-        sage: '#4F7A52',
-        'sage-light': '#A8C5AB',
-
-        // Lugn bärnsten för "över budget" – varning utan aggressivt rött
-        ochre: '#9A6A2F',
-        'ochre-light': '#E8D5AE',
-
-        // Text – mörk choklad. Betydligt högre kontrast än tidigare
-        // (#2E211A mot #5C3D2E) enligt tillgänglighetskravet.
-        brown: '#2E211A',
-        'brown-light': '#6B5749',
-
-        // Linjer och ytor
-        'stone-warm': '#EFE8DE',
-        'stone-mid': '#8A7767',
-        line: '#E4DACE',
+        page: 'rgb(var(--color-page) / <alpha-value>)',             // sidbakgrund
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',       // kort, fält, paneler
+        'surface-alt': 'rgb(var(--color-surface-alt) / <alpha-value>)', // varm gräddvit yta (startsidans fördelsrad m.m.)
+        ink: 'rgb(var(--color-ink) / <alpha-value>)',               // text
+        'ink-light': 'rgb(var(--color-ink-muted) / <alpha-value>)', // sekundär text
+        primary: 'rgb(var(--color-primary) / <alpha-value>)',       // oliv: primära knappar, valda tillstånd, fokus
+        'primary-hover': 'rgb(var(--color-primary-hover) / <alpha-value>)',
+        'primary-soft': 'rgb(var(--color-primary-soft) / <alpha-value>)', // tonad yta för valt/positivt
+        'on-primary': 'rgb(var(--color-on-primary) / <alpha-value>)', // gräddvit text på oliv
+        accent: 'rgb(var(--color-accent) / <alpha-value>)',         // smörgult
+        'accent-hover': 'rgb(var(--color-accent-hover) / <alpha-value>)',
+        'accent-soft': 'rgb(var(--color-accent-soft) / <alpha-value>)',
+        line: 'rgb(var(--color-line) / <alpha-value>)',             // kantlinjer
+        'line-strong': 'rgb(var(--color-line-strong) / <alpha-value>)',
+        danger: 'rgb(var(--color-danger) / <alpha-value>)',         // fel och "över budget"
+        'danger-soft': 'rgb(var(--color-danger-soft) / <alpha-value>)',
       },
       borderRadius: {
-        // Behålls oförändrade så att receptkort och inköpslista (som inte
-        // ingår i etapp 1) ser exakt likadana ut. Den nya, mer kompakta
-        // designen använder istället Tailwinds mindre standardradier.
         '2xl': '1rem',
-        '3xl': '1.5rem',
-        '4xl': '2rem',
+        '3xl': '1.25rem',
       },
       boxShadow: {
-        // Kraftigt nedtonade – den nya designen bär på hårfina linjer
-        // istället för stora skuggor.
-        'warm-sm': '0 1px 2px rgba(46, 33, 26, 0.04)',
-        'warm-md': '0 1px 3px rgba(46, 33, 26, 0.06)',
-        'warm-lg': '0 2px 8px rgba(46, 33, 26, 0.07)',
+        'sm': '0 1px 2px rgb(var(--color-ink) / 0.05)',
+        'md': '0 1px 3px rgb(var(--color-ink) / 0.07)',
+        'lg': '0 4px 16px rgb(var(--color-ink) / 0.08)',
       },
       fontSize: {
-        // Tydlig typografisk skala
         'label': ['0.8125rem', { lineHeight: '1.2', letterSpacing: '0.01em' }],
         'meta': ['0.8125rem', { lineHeight: '1.45' }],
       },
@@ -69,3 +57,5 @@ module.exports = {
   },
   plugins: [],
 }
+
+

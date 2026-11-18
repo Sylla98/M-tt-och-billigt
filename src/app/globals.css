@@ -2,23 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Satoshi serveras från appens egen domän. Filerna hämtas oförändrade från Fontshares
+   officiella paket vid bygget (scripts/fetch-fonts.mjs) och checkas inte in (ITF Free Font
+   License). Samma familj, vikter och font-display som Fontshares API gav tidigare. */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/satoshi/Satoshi-Regular.woff2') format('woff2'),
+       url('/fonts/satoshi/Satoshi-Regular.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/satoshi/Satoshi-Medium.woff2') format('woff2'),
+       url('/fonts/satoshi/Satoshi-Medium.woff') format('woff');
+  font-weight: 500;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/satoshi/Satoshi-Bold.woff2') format('woff2'),
+       url('/fonts/satoshi/Satoshi-Bold.woff') format('woff');
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/satoshi/Satoshi-Black.woff2') format('woff2'),
+       url('/fonts/satoshi/Satoshi-Black.woff') format('woff');
+  font-weight: 900;
+  font-display: swap;
+  font-style: normal;
+}
+
 @layer base {
+  /* ── Gemensam färgpalett: oliv och smörgult (se DESIGN.md) ──────────────
+     Alla färger i appen kommer härifrån, per roll. Tailwind-färgerna i
+     tailwind.config.js pekar på variablerna (bg-primary, text-ink-light/70
+     osv.). Värdena är RGB-kanaler så att opacitet fungerar:
+     rgb(var(--color-primary) / 0.5). */
+  :root {
+    --color-page: 251 245 234; /* #FBF5EA – sidbakgrund (varm gräddvit) */
+    --color-surface: 255 252 245; /* #FFFCF5 – kort, fält, paneler */
+    --color-surface-alt: 246 232 202; /* #F6E8CA – varm gräddvit yta, t.ex. startsidans fördelsrad */
+    --color-ink: 42 44 28; /* #2A2C1C – text */
+    --color-ink-muted: 89 91 66; /* #595B42 – sekundär text */
+    --color-primary: 79 82 41; /* #4F5229 – oliv: primära knappar, valda och avbockade tillstånd, fokus, startsidans bakgrund */
+    --color-primary-hover: 63 66 32; /* #3F4220 – oliv, hover */
+    --color-primary-soft: 233 234 211; /* #E9EAD3 – tonad oliv: positivt/valt i lugn form */
+    --color-on-primary: 253 247 227; /* #FDF7E3 – gräddvit text och ikoner på oliv */
+    --color-accent: 244 210 100; /* #F4D264 – smörgult: startsidans huvudknapp, feedbackknappen i resultatet */
+    --color-accent-hover: 247 220 133; /* #F7DC85 – smörgult, hover */
+    --color-accent-soft: 250 236 192; /* #FAECC0 – tonat smörgult */
+    --color-line: 230 223 201; /* #E6DFC9 – kantlinjer */
+    --color-line-strong: 211 202 170; /* #D3CAAA – tydligare kantlinjer */
+    --color-danger: 168 67 43; /* #A8432B – fel och "över budget" */
+    --color-danger-soft: 246 225 214; /* #F6E1D6 – tonad yta för fel/över budget */
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
   }
 
   body {
-    background-color: #FBF8F4;
-    color: #2E211A;
+    background-color: rgb(var(--color-page));
+    color: rgb(var(--color-ink));
     -webkit-font-smoothing: antialiased;
   }
 
   /* Synlig tangentbordsfokus på alla interaktiva element.
      :focus-visible gör att fokusringen bara syns vid tangentbords-
-     navigering, inte vid musklick. */
+     navigering, inte vid musklick. Oliv (primärfärgen); på oliv bakgrund
+     används gräddvit i stället (startsidan, se landing.module.css). */
   :focus-visible {
-    outline: 2px solid #BE5A3E;
+    outline: 2px solid rgb(var(--color-primary));
     outline-offset: 2px;
     border-radius: 4px;
   }
@@ -31,7 +92,7 @@
 
   /* Hårfin avdelare mellan formulärsektioner – ersätter separata kort */
   .divide-hairline > * + * {
-    border-top: 1px solid #E4DACE;
+    border-top: 1px solid rgb(var(--color-line));
   }
 
   .animate-fade-in {
@@ -96,7 +157,7 @@
 }
 
 /* ── Budgetreglage ──────────────────────────────────────────────────────
-   Egen styling av <input type="range"> så reglaget följer terrakotta-
+   Egen styling av <input type="range"> så reglaget följer det nya
    designsystemet. Ingen extern dependency – bara CSS. */
 .budget-slider {
   -webkit-appearance: none;
@@ -111,12 +172,12 @@
 .budget-slider::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 999px;
-  background: #EFE8DE;
+  background: rgb(var(--color-line));
 }
 .budget-slider::-moz-range-track {
   height: 6px;
   border-radius: 999px;
-  background: #EFE8DE;
+  background: rgb(var(--color-line));
 }
 
 /* Handtag */
@@ -127,26 +188,26 @@
   height: 26px;
   margin-top: -10px; /* centrera mot det 6px höga spåret */
   border-radius: 50%;
-  background: #BE5A3E;
-  border: 3px solid #FFFFFF;
-  box-shadow: 0 1px 3px rgba(46, 33, 26, 0.25);
+  background: rgb(var(--color-primary));
+  border: 3px solid rgb(var(--color-surface));
+  box-shadow: 0 1px 3px rgb(var(--color-ink) / 0.25);
 }
 .budget-slider::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  background: #BE5A3E;
-  border: 3px solid #FFFFFF;
-  box-shadow: 0 1px 3px rgba(46, 33, 26, 0.25);
+  background: rgb(var(--color-primary));
+  border: 3px solid rgb(var(--color-surface));
+  box-shadow: 0 1px 3px rgb(var(--color-ink) / 0.25);
 }
 
 /* Tydlig tangentbordsfokus på handtaget */
 .budget-slider:focus-visible::-webkit-slider-thumb {
-  outline: 2px solid #BE5A3E;
+  outline: 2px solid rgb(var(--color-primary));
   outline-offset: 2px;
 }
 .budget-slider:focus-visible::-moz-range-thumb {
-  outline: 2px solid #BE5A3E;
+  outline: 2px solid rgb(var(--color-primary));
   outline-offset: 2px;
 }
 
@@ -159,5 +220,78 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+/* Planeringssidans sidfot ligger längst ned på sidan, precis där det första statistikvalet
+   (fast panel, ca 250–350 px hög) visas, och blev då helt dold. Medan valet visas
+   (html[data-consent='open']) lämnas därför plats under sidfoten så att länkarna går att
+   scrolla fram ovanför panelen. Gäller bara sidfoten med feedbacklänk. */
+html[data-consent='open'] .footer-above-consent {
+  padding-bottom: 22rem;
+}
+
+/* Fast feedbackknapp (FeedbackFab.js): längst upp, över innehåll och över dimmade bakgrunder
+   (modalerna använder z-50). Ligger i toppradens höjd och följer mobilens safe area
+   (env(safe-area-inset-top)). Centrerad på bredare skärmar. Startsidan har eget vågrätt läge
+   och egna färger, se src/app/landing.module.css. */
+.feedback-fab {
+  position: fixed;
+  top: max(0.25rem, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+}
+
+/* Smal skärm (mobil): knappen är visuellt liten och ligger förskjuten åt höger, strax till vänster
+   om "Ny plan" (ca 4 rem bred plus sidmarginal), så att den får luft mot logotypen även med
+   bredare typsnitt. Tryckytan görs större än knappen med en osynlig ::after (ca 44 px hög). */
+@media (max-width: 599px) {
+  .feedback-fab {
+    left: auto;
+    right: calc(5.75rem + env(safe-area-inset-right));
+    top: max(0.5rem, env(safe-area-inset-top));
+    transform: none;
+  }
+  .feedback-fab::after {
+    content: '';
+    position: absolute;
+    inset: -7px -2px;
+  }
+}
+
+/* Snabbväg till statistikvalet (ConsentQuickButton.js): visas bara när statistik är tillåten.
+   Fast längst upp intill feedbackknappen, i den del av skärmen som modalerna lämnar fri, så att
+   samtycket kan återkallas utan att scrolla. Bredare skärmar: till höger om den centrerade
+   feedbackknappen. Smal skärm: direkt under feedbackknappen, högerjusterad med den.
+   Startsidan har eget läge, se src/app/landing.module.css. */
+.consent-fab {
+  position: fixed;
+  top: max(0.25rem, env(safe-area-inset-top));
+  left: calc(50% + 5.25rem);
+  z-index: 60;
+}
+.consent-fab::after {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+}
+@media (min-width: 600px) and (max-width: 767px) {
+  /* Mellanbredd: centrerad direkt under feedbackknappen (bredvid den är det för trångt
+     intill sidhuvudets länkar). */
+  .consent-fab {
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(max(0.25rem, env(safe-area-inset-top)) + 42px);
+  }
+}
+@media (max-width: 599px) {
+  .consent-fab {
+    left: auto;
+    right: calc(5.75rem + env(safe-area-inset-right));
+    top: calc(max(0.5rem, env(safe-area-inset-top)) + 38px);
+  }
+  .consent-fab::after {
+    inset: -5px -2px;
   }
 }

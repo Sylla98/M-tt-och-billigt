@@ -29,6 +29,16 @@ const MUST_BE_COUNT = [
 
 const errors = []
 const warnings = []
+
+// Produkter i referencePrices.js: valfritt packageLabel måste ha singular och plural
+for (const product of REFERENCE_PRICES) {
+  if (product.packageLabel !== undefined) {
+    const l = product.packageLabel
+    if (!l || typeof l.singular !== 'string' || !l.singular || typeof l.plural !== 'string' || !l.plural)
+      errors.push(`produkt "${product.key}": packageLabel måste vara { singular, plural } med icke-tomma texter`)
+    if (product.purchaseType !== 'package') errors.push(`produkt "${product.key}": packageLabel kräver purchaseType "package"`)
+  }
+}
 const seenIds = new Set()
 const seenNames = new Set()
 const seenImages = new Set()
@@ -77,6 +87,12 @@ for (const [i, r] of RECIPES.entries()) {
       if (!ing.unit) errors.push(`${label}: "${ing.name}" saknar enhet`)
       else if (!VALID_UNITS.includes(ing.unit))
         errors.push(`${label}: "${ing.name}" har ogiltig enhet "${ing.unit}"`)
+      // priceKey: uttrycklig koppling till en produkt i referencePrices.js (se den filen).
+      if (ing.priceKey !== undefined) {
+        if (typeof ing.priceKey !== 'string' || !ing.priceKey) errors.push(`${label}: "${ing.name}" har ogiltig priceKey`)
+        else if (!REFERENCE_PRICES.some((p) => p.key === ing.priceKey))
+          warnings.push(`${label}: "${ing.name}" har priceKey "${ing.priceKey}" men ingen produkt med den nyckeln finns i referencePrices.js (saknat prisunderlag: generiskt kategoripris används)`)
+      }
       if (!ing.category) errors.push(`${label}: "${ing.name}" saknar kategori`)
       else if (!VALID_CATEGORIES.includes(ing.category))
         errors.push(`${label}: "${ing.name}" har ogiltig kategori "${ing.category}"`)
@@ -109,7 +125,7 @@ for (const [i, r] of RECIPES.entries()) {
     if (r.dietTypes?.includes('vegetarisk')) {
       const meatIngredient = r.ingredients.find((ing) => ing.category === 'meat')
       if (meatIngredient) errors.push(`${label}: markerad vegetarisk men innehåller köttvaran "${meatIngredient.name}"`)
-      if (['kyckling', 'köttfärs', 'fisk', 'korv'].includes(r.proteinType))
+      if (['kyckling', 'köttfärs', 'fisk', 'korv', 'nötkött', 'fläsk'].includes(r.proteinType))
         errors.push(`${label}: markerad vegetarisk men proteinType är "${r.proteinType}"`)
     }
   }
@@ -151,15 +167,15 @@ for (const [name, familyMap] of nameToUnits.entries()) {
 }
 
 // ── Antalskontroller ─────────────────────────────────────────────────────────
-const EXPECTED_TOTAL = 40
-const MINIMUM_COUNTS = { vegetarisk: 16, kyckling: 10, 'kött/köttfärs': 7, fisk: 5 }
+const EXPECTED_TOTAL = 60
+const MINIMUM_COUNTS = { vegetarisk: 16, kyckling: 16, 'kött/köttfärs': 13, fisk: 9 }
 
 const total = RECIPES.length
 if (total !== EXPECTED_TOTAL) errors.push(`Fel totalantal recept: ${total} (förväntade ${EXPECTED_TOTAL})`)
 
 const vegCount = RECIPES.filter((r) => r.dietTypes?.includes('vegetarisk')).length
 const chickenCount = RECIPES.filter((r) => r.proteinType === 'kyckling').length
-const meatCount = RECIPES.filter((r) => ['köttfärs', 'korv'].includes(r.proteinType)).length
+const meatCount = RECIPES.filter((r) => ['köttfärs', 'korv', 'nötkött', 'fläsk'].includes(r.proteinType)).length
 const fishCount = RECIPES.filter((r) => r.proteinType === 'fisk').length
 
 if (vegCount < MINIMUM_COUNTS.vegetarisk) errors.push(`För få vegetariska: ${vegCount} (kräver minst ${MINIMUM_COUNTS.vegetarisk})`)
@@ -273,7 +289,7 @@ function findRoughProduct(ingredientName) {
 }
 
 function roughIngredientCost(ing) {
-  const product = findRoughProduct(ing.name)
+  const product = ing.priceKey ? REFERENCE_PRICES.find((p) => p.key === ing.priceKey) : findRoughProduct(ing.name)
   if (!product) return 10
   const u = (ing.unit || '').toLowerCase()
   if (product.purchaseType === 'weight') {

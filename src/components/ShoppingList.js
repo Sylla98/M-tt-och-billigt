@@ -1,77 +1,41 @@
 'use client'
-import { useState } from 'react'
-import { formatQuantity } from '@/utils/formatQuantity'
-import { formatCountableIngredient } from '@/utils/ingredientRules'
+import { useState, useRef, useEffect } from 'react'
+import { buildDisplay, shoppingListText } from '@/utils/shoppingDisplay'
+import { loadChecked, saveChecked } from '@/utils/savedPlan'
+import { trackEvent } from '@/utils/analytics'
 
 function formatSEK(value) {
   if (value == null || isNaN(value)) return null
   return `ca ${Math.round(value).toLocaleString('sv-SE')} kr`
 }
 
-// Volym under 1 liter visas i dl i inköpslistan (t.ex. 800 ml → 8 dl).
-// formatQuantity.js rörs inte – den delen är en delad funktion som även
-// receptvyn använder, så dl-omvandlingen hålls lokal här istället.
-function formatShoppingTotal(quantity, unit) {
-  const u = (unit || '').toLowerCase()
-  if (u === 'ml' && quantity < 1000) {
-    return formatQuantity(quantity / 100, 'dl')
-  }
-  return formatQuantity(quantity, unit)
-}
-
-/**
- * Delar upp raden i namn och mängd så de kan visas på var sin rad i butik.
- * Prisberäkningen (packagesRequired, packageAmount, isWeightBased m.m.)
- * fortsätter beräknas exakt som förut – det är bara PRESENTATIONEN här.
- */
-function buildDisplay(item) {
-  // Räknebara varor (lök, vitlök, ägg, citron, buljong ...): visa alltid
-  // det naturliga antalet, oavsett hur priset räknats internt.
-  if (item.requiredUnit === 'st') {
-    return { name: formatCountableIngredient(item.displayName, item.requiredQuantity), amount: null }
-  }
-
-  // Lösviktsvaror: redan en sammanlagd mängd utan förpackningsantal.
-  if (item.isWeightBased) {
-    return {
-      name: item.displayName,
-      amount: `cirka ${formatQuantity(item.purchaseQuantity, item.purchaseUnit)}`,
-    }
-  }
-
-  // Paketbaserade varor: total köpt mängd = antal förpackningar × storlek,
-  // visad som EN sammanlagd mängd istället för "N × storlek".
-  if (item.packagesRequired != null && item.packageAmount != null && item.packageUnit) {
-    const totalQuantity = item.packagesRequired * item.packageAmount
-    return {
-      name: item.displayName,
-      amount: formatShoppingTotal(totalQuantity, item.packageUnit),
-    }
-  }
-
-  return { name: item.displayName, amount: null }
-}
-
-function ShoppingCategory({ category, checked, onToggle }) {
+function ShoppingCategory({ category, checked, onToggle, lastItemRef }) {
   return (
     <section className="break-inside-avoid mb-6">
-      <h3 className="text-label font-semibold text-brown pb-2 mb-1 border-b border-line">
+      <h3 className="text-label font-semibold text-ink pb-2 mb-1 border-b border-line">
         {category.label}
       </h3>
       <ul>
-        {category.items.map((item) => {
+        {category.items.map((item, index) => {
           const key = `${category.label}::${item.displayName}`
           const done = checked.includes(key)
           const { name, amount } = buildDisplay(item)
+          // lastItemRef sätts bara in av föräldern på den sista kategorin
+          // som faktiskt har varor – och bara på DESS sista rad.
+          const isLastRow = Boolean(lastItemRef) && index === category.items.length - 1
 
           return (
-            <li key={key} className="border-b border-line/60 last:border-b-0">
+            <li
+              key={key}
+              ref={isLastRow ? lastItemRef : undefined}
+              className="border-b border-line/60 last:border-b-0"
+            >
               <button
                 type="button"
                 onClick={() => onToggle(key)}
                 aria-pressed={done}
                 className="w-full flex items-center gap-3 py-2.5 text-left min-h-[48px]
-                           hover:bg-warm/60 -mx-2 px-2 rounded transition-colors"
+                           hover:bg-page/60 -mx-2 px-2 rounded transition-colors"
               >
                 {/* Checkbox – tydligt läge via både form, bock och genomstrykning */}
                 <span
@@ -79,27 +43,27 @@ function ShoppingCategory({ category, checked, onToggle }) {
                   className={`w-[22px] h-[22px] rounded border-2 flex-shrink-0
                               flex items-center justify-center text-xs transition-colors
                     ${done
-                      ? 'bg-sage border-sage text-white'
-                      : 'border-stone-mid bg-white'}`}
+                      ? 'bg-primary border-primary text-on-primary'
+                      : 'border-ink-light/70 bg-surface'}`}
                 >
                   {done && '✓'}
                 </span>
 
                 <span className="flex-1 min-w-0">
                   <span className={`block text-sm leading-snug transition-colors
-                    ${done ? 'line-through text-stone-mid' : 'text-brown font-medium'}`}>
+                    ${done ? 'line-through text-ink-light' : 'text-ink font-medium'}`}>
                     {name}
                   </span>
                   {amount && (
                     <span className={`block text-meta transition-colors
-                      ${done ? 'text-stone-mid' : 'text-brown-light'}`}>
+                      ${done ? 'text-ink-light' : 'text-ink-light'}`}>
                       {amount}
                     </span>
                   )}
                 </span>
 
                 <span className={`text-sm tabular-nums flex-shrink-0 transition-colors
-                  ${done ? 'text-stone-mid' : 'text-brown-light'}`}>
+                  ${done ? 'text-ink-light' : 'text-ink-light'}`}>
                   {formatSEK(item.lineCost)}
                 </span>
               </button>
@@ -115,47 +79,170 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
   const categories = Object.values(shoppingList || {})
   // Avbockningen delas mellan kategorierna så state inte nollställs när
   // layouten går från en till två kolumner.
-  const [checked, setChecked] = useState([])
+  // Avbockningen sparas i webbläsaren tillsammans med planen (se utils/savedPlan.js), så den
+  // finns kvar efter omladdning, t.ex. mitt i handlingen.
+  const [checked, setChecked] = useState(() => loadChecked())
 
   const toggle = (key) => {
-    setChecked((prev) =>
-      prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
-    )
+    setChecked((prev) => {
+      const next = prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]
+      saveChecked(next)
+      return next
+    })
+  }
+
+  // Kopierar de varor som inte är avbockade som vanlig text (för anteckningar eller meddelanden).
+  const [copyState, setCopyState] = useState('idle') // idle | done | failed
+  const copyList = async () => {
+    const text = shoppingListText(categories, checked, totalCost)
+    let ok = false
+    try {
+      await navigator.clipboard.writeText(text)
+      ok = true
+    } catch {
+      try {
+        const ta = document.createElement('textarea')
+        ta.value = text
+        ta.setAttribute('readonly', '')
+        ta.style.position = 'fixed'
+        ta.style.opacity = '0'
+        document.body.appendChild(ta)
+        ta.select()
+        ok = document.execCommand('copy')
+        document.body.removeChild(ta)
+      } catch {
+        ok = false
+      }
+    }
+    setCopyState(ok ? 'done' : 'failed')
+    setTimeout(() => setCopyState('idle'), 3000)
   }
 
   const totalItems = categories.reduce((sum, c) => sum + (c.items?.length || 0), 0)
+  // Räkna bara avbockningar som hör till varor som finns kvar (efter "Byt rätt" kan nycklar ha blivit föräldralösa).
+  const currentKeys = new Set(categories.flatMap((c) => (c.items || []).map((i) => `${c.label}::${i.displayName}`)))
+  const checkedCount = checked.filter((k) => currentKeys.has(k)).length
+
+  // Index för den sista kategorin som faktiskt har minst en vara – dit (och
+  // bara dit) skickas endRef, se ShoppingCategory ovan.
+  const lastCategoryWithItemsIndex = categories.reduce(
+    (lastIdx, cat, idx) => (cat.items && cat.items.length > 0 ? idx : lastIdx),
+    -1
+  )
+
+  // shopping_list_viewed / shopping_list_end_reached: listan renderas
+  // automatiskt som en del av resultatsidan (ingen klick krävs för att visa
+  // den), så en vanlig montering får INTE räknas som en aktiv öppning (se
+  // uppdragets avsnitt 2/3). Vi mäter istället när användaren faktiskt
+  // scrollar fram till start respektive slut av listan.
+  //
+  // Tidigare observerades HELA (potentiellt mycket höga) sektionen med
+  // threshold 0.4 – det krävde att 40% av hela listans yta var synlig
+  // samtidigt, vilket i praktiken bara inträffade efter att användaren
+  // scrollat nästan ända ned. Nu observeras istället två redan existerande,
+  // konkreta punkter var för sig:
+  //  - headerRef: rubrikraden överst ("Inköpslista" + totalsumman) →
+  //    shopping_list_viewed, så fort den blir synlig.
+  //  - endRef: sista FAKTISKA inköpsraden (inte prisreservationstexten
+  //    under listan) → shopping_list_end_reached, så fort DEN blir synlig.
+  //    lastCategoryWithItemsIndex nedan hittar rätt kategori även om en
+  //    tom kategori skulle råka ligga sist i listan.
+  // threshold: 0 betyder "så fort EN pixel av elementet är synlig" – det
+  // matchar "blir synlig" bättre än att kräva en viss andel synlig yta, och
+  // gör att båda eventen skickas direkt om hela listan redan ryms på
+  // skärmen (då är både start och slut synliga från första stund).
+  // Två oberoende ref-flaggor garanterar att vardera event skickas högst en
+  // gång per visad matplan.
+  const headerRef = useRef(null)
+  const endRef = useRef(null)
+  const hasTrackedViewRef = useRef(false)
+  const hasTrackedEndRef = useRef(false)
+
+  useEffect(() => {
+    const headerEl = headerRef.current
+    const endEl = endRef.current
+    if (!headerEl || !endEl) return
+
+    const viewObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasTrackedViewRef.current) {
+          hasTrackedViewRef.current = true
+          trackEvent('shopping_list_viewed')
+          viewObserver.disconnect()
+        }
+      },
+      { threshold: 0 }
+    )
+    const endObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasTrackedEndRef.current) {
+          hasTrackedEndRef.current = true
+          trackEvent('shopping_list_end_reached')
+          endObserver.disconnect()
+        }
+      },
+      { threshold: 0 }
+    )
+
+    viewObserver.observe(headerEl)
+    endObserver.observe(endEl)
+    return () => {
+      viewObserver.disconnect()
+      endObserver.disconnect()
+    }
+  }, [])
 
   return (
     <div>
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 mb-1">
-        <h2 className="text-lg font-semibold text-brown">Inköpslista</h2>
+      <div ref={headerRef} className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 mb-1">
+        <h2 className="text-lg font-bold text-ink">Inköpslista</h2>
         {totalCost != null && (
           <div className="text-right">
-            <div className="text-xs text-brown-light">Uppskattad totalsumma</div>
-            <div className="text-xl font-semibold text-brown tabular-nums">
+            <div className="text-xs text-ink-light">Uppskattad totalsumma</div>
+            <div className="text-xl font-black text-ink tabular-nums">
               {Math.round(totalCost).toLocaleString('sv-SE')} kr
             </div>
           </div>
         )}
       </div>
-      <p className="text-meta text-stone-mid mb-5">
-        {checked.length} av {totalItems} avbockade · tryck för att bocka av
+      <p className="text-meta text-ink-light mb-3">
+        {checkedCount} av {totalItems} avbockade · tryck för att bocka av · sparas i den här webbläsaren
       </p>
+      <div className="mb-5">
+        <button
+          type="button"
+          onClick={copyList}
+          className="inline-flex items-center justify-center bg-surface border border-line hover:border-ink-light/40
+                     text-ink font-semibold py-2 px-4 rounded-lg text-sm min-h-[44px] transition-colors duration-150"
+        >
+          Kopiera listan
+        </button>
+        <span role="status" aria-live="polite" className="ml-3 text-meta text-ink-light">
+          {copyState === 'done' && 'Kopierad. Avbockade varor är inte med.'}
+          {copyState === 'failed' && 'Kunde inte kopiera. Markera och kopiera listan manuellt.'}
+        </span>
+      </div>
 
       {/* Desktop: två kolumner via CSS-kolumner, så kategorierna flödar
           naturligt utan att någon kategori blir onödigt kort. */}
       <div className="lg:columns-2 lg:gap-10">
-        {categories.map((cat) => (
-          <ShoppingCategory key={cat.label} category={cat} checked={checked} onToggle={toggle} />
+        {categories.map((cat, index) => (
+          <ShoppingCategory
+            key={cat.label}
+            category={cat}
+            checked={checked}
+            onToggle={toggle}
+            lastItemRef={index === lastCategoryWithItemsIndex ? endRef : undefined}
+          />
         ))}
       </div>
 
       {freshItemsTips.length > 0 && (
         <div className="mt-2 pt-5 border-t border-line">
-          <h3 className="text-label font-semibold text-brown mb-2">Tips för färskvaror</h3>
+          <h3 className="text-label font-semibold text-ink mb-2">Tips för färskvaror</h3>
           <ul className="space-y-1.5">
             {freshItemsTips.map((tip, i) => (
-              <li key={i} className="text-sm text-brown-light leading-relaxed">
+              <li key={i} className="text-sm text-ink-light leading-relaxed">
                 {tip}
               </li>
             ))}
@@ -163,8 +250,8 @@ export default function ShoppingList({ shoppingList, freshItemsTips = [], totalC
         </div>
       )}
 
-      <p className="text-xs text-stone-mid mt-5">
-        Prisuppskattningen bygger på generella svenska matpriser och kan variera mellan butiker.
+      <p className="text-xs text-ink-light mt-5">
+        Prisuppskattningen bygger på generella svenska matpriser och räknas på hela förpackningar. Priset i din butik kan skilja sig.
       </p>
     </div>
   )

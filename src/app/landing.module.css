@@ -1,0 +1,193 @@
+/* ── Startsidans design (se DESIGN.md) ────────────────────────────────────
+   CSS-modul: alla klasser här får unika namn och gäller bara startsidan
+   (src/app/page.js). Planeringssidan, recepten, inköpslistan och övriga
+   delade komponenter påverkas inte. Färgerna kommer från appens gemensamma
+   färgvariabler (--color-* i globals.css): oliv, smörgult och varm gräddvit. */
+
+/* Olivsektionen (sidhuvud + hero). overflow-x: clip hindrar att den
+   dekorativa bågen ger sidledsöverflöd. */
+.hero {
+  background-color: rgb(var(--color-primary));
+  color: rgb(var(--color-on-primary));
+  overflow-x: clip;
+}
+
+/* Tangentbordsfokus: appens olivfärgade fokusring syns inte mot oliv. */
+.hero :focus-visible {
+  outline-color: rgb(var(--color-on-primary));
+}
+
+/* Huvudknappen: smörgul med mörk text. */
+.cta {
+  background-color: rgb(var(--color-accent));
+  color: rgb(var(--color-ink));
+}
+.cta:hover {
+  background-color: rgb(var(--color-accent-hover));
+}
+
+/* Matbilden med välvd överkant: överkanten är en halvcirkel med bildens bredd
+   som diameter. */
+.arch {
+  border-top-left-radius: 9999px;
+  border-top-right-radius: 9999px;
+}
+
+/* Dekorativ båge runt bildens överkant. SVG:n är kvadratisk med bildens
+   bredd som sida, så bågens geometri följer bilden i alla bredder. */
+.arc {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* Kort "bordslinje" under grytfiguren, som i skissen. */
+.ground {
+  display: block;
+  height: 3px;
+  border-radius: 9999px;
+  background-color: rgb(var(--color-on-primary));
+}
+
+/* Nedre informationsraden: varm gräddvit med mörk text och ikoner. */
+.benefits {
+  background-color: rgb(var(--color-surface-alt));
+  color: rgb(var(--color-ink));
+}
+
+/* Låga mobilskärmar medan första statistikvalet visas (html[data-consent='open']
+   sätts före första målningen): tätare avstånd så att huvudknappen syns ovanför
+   panelen. Upp till 700 px höjd (t.ex. 320x640) räcker tätare avstånd; upp till
+   600 px (t.ex. 320x568) ligger rubriken dessutom på två rader. Vanliga och
+   stora mobiler påverkas inte, och inte heller desktop. */
+@media (max-width: 767px) and (max-height: 700px) {
+  :global(html[data-consent='open']) .heroInner {
+    padding-top: 0.75rem;
+  }
+  :global(html[data-consent='open']) .title {
+    font-size: 1.875rem;
+    margin-bottom: 0.5rem;
+  }
+  :global(html[data-consent='open']) .lead {
+    margin-bottom: 0.875rem;
+  }
+}
+@media (max-width: 767px) and (max-height: 600px) {
+  :global(html[data-consent='open']) .header {
+    padding-top: 0.625rem;
+  }
+  :global(html[data-consent='open']) .heroInner {
+    padding-top: 0.25rem;
+  }
+  :global(html[data-consent='open']) .title {
+    font-size: 1.75rem;
+  }
+  :global(html[data-consent='open']) .title > span:not(:first-child) {
+    display: inline;
+  }
+  :global(html[data-consent='open']) .lead {
+    margin-bottom: 0.625rem;
+  }
+}
+
+/* Desktop: bildens höjd följer fönstrets höjd (28–40rem), så att sidhuvud,
+   bild, fördelar och sidfot ryms i ett vanligt fönster utan tomrum. */
+@media (min-width: 768px) {
+  .archBox.arch {
+    height: clamp(28rem, calc(100vh - 17rem), 40rem);
+    height: clamp(28rem, calc(100svh - 17rem), 40rem);
+  }
+}
+
+/* Desktop med lågt fönster (t.ex. 1280x800): något mindre rubrik, så att
+   huvudknappen hamnar ovanför statistikpanelen. */
+@media (min-width: 1024px) and (max-height: 860px) {
+  h1.title {
+    font-size: 3.5rem;
+  }
+}
+
+/* ── Fast feedbackknapp på startsidan ──────────────────────────────────────
+   Samma komponent och länk som i resten av flödet (FeedbackFab.js, fast läge
+   i globals.css). Här ändras bara färg och vågrätt läge: oliv med gräddvit
+   text, i linje med sidhuvudets högerkant. Knappen är fortsatt fast längst
+   upp och följer med vid scroll. Olivfyllningen gör den tydlig även när den
+   hamnar över den ljusa informationsraden eller sidfoten. */
+.landing a:global(.feedback-fab) {
+  background-color: rgb(var(--color-primary));
+  border-color: rgb(var(--color-on-primary) / 0.55);
+  color: rgb(var(--color-on-primary));
+  box-shadow: none;
+  left: auto;
+  transform: none;
+  right: max(1.25rem, env(safe-area-inset-right));
+  top: max(0.875rem, env(safe-area-inset-top));
+}
+@media (min-width: 768px) {
+  /* Linjerar med sidhuvudets innehåll (max 75rem brett, 2rem sidmarginal). */
+  .landing a:global(.feedback-fab) {
+    right: max(2rem, calc((100vw - 75rem) / 2 + 2rem));
+    top: max(1.5rem, env(safe-area-inset-top));
+    min-height: 2.5rem;
+    padding: 0 1rem;
+    gap: 0.375rem;
+    font-size: 0.9375rem;
+  }
+}
+@media (min-width: 1024px) {
+  .landing a:global(.feedback-fab) {
+    top: max(1.75rem, env(safe-area-inset-top));
+  }
+}
+.landing a:global(.feedback-fab):hover {
+  border-color: rgb(var(--color-on-primary));
+}
+.landing a:global(.feedback-fab) span {
+  color: inherit;
+}
+.landing a:global(.feedback-fab):focus-visible {
+  outline-color: rgb(var(--color-on-primary));
+  box-shadow: 0 0 0 6px rgb(var(--color-ink));
+}
+
+/* Snabbväg till statistikvalet (ConsentQuickButton.js) på startsidan: direkt under
+   feedbackknappen, högerjusterad med den och i samma oliv- och gräddvita stil. */
+:global(body):has(.landing) :global(.consent-fab) {
+  left: auto;
+  right: max(1.25rem, env(safe-area-inset-right));
+  top: calc(max(0.875rem, env(safe-area-inset-top)) + 32px);
+  min-height: 24px;
+  background-color: rgb(var(--color-primary));
+  border-color: rgb(var(--color-on-primary) / 0.55);
+  color: rgb(var(--color-on-primary));
+  box-shadow: none;
+}
+:global(body):has(.landing) :global(.consent-fab):hover {
+  border-color: rgb(var(--color-on-primary));
+}
+:global(body):has(.landing) :global(.consent-fab):focus-visible {
+  outline-color: rgb(var(--color-on-primary));
+  box-shadow: 0 0 0 6px rgb(var(--color-ink));
+}
+@media (min-width: 600px) {
+  :global(body):has(.landing) :global(.consent-fab) {
+    transform: none;
+    min-height: 30px;
+    top: calc(max(0.875rem, env(safe-area-inset-top)) + 42px);
+  }
+}
+@media (min-width: 768px) {
+  :global(body):has(.landing) :global(.consent-fab) {
+    right: max(2rem, calc((100vw - 75rem) / 2 + 2rem));
+    top: calc(max(1.5rem, env(safe-area-inset-top)) + 2.5rem + 6px);
+  }
+}
+@media (min-width: 1024px) {
+  :global(body):has(.landing) :global(.consent-fab) {
+    top: calc(max(1.75rem, env(safe-area-inset-top)) + 2.5rem + 6px);
+  }
+}

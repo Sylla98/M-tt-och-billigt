@@ -4,7 +4,7 @@
 // inköpslistan. Ingen AI används i detta flöde.
 
 import { RECIPES } from '@/data/recipes'
-import { findReferenceProduct, normalizeIngredientName, priceShoppingListWithReference } from '@/utils/referencePricing'
+import { resolveReferenceProduct, normalizeIngredientName, priceShoppingListWithReference } from '@/utils/referencePricing'
 import { scaleIngredient } from '@/utils/portionScaling'
 
 // ── Kostnadsuppskattning per recept ─────────────────────────────────────────
@@ -15,7 +15,7 @@ const WEIGHT_TO_GRAMS = { g: 1, kg: 1000 }
 const VOLUME_TO_ML = { ml: 1, cl: 10, dl: 100, l: 1000 }
 
 function estimateIngredientCost(ing) {
-  const product = findReferenceProduct(ing.name)
+  const product = resolveReferenceProduct({ priceKey: ing.priceKey, name: ing.name })
   if (!product) return 10 // konservativ schablon för okänd vara
 
   const u = (ing.unit || '').toLowerCase()
@@ -160,60 +160,101 @@ export function scaleRecipe(recipe, targetServings) {
 }
 
 // ── Inköpslista: slå ihop ingredienser över alla recept ─────────────────────
+// Mängder får bara slås ihop när det finns en EXAKT omräkning:
+//  - vikt: g och kg (till gram)
+//  - volym: ml, cl, dl och l (till ml)
+//  - skedmått: krm, tsk och msk. Svenska måttsatsen är exakta volymmått
+//    (1 krm = 1 ml, 1 tsk = 5 ml, 1 msk = 15 ml) och räknas bara om
+//    sinsemellan, aldrig till gram eller antal.
+//  - antal (st), och övriga enheter var för sig.
+// Det finns ingen säker omräkning mellan familjerna (t.ex. msk ↔ g, st ↔ tsk,
+// ml ↔ g, utan påhittad densitet eller storlek). Då bevaras mängderna på
+// SEPARATA rader i stället för att summeras felaktigt eller tappas bort.
+const SPOON_TO_ML = { krm: 1, tsk: 5, msk: 15 }
+
 function toBase(quantity, unit) {
   const u = (unit || '').toLowerCase()
-  if (u in WEIGHT_TO_GRAMS) return { value: quantity * WEIGHT_TO_GRAMS[u], unit: 'g' }
-  if (u in VOLUME_TO_ML) return { value: quantity * VOLUME_TO_ML[u], unit: 'ml' }
-  return { value: quantity, unit: u || 'st' }
+  if (u in WEIGHT_TO_GRAMS) return { family: 'vikt', value: quantity * WEIGHT_TO_GRAMS[u], unit: 'g' }
+  if (u in VOLUME_TO_ML) return { family: 'volym', value: quantity * VOLUME_TO_ML[u], unit: 'ml' }
+  if (u in SPOON_TO_ML) return { family: 'sked', value: quantity, unit: u }
+  if (!u || u === 'st') return { family: 'antal', value: quantity, unit: 'st' }
+  return { family: `annat:${u}`, value: quantity, unit: u }
 }
 
 /**
- * Slår ihop samma ingrediens från alla skalade recept till en rad per vara.
- * Skafferivaror (som användaren redan har) utesluts helt ur listan.
+ * Slår ihop samma ingrediens från alla skalade recept till en rad per vara och
+ * enhetsfamilj (se toBase: bara exakta omräkningar summeras, övriga mängder
+ * bevaras på separata rader). Skafferivaror (som användaren redan har) utesluts
+ * helt ur listan.
  * Returnerar platta rader: { displayName, searchTerm, quantity, unit, category }
  */
 export function buildShoppingItems(scaledRecipes, pantryText) {
-  const pantryTerms = parsePantryTerms(pantryText)
-  const merged = new Map() // normaliserat namn → rad
+  const pantryTerms = parsePantryTermsQualified(pantryText)
+  const merged = new Map() // normaliserat namn + priceKey + enhetsfamilj → rad
 
   for (const recipe of scaledRecipes) {
     for (const ing of recipe.ingredients) {
       const normName = normalizeIngredientName(ing.name)
 
-      // Har användaren varan hemma? Hoppa över.
+      // Har användaren varan hemma? Hoppa över. För varor med priceKey (t.ex. färsk/torkad
+      // basilika) räcker det inte att namnen normaliseras lika: skriver användaren
+      // "torkad basilika" gäller det bara den torkade, och "färsk basilika" bara den färska.
+      // En term utan färsk/torkad-angivelse ("basilika") gäller som förut båda.
+      const ingQualifier = ing.priceKey ? qualifierOf(ing.name) : null
       const inPantry = pantryTerms.some(
-        (t) => normName.includes(t) || t.includes(normName)
+        (t) => (normName.includes(t.term) || t.term.includes(normName)) && !(ing.priceKey && t.qualifier && t.qualifier !== ingQualifier)
       )
       if (inPantry) continue
 
       const base = toBase(ing.quantity, ing.unit)
-      const key = normName
+      // Olika produkter (priceKey) slås aldrig ihop, även om namn och enhetsfamilj är lika.
+      const key = `${normName}|${ing.priceKey || ''}|${base.family}`
 
       if (merged.has(key)) {
         const row = merged.get(key)
-        if (row.unit === base.unit) {
-          row.quantity += base.value
+        if (base.family === 'sked') {
+          // Skedmått med olika enheter räknas om exakt via volymmåttet. Summan hålls
+          // exakt i ml och avrundas först när raden presenteras (inget avrundningsfel
+          // som växer för varje sammanslagning).
+          row.exactMl += base.value * SPOON_TO_ML[base.unit]
+          row.quantity = Math.round((row.exactMl / SPOON_TO_ML[row.unit]) * 10000) / 10000
         } else {
-          // olika enhetsfamiljer (t.ex. msk + g) – behåll den större posten,
-          // lägg skedmått som minsta möjliga tillägg (försumbart för köp)
-          if (base.unit === 'g' || base.unit === 'ml') {
-            row.quantity = base.value + row.quantity // rå summering – båda små
-            row.unit = base.unit
-          }
+          row.quantity += base.value // samma enhet (g, ml, st eller övrig enhet)
         }
       } else {
+        // Samma vara med en annan enhetsfamilj får en egen rad. Är namnet identiskt
+        // med en syskonrad läggs enheten till, så att raderna går att skilja åt
+        // (inköpslistan använder namnet som nyckel).
+        const sameName = [...merged.values()].some((r) => r.searchTerm === normName && r.displayName === ing.name)
         merged.set(key, {
-          displayName: ing.name,
+          displayName: sameName ? `${ing.name} (${base.unit})` : ing.name,
           searchTerm: normName,
           quantity: base.value,
           unit: base.unit,
           category: ing.category || 'pantry',
+          ...(ing.priceKey ? { priceKey: ing.priceKey } : {}),
+          ...(base.family === 'sked' ? { exactMl: base.value * SPOON_TO_ML[base.unit] } : {}),
         })
       }
     }
   }
 
-  return [...merged.values()]
+  // exactMl är bara en hjälpsumma för skedmått och ska inte följa med i inköpsraderna
+  return [...merged.values()].map(({ exactMl, ...row }) => row)
+}
+
+// "färsk", "torkad" eller "fryst" i skafferitexten. Normaliseringen tar bort orden, så de läses ur
+// originaltexten. Används bara för varor med priceKey (se buildShoppingItems).
+function qualifierOf(text) {
+  const m = (text || '').toLowerCase().match(/\b(färsk|färska|torkad|torkade|fryst|frysta)\b/)
+  return m ? m[1].replace(/e$|a$/, '') : null
+}
+
+export function parsePantryTermsQualified(pantryText) {
+  return (pantryText || '')
+    .split(/[,;\n]+/)
+    .map((raw) => ({ term: normalizeIngredientName(raw), qualifier: qualifierOf(raw) }))
+    .filter((t) => t.term.length >= 2)
 }
 
 export function parsePantryTerms(pantryText) {
@@ -364,7 +405,7 @@ export function buildRecipeOccurrences(scaledRecipes) {
       servedWith: r.servedWith,
       fridgeStorage: r.fridgeStorage,
       freezerStorage: r.freezerStorage,
-      ingredients: r.ingredients.map((ing) => ({ name: ing.name, quantity: ing.quantity, unit: ing.unit })),
+      ingredients: r.ingredients.map((ing) => ({ name: ing.name, quantity: ing.quantity, unit: ing.unit, ...(ing.priceKey ? { priceKey: ing.priceKey } : {}) })),
       instructions: r.instructions,
       image: r.image,
     }
@@ -413,6 +454,44 @@ export function selectSwapAlternatives({ foodTypes, excludeIds = [], budgetPerSe
 
   scored.sort((a, b) => b.score - a.score)
   return scored.map((s) => ({ recipe: s.recipe, costPerServing: s.costPerServing }))
+}
+
+/**
+ * Ett tillagningstillfälle har id "receptid" eller "receptid-tillfalle-N"
+ * (se buildRecipeOccurrences). Returnerar det ursprungliga receptid:t.
+ */
+export function getBaseRecipeId(id) {
+  return (id || '').replace(/-tillfalle-\d+$/, '')
+}
+
+/**
+ * Beskriver planen efter ett byte: byter ut ALLA tillagningstillfällen som
+ * tillhörde receptplatsen `replacedBaseId` mot `newRecipeId` och behåller alla
+ * andra exakt som de är (inklusive deras portionsantal). `occurrences` är
+ * planens `recipes`-lista. Används både av det faktiska bytet och av
+ * förhandsvisningen av kostnadsskillnaden, så de ALDRIG kan räkna olika.
+ */
+export function buildSwapOccurrenceSpecs(occurrences, replacedBaseId, newRecipeId) {
+  return occurrences.map((r) => {
+    const baseId = getBaseRecipeId(r.id)
+    return { baseId: baseId === replacedBaseId ? newRecipeId : baseId, servings: r.servings }
+  })
+}
+
+/**
+ * Hur planens uppskattade inköpskostnad (kr, heltal) skulle ändras av ett
+ * byte, jämfört med planens nuvarande totalsumma. Bygger om HELA planen med
+ * samma pipeline som ett faktiskt byte (rebuildPlanData): alla
+ * tillagningstillfällen, skafferi, sammanslagen inköpslista och hela
+ * förpackningar – alltså inte bara skillnaden i kr per portion. Negativt tal
+ * = billigare, positivt = dyrare. Skillnaden är exakt den ändring av
+ * totalsumman som visas efter bytet, eftersom båda beräknas med
+ * estimatedTotalCost från rebuildPlanData.
+ */
+export function calculateSwapCostDelta({ occurrences, replacedBaseId, newRecipeId, pantryText, budget, currentTotalCost }) {
+  const specs = buildSwapOccurrenceSpecs(occurrences, replacedBaseId, newRecipeId)
+  const rebuilt = rebuildPlanData(specs, pantryText, budget)
+  return rebuilt.pricing.estimatedTotalCost - currentTotalCost
 }
 
 /**

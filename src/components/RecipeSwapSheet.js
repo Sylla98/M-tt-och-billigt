@@ -2,6 +2,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { selectSwapAlternatives } from '@/utils/selectRecipes'
 import { getRecipeImage, FALLBACK_IMAGE } from '@/utils/getRecipeImage'
+import { formatPlanCostDelta } from '@/utils/formatPlanCostDelta'
 
 const PAGE_SIZE = 3
 
@@ -11,7 +12,7 @@ function AlternativeThumb({ recipe }) {
   const imageSrc = imgState === 'primary' ? primaryImage : FALLBACK_IMAGE
 
   return (
-    <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-warm">
+    <div className="w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden bg-page">
       {imgState !== 'none' ? (
         <img
           src={imageSrc}
@@ -22,7 +23,7 @@ function AlternativeThumb({ recipe }) {
         />
       ) : (
         <div className="w-full h-full flex items-center justify-center px-1">
-          <span className="text-[9px] text-brown-light/70 text-center leading-tight">{recipe.name}</span>
+          <span className="text-[9px] text-ink-light text-center leading-tight">{recipe.name}</span>
         </div>
       )}
     </div>
@@ -42,6 +43,7 @@ export default function RecipeSwapSheet({
   pantryTerms,
   budgetPerServing,
   referenceRecipe, // fullständigt receptobjekt för currentRecipe, för pris-/tidnärhet
+  getCostDelta,    // (newRecipeId) => kr-skillnad för HELA planen (negativt = billigare) | null
   onSelect,        // (newRecipeId) => void
 }) {
   const [shownCount, setShownCount] = useState(PAGE_SIZE)
@@ -93,6 +95,18 @@ export default function RecipeSwapSheet({
     })
   }, [open, currentRecipe?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Skillnaden räknas bara för de alternativ som faktiskt visas (varje
+  // beräkning bygger om hela planen) och först när dialogen är öppen. Räknas
+  // om när planen ändrats, eftersom getCostDelta då har en ny identitet.
+  const costDeltaText = useMemo(() => {
+    const map = new Map()
+    if (!open || !getCostDelta) return map
+    for (const { recipe } of rankedAlternatives.slice(0, shownCount)) {
+      map.set(recipe.id, formatPlanCostDelta(getCostDelta(recipe.id)))
+    }
+    return map
+  }, [open, rankedAlternatives, shownCount, getCostDelta])
+
   if (!open) return null
 
   const visible = rankedAlternatives.slice(0, shownCount)
@@ -110,7 +124,7 @@ export default function RecipeSwapSheet({
       <div
         onClick={onClose}
         aria-hidden="true"
-        className={`absolute inset-0 bg-brown/40 transition-opacity duration-300
+        className={`absolute inset-0 bg-ink/45 transition-opacity duration-300
                     ${entered ? 'opacity-100' : 'opacity-0'}`}
       />
 
@@ -120,7 +134,7 @@ export default function RecipeSwapSheet({
         aria-modal="true"
         aria-labelledby="swap-sheet-title"
         onClick={(e) => e.stopPropagation()}
-        className={`relative bg-cream w-full md:max-w-md md:mx-4 md:rounded-2xl
+        className={`relative bg-surface w-full md:max-w-md md:mx-4 md:rounded-2xl
                     rounded-t-2xl max-h-[85vh] overflow-y-auto
                     transition-all duration-300
                     ${entered
@@ -132,14 +146,14 @@ export default function RecipeSwapSheet({
 
         <div className="p-5">
           <div className="flex items-start justify-between gap-4 mb-1">
-            <h2 id="swap-sheet-title" className="text-lg font-semibold text-brown leading-tight">
+            <h2 id="swap-sheet-title" className="text-lg font-semibold text-ink leading-tight">
               Byt ut recept
             </h2>
             <button
               onClick={onClose}
               aria-label="Stäng"
               className="flex-shrink-0 w-9 h-9 -mr-1.5 -mt-1 flex items-center justify-center
-                         rounded-lg text-stone-mid hover:text-brown hover:bg-stone-warm/60
+                         rounded-lg text-ink-light hover:text-ink hover:bg-page
                          transition-colors text-lg leading-none
                          [-webkit-tap-highlight-color:transparent]"
             >
@@ -148,13 +162,18 @@ export default function RecipeSwapSheet({
           </div>
 
           {currentRecipe?.title && (
-            <p className="text-sm text-brown-light mb-4">
-              Ersätter <span className="font-medium text-brown">{currentRecipe.title}</span>
+            <p className="text-sm text-ink-light mb-1">
+              Ersätter <span className="font-medium text-ink">{currentRecipe.title}</span>
+            </p>
+          )}
+          {getCostDelta && (
+            <p className="text-meta text-ink-light mb-4">
+              Visar hur planens uppskattade inköpskostnad ändras jämfört med nu.
             </p>
           )}
 
           {visible.length === 0 ? (
-            <p className="text-sm text-brown-light py-6 text-center">
+            <p className="text-sm text-ink-light py-6 text-center">
               Vi hittade inga andra recept som passar dina val just nu.
             </p>
           ) : (
@@ -165,19 +184,27 @@ export default function RecipeSwapSheet({
                   onClick={() => handlePick(recipe.id)}
                   disabled={selecting}
                   className="w-full flex items-center gap-3 p-2.5 rounded-xl border border-line
-                             hover:border-terracotta/40 active:bg-warm/60 transition-colors
+                             hover:border-primary/40 active:bg-page/60 transition-colors
                              text-left disabled:opacity-50 disabled:pointer-events-none
                              min-h-[76px]
                              [-webkit-tap-highlight-color:transparent]"
                 >
                   <AlternativeThumb recipe={recipe} />
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-brown leading-snug">
+                    <div className="text-sm font-semibold text-ink leading-snug">
                       {recipe.name}
                     </div>
-                    <div className="text-meta text-stone-mid mt-0.5">
+                    <div className="text-meta text-ink-light mt-0.5">
                       {recipe.totalTimeMinutes} min · ca {Math.round(costPerServing)} kr/portion
                     </div>
+                    {costDeltaText.get(recipe.id) && (
+                      <div
+                        className={`text-sm font-semibold mt-1 tabular-nums
+                          ${costDeltaText.get(recipe.id).startsWith('\u2212') ? 'text-primary' : 'text-ink'}`}
+                      >
+                        {costDeltaText.get(recipe.id)}
+                      </div>
+                    )}
                   </div>
                 </button>
               ))}
@@ -187,7 +214,7 @@ export default function RecipeSwapSheet({
           {hasMore && (
             <button
               onClick={() => setShownCount((c) => c + PAGE_SIZE)}
-              className="mt-3 w-full text-center text-sm font-medium text-brown
+              className="mt-3 w-full text-center text-sm font-medium text-ink
                          hover:underline underline-offset-4 min-h-[44px]
                          [-webkit-tap-highlight-color:transparent]"
             >
@@ -197,8 +224,8 @@ export default function RecipeSwapSheet({
 
           <button
             onClick={onClose}
-            className="mt-4 w-full text-center text-sm text-stone-mid
-                       hover:text-brown transition-colors min-h-[44px]
+            className="mt-4 w-full text-center text-sm text-ink-light
+                       hover:text-ink transition-colors min-h-[44px]
                        [-webkit-tap-highlight-color:transparent]"
           >
             Avbryt

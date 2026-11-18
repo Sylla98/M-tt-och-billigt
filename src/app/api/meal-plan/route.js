@@ -60,8 +60,10 @@ function validateInput(body) {
   const errors = []
   const { adults, children, duration, budget, foodTypes, pantry, numberOfDishes } = body
 
-  if (!Number.isInteger(adults) || adults < 1 || adults > 20) errors.push('Ogiltigt antal vuxna')
+  // Formuläret tillåter 0 vuxna så länge minst en person är angiven (se InputForm.js), så API:t gör samma sak.
+  if (!Number.isInteger(adults) || adults < 0 || adults > 20) errors.push('Ogiltigt antal vuxna')
   if (!Number.isInteger(children) || children < 0 || children > 20) errors.push('Ogiltigt antal barn')
+  if (Number.isInteger(adults) && Number.isInteger(children) && adults + children < 1) errors.push('Lägg till minst en person')
   if (!['1 vecka', '2 veckor', '1 månad'].includes(duration)) errors.push('Ogiltig period')
   if (!Number.isFinite(budget) || budget < 100 || budget > 100000) errors.push('Ogiltig budget')
   if (!Array.isArray(foodTypes)) errors.push('Ogiltiga matkategorier')
@@ -111,6 +113,11 @@ export async function POST(request) {
     const days = durationToDays(duration)
     const requiredServings = calculateRequiredServings(adults, children, days)
 
+    // Fler rätter än portioner ger rätter med 0 portioner (t.ex. 0 vuxna + 1 barn, 1 vecka, 10 rätter).
+    if (Math.round(requiredServings) < numberOfDishes) {
+      return Response.json({ error: 'Det blir för få portioner för så många rätter. Välj färre rätter eller fler personer.' }, { status: 400 })
+    }
+
     // ── 1. Välj recept lokalt ──────────────────────────────────────────────
     const selection = selectRecipes({ foodTypes, numberOfDishes, pantry, budget, requiredServings })
     if (!selection.ok) {
@@ -146,7 +153,6 @@ export async function POST(request) {
     if (priced.estimatedTotalCost > budget) {
       const swaps = swapForBudget(selected, remaining, 3)
       if (swaps.length > 0) {
-        console.log(`[meal-plan] Budgetbyten: ${swaps.map((s) => `${s.out} → ${s.in}`).join(', ')}`)
         ;({ scaled, priced, occurrences, batchSizes } = scaleAndPrice(selected))
       }
     }
@@ -156,10 +162,8 @@ export async function POST(request) {
     // tillagningstillfällena, vilket per konstruktion är exakt lika med
     // totalServingsTarget.
     const totalServings = scaled.reduce((sum, r) => sum + r.servings, 0)
-    console.log(
-      `[meal-plan] Batchplan: ${selected.length} unika recept → ${occurrences} tillagningstillfällen, ` +
-      `batchstorlekar [${batchSizes.join(', ')}] (min ${Math.min(...batchSizes)}, max ${Math.max(...batchSizes)})`
-    )
+    // Loggar medvetet inga värden som härleds från besökarens indata (portioner, budget,
+    // kostnad), se integritetssidan: servern sparar inte det besökaren fyller i.
     const estimatedTotalCost = priced.estimatedTotalCost
     const budgetDifference = estimatedTotalCost - budget
     const isWithinBudget = estimatedTotalCost <= budget
@@ -193,11 +197,13 @@ export async function POST(request) {
     }
 
     const elapsedMs = Date.now() - startTime
-    console.log(`[meal-plan] Lokal matplan skapad på ${elapsedMs} ms – ${scaled.length} recept, ${totalServings} portioner, ${estimatedTotalCost} kr`)
+    console.log(`[meal-plan] Lokal matplan skapad på ${elapsedMs} ms`)
 
     return Response.json(responseData)
   } catch (err) {
-    console.error(`[meal-plan] Oväntat fel: ${err.message}`)
+    // Bara feltypen loggas: ett felmeddelande kan återge delar av indata (t.ex. ogiltig JSON),
+    // och serverloggarna ska inte innehålla något användaren fyllt i (se integritetssidan).
+    console.error(`[meal-plan] Oväntat fel: ${err?.name || 'okänt'}`)
     return Response.json(
       { error: 'Något gick fel. Försök igen.' },
       { status: 500 }
