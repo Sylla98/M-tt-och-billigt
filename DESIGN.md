@@ -1,6 +1,6 @@
 # Design: Mätt & Billigt
 
-Den här filen beskriver appens beslutade färgpalett och startsidans (`/`) genomförda design. Planeringssidan, recepten, Byt rätt, inköpslistan, sparad plan, feedback, sidfoten, integritetssidan och statistikpanelen behåller sin layout, sina former och sin typografi, men använder samma palett.
+Den här filen beskriver appens beslutade färgpalett, typsnitt och startsidans (`/`) genomförda design. Planeringssidan, recepten, Byt rätt, inköpslistan, sparad plan, feedback, sidfoten, integritetssidan och statistikpanelen behåller sin layout, sina former och sin typografi, men använder samma palett.
 
 Appen heter **Mätt & Billigt** överallt. Designunderlaget använde ett övergivet arbetsnamn, och det ska inte användas.
 
@@ -87,9 +87,16 @@ Appen heter **Mätt & Billigt** överallt. Designunderlaget använde ett övergi
 | Nedre informationsrad | `surface-alt`, text och ikoner `ink` | `#F6E8CA` och `#2A2C1C` |
 
 ### Typografi
-Bara de befintliga typsnitten från Fontshare används:
-- **Boska** (`font-display`): varumärket "Mätt & Billigt" (halvfet, tight spärrning, som tidigare) och rubriken (fet).
-- **Satoshi**: övrig text.
+Beslut (18 november 2026): det godkända utseendet behålls. Rubriker och varumärke använder **Georgia**, och Boska laddas inte.
+- **Georgia** (`font-display`, `['Georgia', 'serif']`): varumärket "Mätt & Billigt", sidrubriker (till exempel startsidans hero, "Slipp tänka på maten" och "Din matplan") och receptnamn.
+  - Georgia är ett systemtypsnitt och laddas inte ned. Det finns på iPhone, Mac och Windows.
+  - Saknas Georgia, till exempel på många Android-enheter, används enhetens eget serif-typsnitt.
+  - Georgia har bara normal och fet vikt, så `font-semibold` visas som fet.
+  - Bakgrund: appen beställde tidigare Satoshi och Boska i samma anrop till Fontshare, men Fontshare levererade bara Satoshi. Boska syntes därför aldrig, och det godkända utseendet är Georgia. Boska är nu borttagen ur anropet, så att utseendet inte ändras om Fontshare skulle börja leverera den.
+- **Satoshi** (`font-body`/`font-sans`): all övrig text. Laddas från Fontshares API (`api.fontshare.com`, `cdn.fontshare.com`) med vikterna 400, 500, 700 och 900.
+  - Satoshi omfattas av ITF Free Font License. Licensen tillåter egen hosting på den egna webbplatsen, men förbjuder att göra filerna tillgängliga via publika repositories eller publikt åtkomliga servrar för andra (avsnitt 02).
+  - Repot är publikt, så filerna får inte checkas in här, och Satoshi hämtas därför från Fontshare.
+  - Ska Satoshi en dag ligga på appens egen domän behövs en lösning där de officiella, oförändrade filerna inte hamnar i det publika repot.
 
 Rubriken har tre rader: "Veckans mat." / "Smartare" / "planerad." Undantaget är mycket låga mobilskärmar medan statistikpanelen visas (se Layout). Raderna är block i `<h1>`, så skärmläsare läser "Veckans mat. Smartare planerad."
 

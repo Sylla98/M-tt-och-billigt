@@ -27,8 +27,15 @@ export const metadata = {
 //    utanför hemlandet med standardavtalsklausuler; certifierat enligt EU–US DPF).
 //    Vercel Analytics och Speed Insights är inte aktiverade (bekräftat av ägaren).
 //  - Personuppgiftsansvarig och kontaktadress: Elis Sylla Sundin, kontakt.mattochbilligt@gmail.com.
-// Ej fastställt i texten: Google Formulärets inställningar (t.ex. om e-postadress samlas in)
-// och i vilken region Vercel kör appens serverfunktion. Texten påstår därför inget om dem.
+//  - Google Formulär (bekräftat av ägaren 2026-11-18): samlar inte in e-postadresser, kräver
+//    ingen inloggning, bara ägaren har tillgång till svaren. Googles egen behandling enligt
+//    policies.google.com/privacy (IP-adress, webbläsare, enhet).
+//  - Fontshare: ITF Free Font License och FAQ på fontshare.com (API:et samlar enligt Fontshare
+//    inte in personuppgifter; tar emot hänvisande domän och antal anrop). Satoshi laddas från
+//    Fontshare; rubrikerna använder systemtypsnittet Georgia (Boska laddas inte).
+//  - Rättslig grund: förslag för ägarens granskning, se INTRESSEAVVAGNING.md.
+// Ej fastställt i texten: i vilken region Vercel kör appens serverfunktion. Texten påstår därför
+// inget om den.
 
 function Section({ title, children }) {
   return (
@@ -212,21 +219,93 @@ export default function IntegritetPage() {
           </p>
         </Section>
 
-        <Section title="Andra tjänster som kontaktas">
+        <Section title="Typsnitt">
+          <p>
+            Brödtexten använder typsnittet Satoshi, som hämtas från Fontshare
+            (api.fontshare.com och cdn.fontshare.com, som drivs av Indian Type Foundry). När
+            sidan laddas kontaktar din webbläsare Fontshare, och Fontshares servrar ser då din
+            IP-adress och teknisk information om webbläsaren, eftersom det ingår i
+            anslutningen. Enligt Fontshare samlar tjänsten inte in eller sparar personuppgifter,
+            utan tar bara emot uppgifter som vilken domän typsnittet används på och hur många
+            anrop som görs. Detta sker oavsett ditt val om statistik. Rubrikerna använder
+            typsnittet Georgia, som redan finns på din enhet och inte hämtas någonstans ifrån.
+          </p>
+        </Section>
+
+        <Section title="Feedback via Google Formulär">
+          <p>
+            Knapparna och länkarna ”Lämna feedback” (en fast knapp på startsidan och
+            planeringen, en knapp i resultatet och en länk i sidfoten) öppnar ett Google Formulär
+            i en ny flik. Det är frivilligt. Appen skickar inga uppgifter dit och tar inte emot
+            dina svar.
+          </p>
+          <p>
+            <strong className="text-ink">Så är formuläret inställt:</strong> det samlar inte in
+            din e-postadress, du behöver inte logga in med ett Google-konto för att svara, och
+            bara Elis Sylla Sundin, som driver appen, har tillgång till svaren. Svaren sparas i det
+            Google-konto som formuläret tillhör, används bara för att förbättra appen och raderas
+            när de inte längre behövs för det. Skriv gärna inga personuppgifter i fritextsvaren.
+          </p>
+          <p>
+            <strong className="text-ink">Googles egen behandling:</strong> när du öppnar och
+            skickar formuläret tar Google emot bland annat din IP-adress och information om
+            webbläsare och enhet, och behandlar dem enligt{' '}
+            <a
+              href="https://policies.google.com/privacy?hl=sv"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-primary"
+            >
+              Googles integritetspolicy
+            </a>
+            . Om du är inloggad på ett Google-konto gäller Googles villkor för det kontot. Den
+            behandlingen styr Google, inte vi.
+          </p>
+        </Section>
+
+        <Section title="Ändamål och rättslig grund">
+          <p>Varje behandling har ett eget ändamål och en egen rättslig grund:</p>
           <ul className="list-disc pl-5 space-y-2">
             <li>
-              <strong className="text-ink">Typsnitt.</strong> Sidorna hämtar typsnitt från
-              Fontshare (api.fontshare.com och cdn.fontshare.com). Din webbläsare kontaktar då
-              Fontshare, som får din IP-adress och teknisk information om webbläsaren. Detta sker
-              oavsett ditt val om statistik.
+              <strong className="text-ink">Produktstatistik (PostHog):</strong> att förstå hur
+              appen används så att den kan bli bättre. Grund: <strong className="text-ink">ditt
+              samtycke</strong>. Utan ja skickas ingenting.
             </li>
             <li>
-              <strong className="text-ink">Feedback.</strong> Knapparna och länkarna ”Lämna feedback” (en fast knapp
-              på startsidan och planeringen, en knapp i resultatet och en länk i sidfoten) öppnar ett Google Formulär i en ny flik. Det är
-              en frivillig extern tjänst; appen skickar inga uppgifter dit själv och tar inte emot
-              dina svar. Vad som sparas styrs av det du skriver i formuläret och av Googles villkor.
+              <strong className="text-ink">Visa appen och skydda den (Vercel, räknaren mot
+              överbelastning):</strong> att kunna leverera sidorna du öppnar och hålla tjänsten
+              tillgänglig och säker. Grund: <strong className="text-ink">intresseavvägning</strong>{' '}
+              (vårt berättigade intresse av att driva och skydda tjänsten).
+            </li>
+            <li>
+              <strong className="text-ink">Räkna ut din matplan:</strong> att skapa den plan du
+              ber om utifrån det du fyller i. Uppgifterna används bara för uträkningen och sparas
+              inte på servern. Grund: <strong className="text-ink">intresseavvägning</strong>.
+            </li>
+            <li>
+              <strong className="text-ink">Spara plan och statistikval på din enhet:</strong>{' '}
+              att din plan och dina avbockningar finns kvar och att ditt val om statistik
+              respekteras. Uppgifterna lämnar inte din enhet. Grund:{' '}
+              <strong className="text-ink">intresseavvägning</strong>.
+            </li>
+            <li>
+              <strong className="text-ink">Typsnitt (Fontshare):</strong> att visa appen med
+              sitt typsnitt. Grund: <strong className="text-ink">intresseavvägning</strong>.
+            </li>
+            <li>
+              <strong className="text-ink">Feedback (Google Formulär):</strong> att förbättra
+              appen utifrån de synpunkter du själv väljer att lämna. Grund:{' '}
+              <strong className="text-ink">intresseavvägning</strong>.
             </li>
           </ul>
+          <p>
+            Vid intresseavvägning har vi bedömt att behandlingen behövs för det du själv
+            använder, att den är begränsad till det nödvändiga och att den inte väger tyngre
+            än ditt intresse av skydd för dina uppgifter. Du har rätt att invända mot sådan
+            behandling. Hör i så fall av dig till adressen nedan. För uppgifter som behövs för
+            att sidan alls ska kunna visas (drift och typsnitt) kan du i praktiken bara undvika
+            behandlingen genom att inte använda appen.
+          </p>
         </Section>
 
         <Section title="Dina rättigheter och kontakt">
@@ -235,10 +314,10 @@ export default function IntegritetPage() {
             Elis Sylla Sundin ansvarar för hanteringen av uppgifterna som beskrivs här.
           </p>
           <p>
-            Den rättsliga grunden för produktstatistiken är ditt samtycke, som du kan ta tillbaka
-            när som helst utan att det påverkar appen. Statistiken är avsedd att inte kunna kopplas till dig
-            som person, men om du vill veta mer, få uppgifter rättade eller raderade, eller har
-            frågor om integritet, hör av dig till{' '}
+            Du kan när som helst ta tillbaka ditt samtycke till statistik utan att det påverkar
+            appen. Statistiken är avsedd att inte kunna kopplas till dig som person, men om du vill
+            veta mer, få tillgång till, rätta eller radera uppgifter, invända mot en behandling
+            eller har frågor om integritet, hör av dig till{' '}
             <a
               href="mailto:kontakt.mattochbilligt@gmail.com"
               className="text-primary font-bold underline underline-offset-2 hover:text-primary-hover"

@@ -37,7 +37,7 @@ Allt fungerar även om testaren avböjer statistik.
 ## 5. Känt och bra att veta (ingen åtgärd gjord)
 - **Kostnaderna är uppskattningar** utifrån generella svenska priser och räknas på **hela förpackningar**. För små hushåll (t.ex. en person, en vecka) blir kostnaden per portion hög eftersom många olika varor köps i hela förpackningar, och en rätt kan få bara 2 portioner. Det är så modellen är byggd, inte ett fel, men testare kan reagera på det.
 - Färsk basilika och andra varor utan verifierat pris prissätts med generiska kategoripriser (se `RECEPTFLÖDE.md`).
-- Typsnitt hämtas från Fontshare (oavsett statistikval, står i integritetstexten).
+- Satoshi hämtas från Fontshare (oavsett statistikval, står i integritetstexten). Rubrikerna använder systemtypsnittet Georgia (se `DESIGN.md`).
 - **Integritetssidan** är genomgången mot koden, dina bekräftade kontouppgifter och PostHogs och Vercels officiella källor (18 november 2026, underlaget står överst i `src/app/integritet/page.js`). Kvar att fastställa: vad Google Formuläret samlar in (till exempel e-postadress), var svaren lagras och vem som har åtkomst. Se `LANSERING.md`.
 - `NEXT_PUBLIC_ENABLE_ANALYTICS` styr om statistikvalet visas. Ska testdata inte blandas med riktig statistik: använd ett eget PostHog-projekt/nyckel för Preview.
 

@@ -27,16 +27,16 @@ export default function RootLayout({ children }) {
         {process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true' && (
           <script dangerouslySetInnerHTML={{ __html: CONSENT_LAYOUT_SCRIPT }} />
         )}
-        {/* Satoshi (UI-typsnitt, dominerar hela gränssnittet) och Boska
-            (används enbart för logotyp + startsidans hero-rubrik) via
-            Fontshares API – licensierade fritt för kommersiellt bruk
-            (ITF Free Font License). preconnect minskar den upplevda
-            laddningstiden; display=swap gör att text alltid syns direkt
-            i ett reservtypsnitt medan webbtypsnittet hämtas. */}
+        {/* Satoshi (allt UI) via Fontshares API (ITF Free Font License).
+            Rubriker och varumärke använder Georgia (systemtypsnitt, se
+            DESIGN.md); Boska laddas medvetet inte. Satoshi-filerna får enligt
+            licensen inte checkas in i det publika repot, så de hämtas från
+            Fontshare. preconnect minskar laddningstiden; display=swap gör att
+            text syns direkt i ett reservtypsnitt medan Satoshi hämtas. */}
         <link rel="preconnect" href="https://api.fontshare.com" />
         <link rel="preconnect" href="https://cdn.fontshare.com" crossOrigin="anonymous" />
         <link
-          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&f[]=boska@500,600,700&display=swap"
+          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap"
           rel="stylesheet"
         />
       </head>

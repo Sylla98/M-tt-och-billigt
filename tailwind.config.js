@@ -8,14 +8,11 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // Boska ger sidans STORA rubrik (startsidans hero, InputForms
-        // "Slipp tänka på maten", ResultViews "Din matplan") och receptens
-        // namn karaktär och värme – "editorial" i praktiken.
-        // Satoshi bär allt funktionellt UI: navigation, formulär, knappar,
-        // stegtitlar, metadata, produktinformation. Tydlig, konsekvent
-        // regel istället för att blanda friare – ger den typografiska
-        // kontrast som Koncept A 2.0 efterfrågar.
-        display: ['Boska', 'Georgia', 'serif'],
+        // display: rubriker, varumärke och receptnamn. Georgia är det
+        // godkända utseendet (systemtypsnitt; Boska laddas inte, se DESIGN.md).
+        // Saknas Georgia (t.ex. på Android) används enhetens serif-typsnitt.
+        // body/sans: Satoshi via Fontshare för allt funktionellt UI.
+        display: ['Georgia', 'serif'],
         body: ['Satoshi', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
         sans: ['Satoshi', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
