@@ -29,7 +29,9 @@ export const metadata = {
 //  - Personuppgiftsansvarig och kontaktadress: Elis Sylla Sundin, kontakt.mattochbilligt@gmail.com.
 //  - Google Formulär (bekräftat av ägaren 2026-11-18): samlar inte in e-postadresser, kräver
 //    ingen inloggning, bara ägaren har tillgång till svaren. Googles egen behandling enligt
-//    policies.google.com/privacy (IP-adress, webbläsare, enhet).
+//    policies.google.com/privacy (IP-adress, webbläsare, enhet) och
+//    policies.google.com/privacy/frameworks (servrar globalt, DPF, standardavtalsklausuler).
+//    Lagringstid för svaren är inte fastställd (se LANSERING.md).
 //  - Fontshare: ITF Free Font License och FAQ på fontshare.com (API:et samlar enligt Fontshare
 //    inte in personuppgifter; tar emot hänvisande domän och antal anrop). Satoshi laddas från
 //    Fontshare; rubrikerna använder systemtypsnittet Georgia (Boska laddas inte).
@@ -221,14 +223,16 @@ export default function IntegritetPage() {
 
         <Section title="Typsnitt">
           <p>
-            Brödtexten använder typsnittet Satoshi, som hämtas från Fontshare
+            All text utom rubrikerna använder typsnittet Satoshi, som hämtas från Fontshare
             (api.fontshare.com och cdn.fontshare.com, som drivs av Indian Type Foundry). När
             sidan laddas kontaktar din webbläsare Fontshare, och Fontshares servrar ser då din
             IP-adress och teknisk information om webbläsaren, eftersom det ingår i
             anslutningen. Enligt Fontshare samlar tjänsten inte in eller sparar personuppgifter,
             utan tar bara emot uppgifter som vilken domän typsnittet används på och hur många
-            anrop som görs. Detta sker oavsett ditt val om statistik. Rubrikerna använder
-            typsnittet Georgia, som redan finns på din enhet och inte hämtas någonstans ifrån.
+            anrop som görs. Vi har inte kunnat fastställa var Fontshares servrar finns, så
+            uppgifterna kan behandlas utanför EU/EES. Detta sker oavsett ditt val om statistik.
+            Rubrikerna använder Georgia, eller enhetens eget serif-typsnitt om Georgia saknas.
+            Det finns redan på enheten och hämtas inte någonstans ifrån.
           </p>
         </Section>
 
@@ -243,8 +247,8 @@ export default function IntegritetPage() {
             <strong className="text-ink">Så är formuläret inställt:</strong> det samlar inte in
             din e-postadress, du behöver inte logga in med ett Google-konto för att svara, och
             bara Elis Sylla Sundin, som driver appen, har tillgång till svaren. Svaren sparas i det
-            Google-konto som formuläret tillhör, används bara för att förbättra appen och raderas
-            när de inte längre behövs för det. Skriv gärna inga personuppgifter i fritextsvaren.
+            Google-konto som formuläret tillhör och används bara för att förbättra appen. Skriv
+            gärna inga personuppgifter i fritextsvaren.
           </p>
           <p>
             <strong className="text-ink">Googles egen behandling:</strong> när du öppnar och
@@ -258,8 +262,10 @@ export default function IntegritetPage() {
             >
               Googles integritetspolicy
             </a>
-            . Om du är inloggad på ett Google-konto gäller Googles villkor för det kontot. Den
-            behandlingen styr Google, inte vi.
+            . Google har servrar i hela världen, så uppgifterna och svaren kan behandlas utanför
+            EU/EES. Google anger att företaget följer EU–US Data Privacy Framework och använder
+            standardavtalsklausuler där det krävs. Om du är inloggad på ett Google-konto gäller
+            Googles villkor för det kontot. Den behandlingen styr Google, inte vi.
           </p>
         </Section>
 
@@ -299,19 +305,20 @@ export default function IntegritetPage() {
             </li>
           </ul>
           <p>
-            Vid intresseavvägning har vi bedömt att behandlingen behövs för det du själv
-            använder, att den är begränsad till det nödvändiga och att den inte väger tyngre
-            än ditt intresse av skydd för dina uppgifter. Du har rätt att invända mot sådan
-            behandling. Hör i så fall av dig till adressen nedan. För uppgifter som behövs för
-            att sidan alls ska kunna visas (drift och typsnitt) kan du i praktiken bara undvika
-            behandlingen genom att inte använda appen.
+            Intresseavvägning innebär att behandlingen ska behövas för ändamålet och att den inte
+            får väga tyngre än ditt intresse av skydd för dina uppgifter. Du har rätt att invända
+            mot sådan behandling. Hör i så fall av dig till adressen nedan. Uppgifterna för drift
+            kan du i praktiken bara undvika genom att inte använda appen. Typsnittet Satoshi kan
+            du undvika genom att blockera fontshare.com i din webbläsare; sidan visas då med ett
+            reservtypsnitt.
           </p>
         </Section>
 
         <Section title="Dina rättigheter och kontakt">
           <p>
             Mätt &amp; Billigt drivs av Elis Sylla Sundin som privatperson, inte av ett bolag.
-            Elis Sylla Sundin ansvarar för hanteringen av uppgifterna som beskrivs här.
+            Elis Sylla Sundin är personuppgiftsansvarig för hanteringen av uppgifterna som
+            beskrivs här. Med ”vi” på den här sidan menas Elis Sylla Sundin.
           </p>
           <p>
             Du kan när som helst ta tillbaka ditt samtycke till statistik utan att det påverkar

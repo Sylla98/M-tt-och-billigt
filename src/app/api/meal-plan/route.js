@@ -201,7 +201,9 @@ export async function POST(request) {
 
     return Response.json(responseData)
   } catch (err) {
-    console.error(`[meal-plan] Oväntat fel: ${err.message}`)
+    // Bara feltypen loggas: ett felmeddelande kan återge delar av indata (t.ex. ogiltig JSON),
+    // och serverloggarna ska inte innehålla något användaren fyllt i (se integritetssidan).
+    console.error(`[meal-plan] Oväntat fel: ${err?.name || 'okänt'}`)
     return Response.json(
       { error: 'Något gick fel. Försök igen.' },
       { status: 500 }
