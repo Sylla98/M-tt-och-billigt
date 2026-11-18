@@ -61,18 +61,30 @@ Satoshi omfattas av ITF Free Font License 2.0 (fontshare.com/licenses, läst 18 
 
 Repot är publikt, så filerna är inte incheckade, och Satoshi hämtas fortfarande från Fontshare. Se `INTRESSEAVVAGNING.md` avsnitt 4 för alternativen.
 
-## Beslut som återstår före publicering
-Det här är inga tekniska hinder, men bör vara avgjort innan sidan blir offentlig:
+## Kvar före publicering
+Underlaget står i `INTRESSEAVVAGNING.md` (version 18 november, granskad mot IMY, EDPB, LEK 9 kap. 28 § och PTS).
+
+**Verkligt hinder:**
 1. **Fontshare och rättslig grund:** IMY skriver att intresseavvägning inte kan användas om samma resultat kan nås på ett mindre integritetskänsligt sätt. Egen hosting av Satoshi är ett sådant sätt. Välj ett alternativ (`INTRESSEAVVAGNING.md` avsnitt 4):
    - (a) behåll Fontshare,
    - (b) hämta filerna vid bygget utan att checka in dem,
    - (c) byt till systemtypsnitt.
-2. **Lagringstid för feedbacksvaren:** bestäm en tid eller ett kriterium, så att den kan anges på integritetssidan. I dag anger sidan ingen lagringstid.
-3. **Granska `INTRESSEAVVAGNING.md`:** bekräfta förslagen, bland annat:
-   - att "avtal" inte används,
-   - bedömningen av lagringen i webbläsaren enligt lagen om elektronisk kommunikation.
 
-   Ändra sidan om du landar i något annat.
+**Rutin att etablera:**
+
+2. **Feedbacksvar, 90 dagar:** integritetssidan anger att svaren raderas manuellt senast 90 dagar efter att de kommit in. Google Formulär raderar inte automatiskt.
+   - Lägg in en återkommande påminnelse, till exempel första måndagen varje månad.
+   - Radera då svar äldre än 90 dagar i Formulär och i ett eventuellt länkat kalkylark, och radera nedladdade kopior.
+   - Lägg till en rad i formulärets beskrivning om att inte skriva uppgifter om hälsa.
+
+**Ställningstaganden (stoppar inte tekniskt):**
+
+3. Intresseavvägning i stället för avtal (`INTRESSEAVVAGNING.md`, "Avtal som rättslig grund").
+4. **Lagringen i webbläsaren** (avsnitt 3):
+   - automatisk sparning av planen i högst 30 dagar,
+   - statistikvalet utan utgångstid.
+5. **Valfri hjälptext** vid skafferifältet ("Skriv bara matvaror") mot hälsouppgifter (avsnitt 2). Det är en gränssnittsändring.
+6. **Placeringen av "Ändra val för statistik"** i sidfoten: PTS skriver att möjligheten att återkalla ska ligga "högt upp på sidan". En ändring vore en designändring.
 
 ## Före publicering
 1. **Preview:** logga in i Vercel och öppna Preview-länken ovan, eller den commit-specifika länken i Vercel. Gå igenom:

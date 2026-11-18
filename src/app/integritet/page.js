@@ -31,11 +31,12 @@ export const metadata = {
 //    ingen inloggning, bara ägaren har tillgång till svaren. Googles egen behandling enligt
 //    policies.google.com/privacy (IP-adress, webbläsare, enhet) och
 //    policies.google.com/privacy/frameworks (servrar globalt, DPF, standardavtalsklausuler).
-//    Lagringstid för svaren är inte fastställd (se LANSERING.md).
 //  - Fontshare: ITF Free Font License och FAQ på fontshare.com (API:et samlar enligt Fontshare
 //    inte in personuppgifter; tar emot hänvisande domän och antal anrop). Satoshi laddas från
 //    Fontshare; rubrikerna använder systemtypsnittet Georgia (Boska laddas inte).
-//  - Rättslig grund: förslag för ägarens granskning, se INTRESSEAVVAGNING.md.
+//  - Rättslig grund, känsliga uppgifter, lagring i webbläsaren (LEK 9 kap. 28 §, PTS) och rätten
+//    att invända (IMY): förslag för ägarens granskning, se INTRESSEAVVAGNING.md.
+//  - Feedback: manuell radering senast 90 dagar (ägarens förslag; rutinen etableras av ägaren).
 // Ej fastställt i texten: i vilken region Vercel kör appens serverfunktion. Texten påstår därför
 // inget om den.
 
@@ -168,16 +169,29 @@ export default function IntegritetPage() {
         </Section>
 
         <Section title="Vad appen sparar på din enhet">
+          <p>Appen sparar två saker i din webbläsares lokala lagring, och inget annat:</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>
+              <strong className="text-ink">Ditt val om statistik</strong> (ja eller nej). Det
+              behövs för att ditt val ska gälla, så att statistikverktyget inte laddas efter ett
+              nej och frågan inte ställs vid varje sidvisning. Valet sparas tills du ändrar det
+              via ”Ändra val för statistik” eller rensar webbläsarens data.
+            </li>
+            <li>
+              <strong className="text-ink">Din senaste matplan</strong>: recepten, inköpslistan,
+              vilka varor du har bockat av och det du fyllde i formuläret (som skafferi och
+              budget, eftersom planen byggs upp igen från dem). Planen sparas när du har bett om
+              en plan, så att inköpslistan finns kvar när du handlar under planperioden. Den
+              sparas i högst 30 dagar, vilket motsvarar den längsta planperioden (en månad). En
+              äldre plan används inte och tas bort nästa gång du öppnar planeringen. Planen tas
+              också bort när du väljer att skapa en ny plan.
+            </li>
+          </ul>
           <p>
-            Appen sparar två saker i din webbläsares lokala lagring. Det första är ditt val om
-            statistik (ja eller nej), så att vi inte behöver fråga vid varje besök. Det andra
-            är din senaste matplan, inköpslistan och vilka varor du har bockat av, så att de
-            finns kvar om du laddar om sidan eller kommer tillbaka för att handla. En plan som är
-            äldre än 30 dagar används inte och tas bort nästa gång du öppnar planeringen. Den tas
-            också bort när du väljer att skapa en ny plan. Båda sakerna
-            lämnar inte din enhet och sparas även om du avböjer statistik, eftersom de behövs
-            för att tjänsten ska fungera. Om du rensar webbläsarens data eller byter webbläsare
-            försvinner de. Appen sparar inget annat på din enhet.
+            Uppgifterna skickas inte någonstans och sparas även om du avböjer statistik, eftersom
+            de behövs för funktionerna ovan. Om du rensar webbläsarens data eller byter webbläsare
+            försvinner de. Använder du en dator som andra också använder kan du ta bort planen med
+            ”Ny plan”.
           </p>
         </Section>
 
@@ -187,6 +201,10 @@ export default function IntegritetPage() {
             rätter) skickas till appens egen server för att matplanen ska kunna räknas ut. Planen
             skapas från appens egna receptbibliotek. Ingen AI-tjänst eller annan extern part
             anropas för att skapa planen.
+          </p>
+          <p>
+            Appen frågar inte efter uppgifter om hälsa. Skriv därför bara matvaror i
+            skafferifältet, och inga uppgifter om till exempel allergier eller sjukdomar.
           </p>
           <p>
             Appens server sparar inte det du fyller i eller din färdiga plan i någon databas och
@@ -247,8 +265,10 @@ export default function IntegritetPage() {
             <strong className="text-ink">Så är formuläret inställt:</strong> det samlar inte in
             din e-postadress, du behöver inte logga in med ett Google-konto för att svara, och
             bara Elis Sylla Sundin, som driver appen, har tillgång till svaren. Svaren sparas i det
-            Google-konto som formuläret tillhör och används bara för att förbättra appen. Skriv
-            gärna inga personuppgifter i fritextsvaren.
+            Google-konto som formuläret tillhör och används bara för att förbättra appen. Vi
+            raderar svaren manuellt senast 90 dagar efter att de kommit in. Skriv inga
+            personuppgifter i fritextsvaren, och särskilt inga uppgifter om hälsa, till exempel
+            allergier.
           </p>
           <p>
             <strong className="text-ink">Googles egen behandling:</strong> när du öppnar och
@@ -306,11 +326,25 @@ export default function IntegritetPage() {
           </ul>
           <p>
             Intresseavvägning innebär att behandlingen ska behövas för ändamålet och att den inte
-            får väga tyngre än ditt intresse av skydd för dina uppgifter. Du har rätt att invända
-            mot sådan behandling. Hör i så fall av dig till adressen nedan. Uppgifterna för drift
-            kan du i praktiken bara undvika genom att inte använda appen. Typsnittet Satoshi kan
-            du undvika genom att blockera fontshare.com i din webbläsare; sidan visas då med ett
-            reservtypsnitt.
+            får väga tyngre än ditt intresse av skydd för dina uppgifter.
+          </p>
+          <p>
+            <strong className="text-ink">Rätt att invända:</strong> du har rätt att invända mot
+            behandling som bygger på intresseavvägning. Skicka din invändning till adressen nedan
+            och beskriv gärna vilken behandling den gäller. Vi får då bara fortsätta om vi kan
+            visa avgörande berättigade skäl som väger tyngre än dina intressen, rättigheter och
+            friheter, eller om behandlingen behövs för att fastställa, utöva eller försvara
+            rättsliga anspråk. Annars upphör vi med behandlingen av dina uppgifter, till exempel
+            genom att radera dina feedbacksvar. Du får svar så snart som möjligt och senast inom
+            en månad. Tiden kan i undantagsfall förlängas med två månader, och då får du veta
+            varför.
+          </p>
+          <p>
+            Vissa delar kan du dessutom styra själv: statistiken med ”Ändra val för statistik”,
+            den sparade planen med ”Ny plan”, och typsnittet Satoshi genom att blockera
+            fontshare.com i din webbläsare (sidan visas då med ett reservtypsnitt). Att din
+            IP-adress tas emot när en sida levereras går däremot inte att undvika medan du
+            använder appen.
           </p>
         </Section>
 
