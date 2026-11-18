@@ -29,7 +29,7 @@ Status 18 november 2026 (uppdaterad efter dina svar): **klar för granskning, in
 - `npm run test:swap` 100/100.
 - `npm audit` 0 sårbarheter.
 
-**Sett i webbläsare** (headless Chromium mot lokal produktionsserver, riktiga Fontshare-typsnitt, 320/390/1280 px). Huvudflödet kontrollerades på `0efad72`. Ändringarna därefter rör inte flödet: typsnitten gav pixelidentiska sidor, och plan-API:et ändrar bara loggtexten.
+**Sett i webbläsare** (headless Chromium mot lokal produktionsserver med riktiga Satoshi-filer, 320/390/1280 px). Huvudflödet kontrollerades på `0efad72`. Ändringarna därefter rör inte flödet: typsnittsändringarna gav samma sidhöjder och radbrytningar, och plan-API:et ändrar bara loggtexten.
 
 Kontrollerat:
 - Skapa plan, öppna recept (mobil och desktopmodal, scroll oförändrad), Byt rätt (kostnadsskillnaden stämmer med totalsumman), avbockning och Kopiera listan, feedbacklänk.
@@ -38,7 +38,10 @@ Kontrollerat:
 - Statistik: inget före val, efter nej eller efter återkallelse. Efter ja skickas manuella `$pageview` och produkthändelser utan indata, utan cookies och utan lagring från PostHog i webbläsaren. Sökord från en hänvisande sökmotor rensas bort.
 
 **Ändringar efter dina svar 18 november**, verifierade med bygge på Node 24, `test:analytics` 50/50 och `test:swap` 100/100:
-- **Typsnitt:** Boska är borttagen ur Fontshare-anropet, och rubrikerna använder uttryckligen Georgia. Sidorna är pixelidentiska före och efter (start, planering, resultat och integritet, 390 och 1440 px). Satoshi är det enda typsnitt som hämtas från Fontshare.
+- **Typsnitt:**
+  - Rubrikerna använder uttryckligen Georgia, och Boska laddas inte. Det gav pixelidentiska sidor.
+  - Satoshi serveras sedan från appens egen domän (se "Typsnitt" nedan). Sidhöjder och radbrytningar är oförändrade på 390 och 1440 px, med bara skillnader i kantutjämning mot den tidigare CDN-versionen.
+  - Besökarens webbläsare gör inga externa anrop.
 - **Integritetssidan:**
   - Ändamål och rättslig grund redovisas per behandling, och rätten att invända beskrivs.
   - Google Formulärets inställningar skiljs från Googles egen behandling.

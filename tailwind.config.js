@@ -11,7 +11,8 @@ module.exports = {
         // display: rubriker, varumärke och receptnamn. Georgia är det
         // godkända utseendet (systemtypsnitt; Boska laddas inte, se DESIGN.md).
         // Saknas Georgia (t.ex. på Android) används enhetens serif-typsnitt.
-        // body/sans: Satoshi via Fontshare för allt funktionellt UI.
+        // body/sans: Satoshi för allt funktionellt UI, serverat från appens egen domän
+        // (@font-face i src/app/globals.css, filerna hämtas vid bygget).
         display: ['Georgia', 'serif'],
         body: ['Satoshi', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
         sans: ['Satoshi', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],

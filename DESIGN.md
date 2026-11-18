@@ -92,7 +92,7 @@ Beslut (18 november 2026): det godkända utseendet behålls. Rubriker och varum�
   - Georgia är ett systemtypsnitt och laddas inte ned. Det finns på iPhone, Mac och Windows.
   - Saknas Georgia, till exempel på många Android-enheter, används enhetens eget serif-typsnitt.
   - Georgia har bara normal och fet vikt, så `font-semibold` visas som fet.
-  - Bakgrund: appen beställde tidigare Satoshi och Boska i samma anrop till Fontshare, men Fontshare levererade bara Satoshi. Boska syntes därför aldrig, och det godkända utseendet är Georgia. Boska är nu borttagen ur anropet, så att utseendet inte ändras om Fontshare skulle börja leverera den.
+  - Bakgrund: appen beställde tidigare Satoshi och Boska i samma anrop till Fontshare, men Fontshare levererade bara Satoshi. Boska syntes därför aldrig, och det godkända utseendet är Georgia. Appen anropar inte längre Fontshare från webbläsaren alls (se Satoshi nedan), så Boska kan inte råka börja laddas.
 - **Satoshi** (`font-body`/`font-sans`): all övrig text, med vikterna 400, 500, 700 och 900.
   - Serveras från appens egen domän (`/fonts/satoshi/`, `@font-face` i `src/app/globals.css`). Besökarens webbläsare kontaktar inte Fontshare.
   - Filerna hämtas vid varje bygge av `scripts/fetch-fonts.mjs`, som körs som `prebuild` och `predev`. Skriptet hämtar Fontshares officiella paket (`https://api.fontshare.com/v2/fonts/download/satoshi`) och packar upp de oförändrade woff2- och woff-filerna och licenstexten `FFL.txt`.
