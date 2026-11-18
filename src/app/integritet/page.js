@@ -22,7 +22,7 @@ export const metadata = {
 //    posthog.com/pricing (ett års lagring på gratisplanen), posthog.com/dpa avsnitt 10
 //    (behandling även utanför EU, bl.a. USA; DPF; standardavtalsklausuler),
 //    posthog.com/subprocessors (EU Cloud i Tyskland; Cloudflare globalt för data under överföring).
-//  - Vercel (Hobby): vercel.com/docs/logs/runtime (körloggar sparas en timme),
+//  - Vercel (Hobby, enligt ägaren): vercel.com/docs/logs/runtime (körloggar sparas en timme),
 //    vercel.com/legal/privacy-notice (IP-adress, ort och land, systeminformation; överföring
 //    utanför hemlandet med standardavtalsklausuler; certifierat enligt EU–US DPF).
 //    Vercel Analytics och Speed Insights är inte aktiverade (bekräftat av ägaren).
@@ -74,7 +74,7 @@ export default function IntegritetPage() {
             Innan du har valt, och om du väljer att fortsätta utan statistik, laddas inte
             statistikverktyget och ingenting skickas dit. Du kan ändra ditt val när som helst via
             länken ”Ändra val för statistik” längst ned på sidorna. Om du tar tillbaka ditt ja
-            slutar appen skicka nya händelser direkt. Händelser som redan har skickats finns kvar
+            slutar appen skicka nya händelser. Händelser som redan har skickats finns kvar
             hos statistikverktyget under den lagringstid som beskrivs nedan.
           </p>
           <p>
@@ -100,8 +100,8 @@ export default function IntegritetPage() {
           </ul>
           <p>
             Vi skickar <strong className="text-ink">aldrig</strong> din budget, hur många ni är i
-            hushållet, vad du skriver i skafferifältet eller något annat du matar in. Vi sparar
-            inte vilka recept du valt. PostHogs automatiska insamling av klick, inspelning av
+            hushållet, vad du skriver i skafferifältet eller något annat du matar in. Händelserna
+            innehåller inte vilka recept du valt eller öppnat. PostHogs automatiska insamling av klick, inspelning av
             skärmen, värmekartor, mätning av sidans prestanda och registrering av klick som inte
             leder någonstans är avstängda.
           </p>
@@ -113,8 +113,9 @@ export default function IntegritetPage() {
             operativsystem och version, webbläsare och version (inklusive webbläsarens
             fullständiga identifieringssträng), enhetstyp och ibland enhetsmodell (till exempel
             iPhone), skärm- och fönsterstorlek,
-            webbläsarens språk, tidszon, sidans titel och adress, samt vilken version av
-            statistikverktyget som används. Om du kom till appen från en annan webbplats följer
+            webbläsarens språk, tidszon, sidans titel och adress, tidpunkt och slumpmässiga
+            id-nummer för själva händelsen, samt vilken version av statistikverktyget som
+            används. Om du kom till appen från en annan webbplats följer
             bara den webbplatsens domännamn med, och om det var en sökmotor även sökmotorns
             namn. Hela adressen och dina sökord skickas inte.
           </p>
@@ -133,9 +134,10 @@ export default function IntegritetPage() {
           <p>
             För att kunna räkna ungefär hur många som använder appen utan cookies räknar PostHog
             på sina servrar fram ett kodat värde (en så kallad hash) av IP-adressen, webbläsarens
-            identifieringssträng, webbplatsens adress och ett slumpvärde som byts varje dag.
-            Slumpvärdet raderas när dagens händelser har behandlats, och värdet går inte att räkna
-            tillbaka till IP-adressen. Samma besökare räknas därför som en ny besökare nästa dag.
+            identifieringssträng, webbplatsens domännamn och ett slumpvärde som byts varje dag.
+            Enligt PostHog raderas slumpvärdet när dagens händelser har behandlats, och värdet går
+            inte att räkna tillbaka till IP-adressen. Samma besökare räknas därför som en ny
+            besökare nästa dag.
           </p>
         </Section>
 
@@ -161,8 +163,9 @@ export default function IntegritetPage() {
             Appen sparar två saker i din webbläsares lokala lagring. Det första är ditt val om
             statistik (ja eller nej), så att vi inte behöver fråga vid varje besök. Det andra
             är din senaste matplan, inköpslistan och vilka varor du har bockat av, så att de
-            finns kvar om du laddar om sidan eller kommer tillbaka för att handla. Planen sparas
-            i högst 30 dagar och tas bort när du väljer att skapa en ny plan. Båda sakerna
+            finns kvar om du laddar om sidan eller kommer tillbaka för att handla. En plan som är
+            äldre än 30 dagar används inte och tas bort nästa gång du öppnar planeringen. Den tas
+            också bort när du väljer att skapa en ny plan. Båda sakerna
             lämnar inte din enhet och sparas även om du avböjer statistik, eftersom de behövs
             för att tjänsten ska fungera. Om du rensar webbläsarens data eller byter webbläsare
             försvinner de. Appen sparar inget annat på din enhet.
@@ -180,7 +183,8 @@ export default function IntegritetPage() {
             Appens server sparar inte det du fyller i eller din färdiga plan i någon databas och
             skriver inte in det i sina loggar. Planen sparas bara i din webbläsare, enligt
             beskrivningen ovan. För att skydda tjänsten mot överbelastning håller servern en
-            tillfällig räknare per IP-adress i minnet, i högst tio minuter.
+            tillfällig räknare per IP-adress i sitt minne. Den gäller de senaste tio minuterna,
+            rensas bort efterhand och sparas aldrig i någon databas eller logg.
           </p>
         </Section>
 
@@ -231,8 +235,8 @@ export default function IntegritetPage() {
             Elis Sylla Sundin ansvarar för hanteringen av uppgifterna som beskrivs här.
           </p>
           <p>
-            Stödet för produktstatistik bygger på ditt samtycke, som du kan ta tillbaka när som
-            helst utan att det påverkar appen. Statistiken är avsedd att inte kunna kopplas till dig
+            Den rättsliga grunden för produktstatistiken är ditt samtycke, som du kan ta tillbaka
+            när som helst utan att det påverkar appen. Statistiken är avsedd att inte kunna kopplas till dig
             som person, men om du vill veta mer, få uppgifter rättade eller raderade, eller har
             frågor om integritet, hör av dig till{' '}
             <a
