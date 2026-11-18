@@ -273,5 +273,11 @@ export function sanitizeAnalyticsProperties(properties) {
   delete properties.$search
   delete properties.$search_params
 
+  // Sökordet från en sökmotor som hänvisade hit (PostHog läser parametern q eller p ur
+  // hänvisarens adress och bifogar den som ph_keyword, verifierat mot version 1.434.15).
+  // Vi behåller bara vilken sökmotor och domän det var, aldrig vad besökaren sökte på.
+  delete properties.ph_keyword
+  delete properties.$initial_ph_keyword
+
   return properties
 }

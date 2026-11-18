@@ -7,24 +7,28 @@ export const metadata = {
   description: 'Så fungerar valet om produktstatistik i Mätt & Billigt och vilka uppgifter som hanteras.',
 }
 
-// ─── GRANSKNING INNAN PUBLICERING ───────────────────────────────────────────
-// Den här sidan är ett UTKAST för granskning, inte juridisk rådgivning.
-//
-// Måste fyllas i / verifieras av ansvarig innan externa tester:
-//  1. Hur PostHog-projektet hanterar IP-adress (projektinställning, syns inte
-//     i koden) och vad Google Forms-formuläret för feedback samlar in.
-//  2. Hostingplats/loggning hos Vercel (syns inte i koden).
-//  3. (se nedan) Överföringar utanför EU/EES: texten bygger på vårt biträdesavtal med
-//     PostHog (EU Cloud för lagring; behandling kan ske även utanför EU/EES,
-//     bland annat i USA; EU:s standardavtalsklausuler). Texten påstår medvetet
-//     INGEN DPF-registrering – den är inte verifierad. Ändra bara texten om
-//     avtalet eller PostHogs villkor ändras.
-//  4. Feedback går via ett Google Formulär (länken ligger i src/utils/feedbackLink.js).
-//     Bekräfta vad formuläret faktiskt samlar in (t.ex. om inloggning eller e-post krävs eller
-//     efterfrågas), var svaren lagras och vem som har åtkomst. Texten nedan beskriver bara att
-//     formuläret är en extern tjänst. Planen sparas i webbläsarens lokala lagring (inget skickas).
-// Texten nedan påstår därför inget om dessa punkter utöver det koden och
-// avtalet visar.
+// ─── Underlag för texten ────────────────────────────────────────────────────
+// Texten beskriver hur koden faktiskt fungerar och följande uppgifter, kontrollerade
+// 2026-11-18. Ändras något av detta ska texten ses över.
+//  - Koden: statistik laddas först efter ja (src/utils/analytics.js, analyticsConsent.js),
+//    PostHog körs i cookieless-läge utan personprofiler, autocapture och skärminspelning är
+//    avstängda, sidvisningar skickas manuellt (src/app/providers.js) och adresser, hänvisare,
+//    kampanjparametrar och sökord från sökmotorer tas bort (sanitizeAnalyticsProperties).
+//  - PostHog-projektet (bekräftat av ägaren): EU Cloud, "Discard client IP data" påslaget,
+//    lagringstid för händelser ett år, autocapture, Session Replay, Heatmaps, Web Vitals och
+//    Dead Clicks avstängda, signerat biträdesavtal (DPA).
+//  - PostHogs källor: posthog.com/docs/privacy/data-storage (IP sparas inte med händelserna),
+//    posthog.com/tutorials/cookieless-tracking (daglig hash av IP, user agent och värdnamn),
+//    posthog.com/pricing (ett års lagring på gratisplanen), posthog.com/dpa avsnitt 10
+//    (behandling även utanför EU, bl.a. USA; DPF; standardavtalsklausuler),
+//    posthog.com/subprocessors (EU Cloud i Tyskland; Cloudflare globalt för data under överföring).
+//  - Vercel (Hobby): vercel.com/docs/logs/runtime (körloggar sparas en timme),
+//    vercel.com/legal/privacy-notice (IP-adress, ort och land, systeminformation; överföring
+//    utanför hemlandet med standardavtalsklausuler; certifierat enligt EU–US DPF).
+//    Vercel Analytics och Speed Insights är inte aktiverade (bekräftat av ägaren).
+//  - Personuppgiftsansvarig och kontaktadress: Elis Sylla Sundin, kontakt.mattochbilligt@gmail.com.
+// Ej fastställt i texten: Google Formulärets inställningar (t.ex. om e-postadress samlas in)
+// och i vilken region Vercel kör appens serverfunktion. Texten påstår därför inget om dem.
 
 function Section({ title, children }) {
   return (
@@ -57,20 +61,21 @@ export default function IntegritetPage() {
           Du kan använda hela appen utan att tillåta någon statistik. Här förklarar vi vad
           valet gäller och vilka andra uppgifter som hanteras när du planerar.
         </p>
+        <p className="text-sm text-ink-light mt-3">Senast uppdaterad 18 november 2026.</p>
 
         <Section title="Produktstatistik är ett frivilligt val">
           <p>
-            När produktstatistik är påslagen i appen frågar vi första gången du besöker den om
-            du vill bidra. Du kan välja <strong className="text-ink">Tillåt produktstatistik</strong> eller{' '}
+            Första gången du besöker appen frågar vi om du vill bidra med produktstatistik. Du kan
+            välja <strong className="text-ink">Tillåt produktstatistik</strong> eller{' '}
             <strong className="text-ink">Fortsätt utan statistik</strong>. Inget av valen är
-            förvalt, och planeringen fungerar likadant oavsett vad du väljer. Är statistiken inte
-            påslagen visas inget val, och då skickas ingenting till statistikverktyget.
+            förvalt, och planeringen fungerar likadant oavsett vad du väljer.
           </p>
           <p>
             Innan du har valt, och om du väljer att fortsätta utan statistik, laddas inte
-            statistikverktyget och ingenting skickas dit. När valet visas kan du ändra det när som
-            helst via länken ”Ändra val för statistik”, som finns längst ned på sidorna. Om du
-            tar tillbaka ditt ja slutar appen skicka nya händelser direkt.
+            statistikverktyget och ingenting skickas dit. Du kan ändra ditt val när som helst via
+            länken ”Ändra val för statistik” längst ned på sidorna. Om du tar tillbaka ditt ja
+            slutar appen skicka nya händelser direkt. Händelser som redan har skickats finns kvar
+            hos statistikverktyget under den lagringstid som beskrivs nedan.
           </p>
           <p>
             <AnalyticsSettingsButton className="text-primary font-bold underline underline-offset-4 hover:text-primary-hover" />
@@ -79,12 +84,12 @@ export default function IntegritetPage() {
 
         <Section title="Vad vi mäter om du tillåter statistik">
           <p>
-            Vi använder verktyget PostHog (EU Cloud) för att förstå hur appen används, så att vi
-            kan göra den bättre. Vi mäter bara att följande händer, utan någon information om
-            vad du fyllt i:
+            Vi använder verktyget PostHog för att förstå hur appen används, så att vi kan göra den
+            bättre. Appen skickar själv en händelse när något av följande händer, utan någon
+            information om vad du fyllt i:
           </p>
           <ul className="list-disc pl-5 space-y-1">
-            <li>att du besöker en sida i appen (sidans adress, utan sökparametrar eller fragment)</li>
+            <li>att du visar en sida i appen (sidans adress, utan sökparametrar eller fragment)</li>
             <li>att du klickar på knappen på startsidan för att skapa en matplan</li>
             <li>att du börjar fylla i planeringsformuläret</li>
             <li>att en matplan har skapats</li>
@@ -95,44 +100,59 @@ export default function IntegritetPage() {
           </ul>
           <p>
             Vi skickar <strong className="text-ink">aldrig</strong> din budget, hur många ni är i
-            hushållet, vad du skriver i skafferifältet eller något annat du matar in som
-            statistik. Vi sparar inte heller vilka recept du valt, och vi spelar inte in din
-            skärm eller dina klick.
+            hushållet, vad du skriver i skafferifältet eller något annat du matar in. Vi sparar
+            inte vilka recept du valt. PostHogs automatiska insamling av klick, inspelning av
+            skärmen, värmekartor, mätning av sidans prestanda och registrering av klick som inte
+            leder någonstans är avstängda.
           </p>
         </Section>
 
-        <Section title="Teknisk information som ändå följer med">
+        <Section title="Teknisk information som följer med">
           <p>
-            Även om vi har ställt in PostHog så att det inte lägger några cookies eller sparar
-            något i din webbläsare (så kallat cookieless-läge) tar PostHog <strong className="text-ink">ändå
-            emot teknisk information om din webbläsare och enhet</strong>. Det handlar om
-            webbläsare och version (inklusive webbläsarens fullständiga identifieringssträng),
-            operativsystem, enhetstyp, skärm- och fönsterstorlek, språk, tidszon och sidans
-            titel. Dessutom ser PostHogs servrar den IP-adress din enhet har när den kontaktar
-            dem, eftersom det ingår i varje internetanslutning.
+            Med varje händelse följer teknisk information om din webbläsare och enhet:
+            operativsystem och version, webbläsare och version (inklusive webbläsarens
+            fullständiga identifieringssträng), enhetstyp och ibland enhetsmodell (till exempel
+            iPhone), skärm- och fönsterstorlek,
+            webbläsarens språk, tidszon, sidans titel och adress, samt vilken version av
+            statistikverktyget som används. Om du kom till appen från en annan webbplats följer
+            bara den webbplatsens domännamn med, och om det var en sökmotor även sökmotorns
+            namn. Hela adressen och dina sökord skickas inte.
           </p>
           <p>
-            Vi försöker inte ta reda på vem du är och skapar inga personliga profiler. Innan något
-            skickas tar vi bort sökparametrar och fragment ur sidadresser, och av vilken sida du
-            kom från behåller vi bara domännamnet.
+            Vi försöker inte ta reda på vem du är och skapar inga personprofiler. PostHog lägger
+            inga cookies och sparar ingenting i din webbläsare.
+          </p>
+        </Section>
+
+        <Section title="IP-adress och räkning av besökare">
+          <p>
+            När din webbläsare skickar en händelse tar PostHog emot din IP-adress, eftersom den
+            ingår i varje internetanslutning. Vårt PostHog-projekt är inställt så att IP-adressen
+            inte sparas tillsammans med händelserna.
+          </p>
+          <p>
+            För att kunna räkna ungefär hur många som använder appen utan cookies räknar PostHog
+            på sina servrar fram ett kodat värde (en så kallad hash) av IP-adressen, webbläsarens
+            identifieringssträng, webbplatsens adress och ett slumpvärde som byts varje dag.
+            Slumpvärdet raderas när dagens händelser har behandlats, och värdet går inte att räkna
+            tillbaka till IP-adressen. Samma besökare räknas därför som en ny besökare nästa dag.
           </p>
         </Section>
 
         <Section title="Hur länge sparas statistiken?">
           <p>
-            PostHogs nuvarande Free-plan, som vi använder, garanterar att händelser och
-            tillhörande metadata sparas i minst ett år. Därefter kan äldre data finnas kvar i
-            så kallad kallagring eller raderas. Vi kan därför inte ange någon exakt dag då
-            uppgifterna tas bort.
+            PostHog sparar händelserna i ett år. Därefter kan de raderas permanent av PostHog. Vi
+            kan inte ange någon exakt dag då en viss händelse tas bort.
           </p>
         </Section>
 
-        <Section title="Var behandlas uppgifterna?">
+        <Section title="Var behandlas statistiken?">
           <p>
-            Vi använder PostHog EU Cloud för att lagra statistiken. Enligt vårt biträdesavtal med
-            PostHog kan PostHog dock behandla uppgifter även utanför EU/EES, bland annat i USA.
-            Avtalet hänvisar till EU-kommissionens standardavtalsklausuler som skydd när
-            uppgifter förs över till ett land utanför EU/EES.
+            Statistiken lagras i PostHogs EU-moln, på servrar i Tyskland. Enligt vårt
+            biträdesavtal med PostHog kan PostHog ändå behandla uppgifter utanför EU/EES, bland
+            annat i USA, till exempel hos de leverantörer som förmedlar trafiken. PostHog deltar
+            i EU:s och USA:s ramverk för dataskydd (EU–US Data Privacy Framework), och avtalet
+            innehåller EU-kommissionens standardavtalsklausuler.
           </p>
         </Section>
 
@@ -157,10 +177,34 @@ export default function IntegritetPage() {
             anropas för att skapa planen.
           </p>
           <p>
-            Appens server sparar inte det du fyller i eller din färdiga plan i någon databas. Planen
-            sparas bara i din webbläsare, enligt beskrivningen ovan. För att skydda
-            tjänsten mot överbelastning håller servern en tillfällig räknare per IP-adress i
-            minnet, i högst tio minuter.
+            Appens server sparar inte det du fyller i eller din färdiga plan i någon databas och
+            skriver inte in det i sina loggar. Planen sparas bara i din webbläsare, enligt
+            beskrivningen ovan. För att skydda tjänsten mot överbelastning håller servern en
+            tillfällig räknare per IP-adress i minnet, i högst tio minuter.
+          </p>
+        </Section>
+
+        <Section title="Drift av appen">
+          <p>
+            Appen drivs hos Vercel (Vercel Inc., USA). När du besöker sidorna tar Vercel emot din
+            IP-adress, ort och land som härleds ur den, och teknisk information om anslutningen
+            och webbläsaren, för att kunna leverera sidorna och skydda tjänsten. De körloggar som
+            vi har tillgång till i Vercel sparas i en timme.
+          </p>
+          <p>
+            Vercel kan behandla uppgifter utanför EU/EES, bland annat i USA. Vercel är
+            certifierat enligt EU–US Data Privacy Framework och använder standardavtalsklausuler
+            eller andra lämpliga skyddsåtgärder vid överföring. Hur Vercel självt hanterar
+            uppgifterna beskrivs i{' '}
+            <a
+              href="https://vercel.com/legal/privacy-notice"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-primary"
+            >
+              Vercels integritetsmeddelande
+            </a>
+            . Vi använder inte Vercels egna tjänster för besöksstatistik eller prestandamätning.
           </p>
         </Section>
 
@@ -177,10 +221,6 @@ export default function IntegritetPage() {
               på startsidan och planeringen, en knapp i resultatet och en länk i sidfoten) öppnar ett Google Formulär i en ny flik. Det är
               en frivillig extern tjänst; appen skickar inga uppgifter dit själv och tar inte emot
               dina svar. Vad som sparas styrs av det du skriver i formuläret och av Googles villkor.
-            </li>
-            <li>
-              <strong className="text-ink">Drift.</strong> Som alla webbplatser hanterar vår
-              driftleverantör anslutningsuppgifter, till exempel IP-adress, för att kunna leverera sidorna.
             </li>
           </ul>
         </Section>

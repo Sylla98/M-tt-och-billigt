@@ -299,7 +299,7 @@ const noFreshProduct = !REFERENCE_PRICES.some((p) => p.key === 'farsk-basilika')
 
 describe('valideraren och verifieringsskriptet', () => {
   test('validate:recipes (verkligt bibliotek): inga fel och inga priceKey-varningar', () => {
-    const r = run(repo, ['--experimental-default-type=module', 'scripts/validate-recipes.mjs'])
+    const r = run(repo, ['scripts/validate-recipes.mjs'])
     assert.equal(r.status, 0, r.stdout.slice(-800) + r.stderr.slice(-300))
     assert.match(r.stdout, /Alla recept är giltiga/)
     assert.doesNotMatch(r.stdout, /priceKey/)
@@ -308,7 +308,7 @@ describe('valideraren och verifieringsskriptet', () => {
   test('validate:recipes: priceKey utan produkt ger varning, inte fel (kopia med färsk basilika inlagd)', { skip: !noFreshProduct && 'färsk-produkt finns nu' }, () => {
     const dir = makeCopy({ injectFresh: true })
     try {
-      const r = run(dir, ['--experimental-default-type=module', 'scripts/validate-recipes.mjs'])
+      const r = run(dir, ['scripts/validate-recipes.mjs'])
       assert.equal(r.status, 0, r.stdout.slice(-800))
       assert.match(r.stdout, /priceKey "farsk-basilika" men ingen produkt/)
     } finally { fs.rmSync(dir, { recursive: true, force: true }) }

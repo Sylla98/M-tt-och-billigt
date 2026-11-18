@@ -27,6 +27,18 @@ describe('sanitizeAnalyticsProperties()', () => {
     assert.equal(result.$session_entry_url, 'https://example.se/planera')
   })
 
+  test('tar bort sökordet från en hänvisande sökmotor (ph_keyword), behåller sökmotor och domän', () => {
+    const result = sanitizeAnalyticsProperties({
+      $search_engine: 'google', ph_keyword: 'hemligt sökord', $initial_ph_keyword: 'x',
+      $referring_domain: 'www.google.com', $referrer: 'https://www.google.com/search?q=hemligt',
+    })
+    assert.equal('ph_keyword' in result, false)
+    assert.equal('$initial_ph_keyword' in result, false)
+    assert.equal('$referrer' in result, false)
+    assert.equal(result.$search_engine, 'google')
+    assert.equal(result.$referring_domain, 'www.google.com')
+  })
+
   test('tar bort kampanj- och klick-parametrar ur sidadressen som SDK:n bifogar som egna egenskaper (utm_*, fbclid, gclid ...)', () => {
     const result = sanitizeAnalyticsProperties({
       $current_url: 'https://example.se/planera?utm_source=x&fbclid=abc',

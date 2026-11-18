@@ -205,7 +205,7 @@ describe('valideraren och verifieringsskriptet kontrollerar inköpsenheten', () 
   test('validate:recipes: ofullständigt packageLabel är ett fel (kopia med trasig produkt)', () => {
     const dir = makeCopy({ badLabel: true })
     try {
-      const r = run(dir, ['--experimental-default-type=module', 'scripts/validate-recipes.mjs'])
+      const r = run(dir, ['scripts/validate-recipes.mjs'])
       assert.equal(r.status, 1)
       assert.match(r.stdout + r.stderr, /produkt "trasig-etikett": packageLabel måste vara \{ singular, plural \}/)
     } finally { fs.rmSync(dir, { recursive: true, force: true }) }
