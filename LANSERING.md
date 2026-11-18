@@ -6,7 +6,7 @@ Status 18 november 2026 (uppdaterad efter dina svar): **klar för granskning, in
 | | |
 |---|---|
 | Releasegren | `release/lansering` |
-| Release-kod (sista kodändringen) | `7dec4a3` |
+| Release-kod (sista kodändringen) | `a0c3f86` |
 | Ovanpå release-koden | Bara uppdateringen av denna fil (`LANSERING.md`), ingen kod |
 | Pull request (draft) | https://github.com/Sylla98/M-tt-och-billigt/pull/1 |
 | Preview för grenen (Vercel) | https://m-tt-och-billigt-git-release-lansering-sylla1.vercel.app (grenadress, följer senaste push). Kräver inloggning i Vercel (Vercel Authentication), så den är inte öppnad härifrån. |
@@ -21,7 +21,7 @@ Status 18 november 2026 (uppdaterad efter dina svar): **klar för granskning, in
   - Variablerna byggs in i klientkoden vid byggtillfället. Ändras de efter bygget krävs ett nytt bygge (Redeploy), inte bara en omstart.
 - **Node:** projektet är inställt på Node.js 24.x i Vercel, och det är samma version som releasen verifierades med.
 
-## Vad som är verifierat (release-kod `7dec4a3`; se även Typsnitt nedan)
+## Vad som är verifierat (release-kod `a0c3f86`; se även Typsnitt nedan)
 **Kod och tester visar** (Node 24.22.3, även Node 22.23.4 för testerna):
 - `npm run build` ok.
 - `npm run validate:recipes` ok.
