@@ -1,15 +1,15 @@
 # Lansering av Mätt & Billigt (webbappen)
 
-Status 18 november 2026: **klar för granskning, inte publicerad.** Ingen merge till `main` och ingen Production-deploy har gjorts.
+Status 18 november 2026 (uppdaterad efter dina svar): **klar för granskning, inte publicerad.** Ingen merge till `main` och ingen Production-deploy har gjorts.
 
 ## Release
 | | |
 |---|---|
 | Releasegren | `release/lansering` |
-| Release-kod (sista kodändringen) | `0efad72` |
-| Ovanpå release-koden | Bara denna fil (`LANSERING.md`), ingen kod |
+| Release-kod (sista kodändringen) | `00fc0c8` |
+| Ovanpå release-koden | Bara uppdateringen av denna fil (`LANSERING.md`), ingen kod |
 | Pull request (draft) | https://github.com/Sylla98/M-tt-och-billigt/pull/1 |
-| Preview för grenen (Vercel) | https://m-tt-och-billigt-git-release-lansering-sylla1.vercel.app (grenadress, ändras vid nya pushar) |
+| Preview för grenen (Vercel) | https://m-tt-och-billigt-git-release-lansering-sylla1.vercel.app (grenadress, följer senaste push). Kräver inloggning i Vercel (Vercel Authentication), så den är inte öppnad härifrån. |
 | Production-adress | https://m-tt-och-billigt.vercel.app/ |
 
 - **Förhållande till `main`:** `origin/main` (77cfe79, augusti 2026) är förfader till releasegrenen. Grenen ligger 0 commits efter och 46+ före. En sammanslagning tappar alltså inget arbete och blir i praktiken en fast-forward.
@@ -21,7 +21,7 @@ Status 18 november 2026: **klar för granskning, inte publicerad.** Ingen merge 
   - Variablerna byggs in i klientkoden vid byggtillfället. Ändras de efter bygget krävs ett nytt bygge (Redeploy), inte bara en omstart.
 - **Node:** projektet är inställt på Node.js 24.x i Vercel, och det är samma version som releasen verifierades med.
 
-## Vad som är verifierat (release-kod `0efad72`)
+## Vad som är verifierat (release-kod `00fc0c8`)
 **Kod och tester visar** (Node 24.22.3, även Node 22.23.4 för testerna):
 - `npm run build` ok.
 - `npm run validate:recipes` ok.
@@ -29,13 +29,24 @@ Status 18 november 2026: **klar för granskning, inte publicerad.** Ingen merge 
 - `npm run test:swap` 100/100.
 - `npm audit` 0 sårbarheter.
 
-**Sett i webbläsare** (headless Chromium mot lokal produktionsserver, riktiga Fontshare-typsnitt, 320/390/1280 px):
+**Sett i webbläsare** (headless Chromium mot lokal produktionsserver, riktiga Fontshare-typsnitt, 320/390/1280 px). Huvudflödet kontrollerades på `0efad72`. Ändringarna därefter rör inte flödet: typsnitten gav pixelidentiska sidor, och plan-API:et ändrar bara loggtexten.
+
+Kontrollerat:
 - Skapa plan, öppna recept (mobil och desktopmodal, scroll oförändrad), Byt rätt (kostnadsskillnaden stämmer med totalsumman), avbockning och Kopiera listan, feedbacklänk.
 - En sparad plan från Next 14-versionen återställs med samma rätter, summa och avbockningar.
 - Inget sidledsöverflöd.
 - Statistik: inget före val, efter nej eller efter återkallelse. Efter ja skickas manuella `$pageview` och produkthändelser utan indata, utan cookies och utan lagring från PostHog i webbläsaren. Sökord från en hänvisande sökmotor rensas bort.
 
-**Separat granskning:** ändringarna och integritetstextens faktapåståenden har granskats mot koden, kontouppgifterna och PostHogs och Vercels officiella sidor. Fynden är rättade.
+**Ändringar efter dina svar 18 november**, verifierade med bygge på Node 24, `test:analytics` 50/50 och `test:swap` 100/100:
+- **Typsnitt:** Boska är borttagen ur Fontshare-anropet, och rubrikerna använder uttryckligen Georgia. Sidorna är pixelidentiska före och efter (start, planering, resultat och integritet, 390 och 1440 px). Satoshi är det enda typsnitt som hämtas från Fontshare.
+- **Integritetssidan:**
+  - Ändamål och rättslig grund redovisas per behandling, och rätten att invända beskrivs.
+  - Google Formulärets inställningar skiljs från Googles egen behandling.
+  - Typsnittsavsnittet beskriver den lösning som faktiskt används.
+  - Underlaget för bedömningen står i `INTRESSEAVVAGNING.md`.
+- **Plan-API:et:** vid oväntade fel loggas bara feltypen, inte felmeddelandet. Kontrollerat med ogiltig JSON: loggen innehöll ingen indata.
+
+**Separat granskning:** ändringarna och integritetstextens faktapåståenden har granskats två gånger mot koden, kontouppgifterna, licensen och de officiella källorna (PostHog, Vercel, Fontshare, Google, IMY). Fynden är rättade.
 
 **Inte verifierat:**
 - Vercel Preview och Production.
@@ -43,14 +54,35 @@ Status 18 november 2026: **klar för granskning, inte publicerad.** Ingen merge 
 - Att PostHog faktiskt tar emot och lagrar händelserna från Production.
 - Juridisk bedömning: tekniska tester visar hur appen beter sig, inte att den uppfyller dataskyddsregler.
 
+## Satoshi på egen domän: inte genomfört
+Satoshi omfattas av ITF Free Font License 2.0 (fontshare.com/licenses, läst 18 november 2026):
+- **Tillåtet (avsnitt 01):** egen hosting för den egna webbplatsen.
+- **Förbjudet (avsnitt 02):** att göra filerna tillgängliga via "repository" eller "publicly accessible servers", och att ändra eller konvertera dem.
+
+Repot är publikt, så filerna är inte incheckade, och Satoshi hämtas fortfarande från Fontshare. Se `INTRESSEAVVAGNING.md` avsnitt 4 för alternativen.
+
+## Beslut som återstår före publicering
+Det här är inga tekniska hinder, men bör vara avgjort innan sidan blir offentlig:
+1. **Fontshare och rättslig grund:** IMY skriver att intresseavvägning inte kan användas om samma resultat kan nås på ett mindre integritetskänsligt sätt. Egen hosting av Satoshi är ett sådant sätt. Välj ett alternativ (`INTRESSEAVVAGNING.md` avsnitt 4):
+   - (a) behåll Fontshare,
+   - (b) hämta filerna vid bygget utan att checka in dem,
+   - (c) byt till systemtypsnitt.
+2. **Lagringstid för feedbacksvaren:** bestäm en tid eller ett kriterium, så att den kan anges på integritetssidan. I dag anger sidan ingen lagringstid.
+3. **Granska `INTRESSEAVVAGNING.md`:** bekräfta förslagen, bland annat:
+   - att "avtal" inte används,
+   - bedömningen av lagringen i webbläsaren enligt lagen om elektronisk kommunikation.
+
+   Ändra sidan om du landar i något annat.
+
 ## Före publicering
-1. **Preview:** öppna Preview-länken ovan, eller den commit-specifika länken i Vercel. Gå igenom: skapa plan, Byt rätt, ladda om (planen och avbockningarna finns kvar) och feedback.
-2. **PostHog:** under *Settings > Project > Web analytics* ska **Enable cookieless tracking** vara påslaget. Appen kör PostHog i cookieless-läge, och enligt PostHog kastas sådana händelser med en varning om inställningen är av.
-3. **Integritetssidan:** läs `/integritet` och besvara de öppna frågorna i rapporten:
-   - Google Formulärets inställningar.
-   - Rättslig grund för övrig behandling.
-   - Fontshare.
-4. **Godkänn PR:en** och ändra den från draft till klar.
+1. **Preview:** logga in i Vercel och öppna Preview-länken ovan, eller den commit-specifika länken i Vercel. Gå igenom:
+   - skapa plan,
+   - Byt rätt,
+   - ladda om (planen och avbockningarna finns kvar),
+   - feedback,
+   - `/integritet`.
+2. **PostHog:** *Enable cookieless tracking* är påslaget (bekräftat 18 november).
+3. **Godkänn PR:en** och ändra den från draft till klar.
 
 ## Publicering
 1. Slå ihop https://github.com/Sylla98/M-tt-och-billigt/pull/1 till `main`.
