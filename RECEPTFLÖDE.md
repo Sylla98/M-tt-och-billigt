@@ -169,15 +169,15 @@ Bygg (`npm run build`) bara om appkod har ändrats. `test:analytics` bara om ana
 
 ### 2.6 Leverans
 1. Utgå från den **senaste gren som innehåller senaste appversionen** (`CLAUDE.md`, "Standardflöde"). `main` är inte senaste versionen. Skapa en egen feature-gren, t.ex. `feature/recept-<id>`.
-2. Ändra, testa och verifiera enligt 2.5. Committa med källa och prisunderlag i meddelandet.
-3. Pusha med uttryckligt grennamn: `git push -u origin <gren>:<gren>`.
-4. Försök hitta Vercel Preview och byggstatus (GitHub-status/checks). Hittas ingen: skriv att den inte kunnat bekräftas.
-5. Rapportera kort:
+2. Ändra, testa och verifiera enligt 2.5, och rätta granskningsfynd. Committa lokalt med källa och prisunderlag i meddelandet.
+3. Rapportera med skärmbilder och vänta på Elis klartecken innan push (`CLAUDE.md`, standardflödet steg 6). Efter klartecken: pusha med uttryckligt grennamn, `git push -u origin <gren>:<gren>`.
+4. Efter push: försök hitta Vercel Preview och byggstatus (GitHub-status/checks). Hittas ingen: skriv att den inte kunnat bekräftas.
+5. Rapporten innehåller:
    - **Ändrat:** recept (id), filer, bild (ny/återanvänd/saknas), gren och commit.
    - **Källa → appen:** avvikelser och antaganden (2.1, 2.3).
    - **Verifierat:** `validate:recipes`, planverifiering (hushåll, budget, period, totalsumma, generiska priser, Byt rätt-skillnad), webbläsarkontroll (bredder), vad som *inte* verifierats (Preview, riktig telefon).
    - **Elis ska bedöma:** smak/recept i verkligheten, receptets bild, kostnaden på mobilen, ev. beslut jag behöver.
-6. **Ingen merge till `main`, ingen Production** utan Elis godkännande.
+6. **Ingen merge till `main`, ingen Production** utan Elis separata godkännande efter Preview-kontrollen.
 
 ---
 
