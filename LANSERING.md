@@ -59,7 +59,9 @@ Kontrollerat:
 - **Inte i repot:** mappen är utesluten i `.gitignore` och checkas aldrig in, enligt ITF Free Font License 2.0, avsnitt 01 och 02.
 - **Inga externa anrop:** appen serverar filerna från sin egen domän, så besökarens webbläsare kontaktar inte Fontshare.
 - **Om hämtningen misslyckas:** bygget stoppas med meddelandet `[fetch-fonts] FEL: …`. Är Fontshare tillfälligt nere, bygg om senare.
-- **Vercel:** bygget behöver nå `api.fontshare.com`. Det bekräftas av Preview-bygget för releasecommiten (se PR #1).
+- **Vercel:** bygget behöver nå `api.fontshare.com`. Vercel kör paketets `build`-skript, och därmed `prebuild`.
+  - Om Build Command har ändrats (Override) så att typsnitten inte hämtas, stoppar `next.config.js` bygget med ett tydligt fel.
+  - Ett lyckat Vercel-bygge betyder därför att typsnitten hämtades.
 
 ## Kvar före publicering
 Underlaget står i `INTRESSEAVVAGNING.md` (version 18 november, granskad mot IMY, EDPB, LEK 9 kap. 28 § och PTS).
