@@ -27,18 +27,9 @@ export default function RootLayout({ children }) {
         {process.env.NEXT_PUBLIC_ENABLE_ANALYTICS === 'true' && (
           <script dangerouslySetInnerHTML={{ __html: CONSENT_LAYOUT_SCRIPT }} />
         )}
-        {/* Satoshi (allt UI) via Fontshares API (ITF Free Font License).
-            Rubriker och varumärke använder Georgia (systemtypsnitt, se
-            DESIGN.md); Boska laddas medvetet inte. Satoshi-filerna får enligt
-            licensen inte checkas in i det publika repot, så de hämtas från
-            Fontshare. preconnect minskar laddningstiden; display=swap gör att
-            text syns direkt i ett reservtypsnitt medan Satoshi hämtas. */}
-        <link rel="preconnect" href="https://api.fontshare.com" />
-        <link rel="preconnect" href="https://cdn.fontshare.com" crossOrigin="anonymous" />
-        <link
-          href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700,900&display=swap"
-          rel="stylesheet"
-        />
+        {/* Typsnitt: Satoshi serveras från appens egen domän (@font-face i globals.css,
+            filerna hämtas vid bygget av scripts/fetch-fonts.mjs). Rubrikerna använder
+            systemtypsnittet Georgia. Inga anrop till Fontshare från webbläsaren. */}
       </head>
       <body className="bg-page min-h-screen font-body antialiased">
         <PostHogProvider>{children}</PostHogProvider>

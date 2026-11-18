@@ -54,21 +54,21 @@ Kontrollerat:
 - Att PostHog faktiskt tar emot och lagrar händelserna från Production.
 - Juridisk bedömning: tekniska tester visar hur appen beter sig, inte att den uppfyller dataskyddsregler.
 
-## Satoshi på egen domän: inte genomfört
-Satoshi omfattas av ITF Free Font License 2.0 (fontshare.com/licenses, läst 18 november 2026):
-- **Tillåtet (avsnitt 01):** egen hosting för den egna webbplatsen.
-- **Förbjudet (avsnitt 02):** att göra filerna tillgängliga via "repository" eller "publicly accessible servers", och att ändra eller konvertera dem.
-
-Repot är publikt, så filerna är inte incheckade, och Satoshi hämtas fortfarande från Fontshare. Se `INTRESSEAVVAGNING.md` avsnitt 4 för alternativen.
+## Typsnitt: Satoshi på egen domän (genomfört)
+- **Hämtning vid bygget:** `npm run build` kör först `scripts/fetch-fonts.mjs` (prebuild). Skriptet hämtar Fontshares officiella paket (`https://api.fontshare.com/v2/fonts/download/satoshi`) och packar upp de oförändrade webbfilerna och `FFL.txt` till `public/fonts/satoshi/`.
+- **Inte i repot:** mappen är utesluten i `.gitignore` och checkas aldrig in, enligt ITF Free Font License 2.0, avsnitt 01 och 02.
+- **Inga externa anrop:** appen serverar filerna från sin egen domän, så besökarens webbläsare kontaktar inte Fontshare.
+- **Om hämtningen misslyckas:** bygget stoppas med meddelandet `[fetch-fonts] FEL: …`. Är Fontshare tillfälligt nere, bygg om senare.
+- **Vercel:** bygget behöver nå `api.fontshare.com`. Det bekräftas av Preview-bygget för releasecommiten (se PR #1).
 
 ## Kvar före publicering
 Underlaget står i `INTRESSEAVVAGNING.md` (version 18 november, granskad mot IMY, EDPB, LEK 9 kap. 28 § och PTS).
 
 **Verkligt hinder:**
-1. **Fontshare och rättslig grund:** IMY skriver att intresseavvägning inte kan användas om samma resultat kan nås på ett mindre integritetskänsligt sätt. Egen hosting av Satoshi är ett sådant sätt. Välj ett alternativ (`INTRESSEAVVAGNING.md` avsnitt 4):
-   - (a) behåll Fontshare,
-   - (b) hämta filerna vid bygget utan att checka in dem,
-   - (c) byt till systemtypsnitt.
+1. **Återkallelse av statistiksamtycket:** PTS skriver att möjligheten att återkalla ska ligga "högt upp på sidan" och inte kräva att användaren scrollar, och GDPR artikel 7.3 kräver att det ska vara lika lätt att återkalla som att ge samtycke.
+   - I dag finns "Ändra val för statistik" bara i sidfoten och på integritetssidan.
+   - Minsta rättelse: en liten "Ändra val för statistik"-kontroll i den fasta toppraden på alla sidor, bredvid "Lämna feedback". Den öppnar samma panel och visas bara när statistik är påslagen.
+   - Kräver ditt godkännande av placeringen. Se `INTRESSEAVVAGNING.md`, "Återkallelse av samtycke till statistik (PTS)".
 
 **Rutin att etablera:**
 
@@ -77,14 +77,16 @@ Underlaget står i `INTRESSEAVVAGNING.md` (version 18 november, granskad mot IMY
    - Radera då svar äldre än 90 dagar i Formulär och i ett eventuellt länkat kalkylark, och radera nedladdade kopior.
    - Lägg till en rad i formulärets beskrivning om att inte skriva uppgifter om hälsa.
 
-**Ställningstaganden (stoppar inte tekniskt):**
+**Ställningstaganden (stoppar inte lanseringen):**
 
 3. Intresseavvägning i stället för avtal (`INTRESSEAVVAGNING.md`, "Avtal som rättslig grund").
 4. **Lagringen i webbläsaren** (avsnitt 3):
    - automatisk sparning av planen i högst 30 dagar,
    - statistikvalet utan utgångstid.
-5. **Valfri hjälptext** vid skafferifältet ("Skriv bara matvaror") mot hälsouppgifter (avsnitt 2). Det är en gränssnittsändring.
-6. **Placeringen av "Ändra val för statistik"** i sidfoten: PTS skriver att möjligheten att återkalla ska ligga "högt upp på sidan". En ändring vore en designändring.
+
+**Åtgärdat 18 november:**
+- Fontshare: Satoshi serveras nu från egen domän.
+- Hjälptexten vid skafferifältet: "Skriv bara matvaror, inte hälsouppgifter eller andra personuppgifter."
 
 ## Före publicering
 1. **Preview:** logga in i Vercel och öppna Preview-länken ovan, eller den commit-specifika länken i Vercel. Gå igenom:

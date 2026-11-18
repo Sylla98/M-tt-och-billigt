@@ -2,6 +2,42 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Satoshi serveras från appens egen domän. Filerna hämtas oförändrade från Fontshares
+   officiella paket vid bygget (scripts/fetch-fonts.mjs) och checkas inte in (ITF Free Font
+   License). Samma familj, vikter och font-display som Fontshares API gav tidigare. */
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/satoshi/Satoshi-Regular.woff2') format('woff2'),
+       url('/fonts/satoshi/Satoshi-Regular.woff') format('woff');
+  font-weight: 400;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/satoshi/Satoshi-Medium.woff2') format('woff2'),
+       url('/fonts/satoshi/Satoshi-Medium.woff') format('woff');
+  font-weight: 500;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/satoshi/Satoshi-Bold.woff2') format('woff2'),
+       url('/fonts/satoshi/Satoshi-Bold.woff') format('woff');
+  font-weight: 700;
+  font-display: swap;
+  font-style: normal;
+}
+@font-face {
+  font-family: 'Satoshi';
+  src: url('/fonts/satoshi/Satoshi-Black.woff2') format('woff2'),
+       url('/fonts/satoshi/Satoshi-Black.woff') format('woff');
+  font-weight: 900;
+  font-display: swap;
+  font-style: normal;
+}
+
 @layer base {
   /* ── Gemensam färgpalett: oliv och smörgult (se DESIGN.md) ──────────────
      Alla färger i appen kommer härifrån, per roll. Tailwind-färgerna i

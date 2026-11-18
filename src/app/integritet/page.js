@@ -31,9 +31,9 @@ export const metadata = {
 //    ingen inloggning, bara ägaren har tillgång till svaren. Googles egen behandling enligt
 //    policies.google.com/privacy (IP-adress, webbläsare, enhet) och
 //    policies.google.com/privacy/frameworks (servrar globalt, DPF, standardavtalsklausuler).
-//  - Fontshare: ITF Free Font License och FAQ på fontshare.com (API:et samlar enligt Fontshare
-//    inte in personuppgifter; tar emot hänvisande domän och antal anrop). Satoshi laddas från
-//    Fontshare; rubrikerna använder systemtypsnittet Georgia (Boska laddas inte).
+//  - Typsnitt: Satoshi hämtas från Fontshare vid bygget (scripts/fetch-fonts.mjs, ITF Free Font
+//    License tillåter egen hosting) och serveras från appens domän; webbläsaren kontaktar inte
+//    Fontshare. Rubrikerna använder systemtypsnittet Georgia (Boska laddas inte).
 //  - Rättslig grund, känsliga uppgifter, lagring i webbläsaren (LEK 9 kap. 28 §, PTS) och rätten
 //    att invända (IMY): förslag för ägarens granskning, se INTRESSEAVVAGNING.md.
 //  - Feedback: manuell radering senast 90 dagar (ägarens förslag; rutinen etableras av ägaren).
@@ -241,16 +241,10 @@ export default function IntegritetPage() {
 
         <Section title="Typsnitt">
           <p>
-            All text utom rubrikerna använder typsnittet Satoshi, som hämtas från Fontshare
-            (api.fontshare.com och cdn.fontshare.com, som drivs av Indian Type Foundry). När
-            sidan laddas kontaktar din webbläsare Fontshare, och Fontshares servrar ser då din
-            IP-adress och teknisk information om webbläsaren, eftersom det ingår i
-            anslutningen. Enligt Fontshare samlar tjänsten inte in eller sparar personuppgifter,
-            utan tar bara emot uppgifter som vilken domän typsnittet används på och hur många
-            anrop som görs. Vi har inte kunnat fastställa var Fontshares servrar finns, så
-            uppgifterna kan behandlas utanför EU/EES. Detta sker oavsett ditt val om statistik.
-            Rubrikerna använder Georgia, eller enhetens eget serif-typsnitt om Georgia saknas.
-            Det finns redan på enheten och hämtas inte någonstans ifrån.
+            All text utom rubrikerna använder typsnittet Satoshi. Typsnittsfilerna ligger på
+            appens egen domän och levereras tillsammans med sidorna, så din webbläsare kontaktar
+            ingen typsnittstjänst. Rubrikerna använder Georgia, eller enhetens eget
+            serif-typsnitt om Georgia saknas, och hämtas inte någonstans ifrån.
           </p>
         </Section>
 
@@ -299,7 +293,8 @@ export default function IntegritetPage() {
             </li>
             <li>
               <strong className="text-ink">Visa appen och skydda den (Vercel, räknaren mot
-              överbelastning):</strong> att kunna leverera sidorna du öppnar och hålla tjänsten
+              överbelastning):</strong> att kunna leverera sidorna du öppnar, inklusive
+              typsnittet, och hålla tjänsten
               tillgänglig och säker. Grund: <strong className="text-ink">intresseavvägning</strong>{' '}
               (vårt berättigade intresse av att driva och skydda tjänsten).
             </li>
@@ -313,10 +308,6 @@ export default function IntegritetPage() {
               att din plan och dina avbockningar finns kvar och att ditt val om statistik
               respekteras. Uppgifterna lämnar inte din enhet. Grund:{' '}
               <strong className="text-ink">intresseavvägning</strong>.
-            </li>
-            <li>
-              <strong className="text-ink">Typsnitt (Fontshare):</strong> att visa appen med
-              sitt typsnitt. Grund: <strong className="text-ink">intresseavvägning</strong>.
             </li>
             <li>
               <strong className="text-ink">Feedback (Google Formulär):</strong> att förbättra
@@ -340,11 +331,9 @@ export default function IntegritetPage() {
             varför.
           </p>
           <p>
-            Vissa delar kan du dessutom styra själv: statistiken med ”Ändra val för statistik”,
-            den sparade planen med ”Ny plan”, och typsnittet Satoshi genom att blockera
-            fontshare.com i din webbläsare (sidan visas då med ett reservtypsnitt). Att din
-            IP-adress tas emot när en sida levereras går däremot inte att undvika medan du
-            använder appen.
+            Vissa delar kan du dessutom styra själv: statistiken med ”Ändra val för statistik”
+            och den sparade planen med ”Ny plan”. Att din IP-adress tas emot när en sida levereras
+            går däremot inte att undvika medan du använder appen.
           </p>
         </Section>
 

@@ -459,10 +459,12 @@ export default function InputForm({ onSubmit, loading, onInteraction }) {
                   onKeyDown={handleInputKeyDown}
                   placeholder="Ris, pasta, kryddor, olja"
                   aria-label="Varor du redan har hemma"
+                  aria-describedby="pantry-help"
                   className={inputClass}
                 />
-                <p className="text-xs text-ink-light mt-2">
-                  Det du har hemma tas bort från inköpslistan.
+                <p id="pantry-help" className="text-xs text-ink-light mt-2">
+                  Det du har hemma tas bort från inköpslistan. Skriv bara matvaror, inte
+                  hälsouppgifter eller andra personuppgifter.
                 </p>
               </div>
             </div>

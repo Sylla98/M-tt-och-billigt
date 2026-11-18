@@ -93,10 +93,12 @@ Beslut (18 november 2026): det godkända utseendet behålls. Rubriker och varum�
   - Saknas Georgia, till exempel på många Android-enheter, används enhetens eget serif-typsnitt.
   - Georgia har bara normal och fet vikt, så `font-semibold` visas som fet.
   - Bakgrund: appen beställde tidigare Satoshi och Boska i samma anrop till Fontshare, men Fontshare levererade bara Satoshi. Boska syntes därför aldrig, och det godkända utseendet är Georgia. Boska är nu borttagen ur anropet, så att utseendet inte ändras om Fontshare skulle börja leverera den.
-- **Satoshi** (`font-body`/`font-sans`): all övrig text. Laddas från Fontshares API (`api.fontshare.com`, `cdn.fontshare.com`) med vikterna 400, 500, 700 och 900.
-  - Satoshi omfattas av ITF Free Font License. Licensen tillåter egen hosting på den egna webbplatsen, men förbjuder att göra filerna tillgängliga via publika repositories eller publikt åtkomliga servrar för andra (avsnitt 02).
-  - Repot är publikt, så filerna får inte checkas in här, och Satoshi hämtas därför från Fontshare.
-  - Ska Satoshi en dag ligga på appens egen domän behövs en lösning där de officiella, oförändrade filerna inte hamnar i det publika repot.
+- **Satoshi** (`font-body`/`font-sans`): all övrig text, med vikterna 400, 500, 700 och 900.
+  - Serveras från appens egen domän (`/fonts/satoshi/`, `@font-face` i `src/app/globals.css`). Besökarens webbläsare kontaktar inte Fontshare.
+  - Filerna hämtas vid varje bygge av `scripts/fetch-fonts.mjs`, som körs som `prebuild` och `predev`. Skriptet hämtar Fontshares officiella paket (`https://api.fontshare.com/v2/fonts/download/satoshi`) och packar upp de oförändrade woff2- och woff-filerna och licenstexten `FFL.txt`.
+  - Misslyckas hämtningen stoppas bygget med ett tydligt fel.
+  - `public/fonts/` är utesluten i `.gitignore`. Satoshi omfattas av ITF Free Font License, som tillåter egen hosting (avsnitt 01) men förbjuder att filerna ligger i publika repositories eller ändras (avsnitt 02).
+  - **Lägg aldrig in typsnittsfilerna i repot.**
 
 Rubriken har tre rader: "Veckans mat." / "Smartare" / "planerad." Undantaget är mycket låga mobilskärmar medan statistikpanelen visas (se Layout). Raderna är block i `<h1>`, så skärmläsare läser "Veckans mat. Smartare planerad."
 

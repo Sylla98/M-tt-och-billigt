@@ -57,9 +57,10 @@ Kontrollerat i koden (`src/components/InputForm.js`, `src/app/api/meal-plan/rout
   - fältet efterfrågar inte sådant,
   - servern sparar inte texten,
   - texten sparas bara i besökarens egen webbläsare.
-- **Minsta lämpliga åtgärd:**
-  - **Nu (genomförd):** integritetssidan ber besökaren att inte skriva uppgifter om hälsa, till exempel allergier eller sjukdomar, i skafferifältet eller i feedbackformuläret.
-  - **Förslag för beslut:** en kort hjälptext vid skafferifältet ("Skriv bara matvaror") och en motsvarande rad i Google Formulärets beskrivning. Fältets hjälptext är en ändring i appens gränssnitt, så den kräver ditt beslut.
+- **Minsta lämpliga åtgärd (genomförd):**
+  - Hjälptexten vid skafferifältet lyder: "Det du har hemma tas bort från inköpslistan. Skriv bara matvaror, inte hälsouppgifter eller andra personuppgifter." Den är kopplad till fältet med `aria-describedby`.
+  - Integritetssidan avråder från hälsouppgifter i skafferifältet och i feedbackformuläret.
+  - Kvar för Elis: samma rad i Google Formulärets beskrivning (avsnitt 5).
   - Ett allmänt samtycke föreslås inte. Appen ska inte samla in hälsouppgifter, så rätt åtgärd är att avråda från dem, inte att be om samtycke till dem.
 - **Förslag:** intresseavvägning för de vanliga uppgifterna, med åtgärderna ovan för fritexten.
 
@@ -90,23 +91,21 @@ GDPR gäller parallellt. Uppgifterna lämnar aldrig besökarens enhet och behand
   - **Alternativ:** om du vill minska risken är ett eget "Spara planen"-val eller en kortare tid de minsta ändringarna. Båda är funktionsändringar och föreslås inte utan ditt beslut.
 - **Bedömning:** undantaget bör vara tillämpligt för planen under planperioden. Det är en bedömning, inte ett konstaterande.
 
-## 4. Typsnitt (Fontshare), slutlig lösning
-- **Lösning i release-koden:**
-  - Satoshi hämtas från Fontshares API (`api.fontshare.com`, `cdn.fontshare.com`).
-  - Rubrikerna använder systemtypsnittet Georgia, eller enhetens serif-typsnitt om Georgia saknas, och hämtas inte.
-  - Boska laddas inte.
-- **Uppgifter:** IP-adress och teknisk information om webbläsaren, som en del av anslutningen när Satoshi hämtas. Enligt Fontshares FAQ samlar API:et inte in eller sparar personuppgifter, utan tar emot hänvisande domän och antal anrop. Var Fontshares servrar finns är inte fastställt, så överföring utanför EU/EES kan inte uteslutas.
-- **Berättigat intresse:** att visa appen med sitt godkända typsnitt.
-- **Nödvändighet, den svaga punkten:** samma utseende kan nås utan att besökarens webbläsare kontaktar Fontshare, genom att Satoshi ligger på appens egen domän.
-  - Licensen (ITF Free Font License 2.0) tillåter egen hosting (avsnitt 01), men förbjuder att filerna görs tillgängliga i publika repositories (avsnitt 02).
-  - Repot är publikt, så filerna kan inte checkas in.
-  - Med IMY:s formulering ovan talar det starkt emot intresseavvägning så länge typsnittet hämtas externt.
-  - Sidan visas med ett reservtypsnitt om Fontshare blockeras.
-- **Alternativ för beslut:**
-  - (a) behåll som nu,
-  - (b) hämta de officiella filerna vid bygget utan att checka in dem, och servera dem från appens domän, om du bedömer att det ryms i licensen,
-  - (c) byt Satoshi mot ett systemtypsnitt, vilket är en designändring.
-- **Förslag:** detta är det enda **verkliga hindret** i underlaget. Grunden för (a) är svag enligt IMY:s formulering, så beslut bör fattas före lansering.
+## 4. Typsnitt (genomförd lösning: alternativ b)
+- **Lösning:**
+  - Vid varje bygge hämtar `scripts/fetch-fonts.mjs` Fontshares officiella paket för Satoshi, från `https://api.fontshare.com/v2/fonts/download/satoshi`. Det är samma adress som "Download Family" på fontshare.com använder.
+  - Skriptet packar upp de oförändrade webbfilerna (woff2 och woff, vikterna 400, 500, 700 och 900) och licenstexten `FFL.txt` till `public/fonts/satoshi/`.
+  - Mappen är utesluten i `.gitignore`, så filerna checkas aldrig in i det publika repot.
+  - Appen serverar filerna från sin egen domän via `@font-face` i `src/app/globals.css`.
+  - Rubrikerna använder systemtypsnittet Georgia. Boska laddas inte.
+- **Licens (ITF Free Font License 2.0, 17 augusti 2026):**
+  - Avsnitt 01 tillåter uttryckligen egen hosting för den egna webbplatsen med `@font-face`.
+  - Avsnitt 02 förbjuder att filerna görs tillgängliga i publika repositories och att de ändras eller konverteras. Det följs:
+    - filerna finns inte i repot,
+    - de kopieras byte för byte ur det officiella paketet,
+    - inget konverteras, beskärs eller döps om.
+- **Om hämtningen misslyckas:** skriptet avslutas med felkod och ett tydligt meddelande, så att bygget stoppas.
+- **Personuppgifter:** besökarens webbläsare kontaktar inte längre Fontshare. Typsnittet levereras av Vercel tillsammans med sidorna och omfattas av avsnitt 1. Den tidigare svaga punkten, att samma resultat kunde nås på ett mindre integritetskänsligt sätt, är därmed åtgärdad.
 
 ## 5. Feedback via Google Formulär
 - **Uppgifter:** det besökaren själv skriver i formuläret. Bekräftat 18 november 2026:
@@ -137,25 +136,38 @@ Vid intresseavvägning har den registrerade rätt att invända mot behandlingen 
 - **Praktiska följder, som komplement till rättigheten:**
   - Uppgifter som redan har behandlats kan raderas där Elis har tillgång till dem, till exempel feedbacksvar.
   - Vissa tekniska behandlingar, som att leverera en sida till en IP-adress, går inte att stoppa för en enskild besökare medan hen använder appen. Det framgår av bedömningen ovan.
-  - Typsnittet kan besökaren själv undvika genom att blockera fontshare.com.
   - Statistik styrs av samtycket och återkallas med "Ändra val för statistik".
+
+## Återkallelse av samtycke till statistik (PTS)
+PTS skriver att användaren ska kunna återkalla sitt samtycke "när som helst", att det ska vara "lika enkelt att återkalla samtycket som det var att ge det", och att möjligheten att återkalla "ska ligga högt upp på sidan. Användaren ska inte behöva scrolla eller leta". GDPR artikel 7.3 kräver också att samtycket ska vara lika lätt att återkalla som att ge.
+
+PTS vägledning gäller kakor enligt LEK 9 kap. 28 §. PostHog körs utan cookies och lagring, men läser teknisk information från enheten, till exempel skärmstorlek och språk. EDPB 2/2023 räknar även sådan åtkomst till information i terminalutrustningen till artikel 5.3. Kravet bör därför antas gälla.
+
+- **Hur det fungerar i dag:**
+  - Samtycket ges i en panel som visas direkt vid första besöket.
+  - Återkallelsen görs via länken "Ändra val för statistik", som bara finns i sidfoten och i texten på integritetssidan.
+  - På mobil och på långa sidor (planen och inköpslistan) måste användaren scrolla till slutet för att hitta den.
+- **Bedömning:** det är en konkret brist mot PTS uttryckliga vägledning, inte bara en designfråga.
+- **Minsta nödvändiga rättelse:** gör "Ändra val för statistik" nåbar utan att scrolla på alla sidor, som en liten kontroll i den fasta toppraden.
+  - Lämpligast placeras den bredvid den befintliga fasta feedbackknappen och öppnar samma panel som i dag.
+  - Den visas bara när statistik är påslagen i miljön.
+  - Sidfotslänken kan finnas kvar.
+  - Inget annat i samtyckeslogiken behöver ändras.
+- **Status:** inte genomförd, eftersom den ändrar toppraden på alla sidor och behöver ditt godkännande av placeringen, särskilt på 320 px där utrymmet är litet.
 
 ## Verkliga hinder och dokumentationsrättningar
 **Verkligt hinder före lansering:**
-- Fontshares rättsliga grund (avsnitt 4).
+- **Återkallelsen av statistiksamtycket** är inte nåbar utan att scrolla (avsnittet ovan). Minsta rättelse: en liten "Ändra val för statistik"-kontroll i den fasta toppraden.
 
-**Beslut och rutiner att etablera, som inte stoppar tekniskt:**
-- Påminnelsen för 90-dagarsradering av feedback (avsnitt 5).
-- Ställningstagande till avtal kontra intresseavvägning.
-- Bedömningen av den automatiska planlagringen (3b) och den obegränsade tiden för statistikvalet (3a).
-- Valfria hjälptexter mot hälsouppgifter (avsnitt 2).
-- **PTS och återkallelse:** PTS skriver att möjligheten att återkalla ett samtycke ska ligga "högt upp på sidan" och inte kräva att användaren scrollar. Appens länk "Ändra val för statistik" ligger i sidfoten. Bedöm om placeringen räcker. En ändring vore en designändring.
+**Åtgärdat:**
+- Fontshare-hindret (avsnitt 4, alternativ b genomfört).
+- Hjälptexten vid skafferifältet (avsnitt 2).
 
-**Dokumentationsrättningar i den här versionen:**
-- Avtalsresonemanget.
-- Känsliga uppgifter.
-- LEK-bedömningen per lagringsuppgift.
-- Lagringstid för statistikvalet på integritetssidan.
-- Typsnittslösningen.
-- 90-dagarsrutinen.
-- Rätten att invända.
+**Rutin att etablera:**
+- Påminnelse för manuell 90-dagarsradering av feedback.
+- En rad om hälsouppgifter i formulärets beskrivning (avsnitt 5).
+
+**Ställningstaganden som inte stoppar lanseringen tekniskt:**
+- Intresseavvägning i stället för avtal.
+- Den automatiska planlagringen (3b).
+- Statistikvalet utan utgångstid (3a).
