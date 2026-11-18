@@ -259,3 +259,39 @@ html[data-consent='open'] .footer-above-consent {
     inset: -7px -2px;
   }
 }
+
+/* Snabbväg till statistikvalet (ConsentQuickButton.js): visas bara när statistik är tillåten.
+   Fast längst upp intill feedbackknappen, i den del av skärmen som modalerna lämnar fri, så att
+   samtycket kan återkallas utan att scrolla. Bredare skärmar: till höger om den centrerade
+   feedbackknappen. Smal skärm: direkt under feedbackknappen, högerjusterad med den.
+   Startsidan har eget läge, se src/app/landing.module.css. */
+.consent-fab {
+  position: fixed;
+  top: max(0.25rem, env(safe-area-inset-top));
+  left: calc(50% + 5.25rem);
+  z-index: 60;
+}
+.consent-fab::after {
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+}
+@media (min-width: 600px) and (max-width: 767px) {
+  /* Mellanbredd: centrerad direkt under feedbackknappen (bredvid den är det för trångt
+     intill sidhuvudets länkar). */
+  .consent-fab {
+    left: 50%;
+    transform: translateX(-50%);
+    top: calc(max(0.25rem, env(safe-area-inset-top)) + 42px);
+  }
+}
+@media (max-width: 599px) {
+  .consent-fab {
+    left: auto;
+    right: calc(5.75rem + env(safe-area-inset-right));
+    top: calc(max(0.5rem, env(safe-area-inset-top)) + 38px);
+  }
+  .consent-fab::after {
+    inset: -5px -2px;
+  }
+}

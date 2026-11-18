@@ -148,6 +148,19 @@ Storlekar för varumärke och rubrik:
 - Olivfyllningen gör knappen tydlig även när den hamnar över den ljusa informationsraden.
 - Fokusringen är gräddvit med en mörk yttre ring, så den syns mot båda bakgrunderna.
 
+### Knappen "Ändra statistikval"
+- Visas bara medan besökaren har tillåtit statistik (`src/components/ConsentQuickButton.js`) och öppnar samma statistikpanel som sidfotslänken.
+- Den är fast högst upp på alla sidor, med samma storlek och stil som feedbackknappen:
+  - yta, kant och text enligt paletten,
+  - på startsidan oliv med gräddvit text.
+- Placering (`.consent-fab` i `globals.css`, startsidan i `landing.module.css`):
+  - under 600 px: direkt under feedbackknappen, högerjusterad med den,
+  - 600–767 px: centrerad under den,
+  - från 768 px: till höger om den centrerade feedbackknappen,
+  - startsidan: under feedbackknappen, 24 px hög på mobil så att den ryms ovanför rubriken.
+- Ligger ovanför modalernas bakgrund (`z-index` 60), i den del av skärmen som modalerna lämnar fri.
+- Tryckytan är utökad med en osynlig `::after`, och den döljs på pekskärm medan ett textfält har fokus.
+
 ### Fokus och tryckytor
 - I olivsektionen är fokusringen gräddvit i stället för appens olivfärgade.
 - Huvudknappen är minst 48 px hög på mobil och 60 px på desktop.

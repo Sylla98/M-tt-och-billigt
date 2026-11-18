@@ -83,7 +83,9 @@ export default function IntegritetPage() {
           <p>
             Innan du har valt, och om du väljer att fortsätta utan statistik, laddas inte
             statistikverktyget och ingenting skickas dit. Du kan ändra ditt val när som helst via
-            länken ”Ändra val för statistik” längst ned på sidorna. Om du tar tillbaka ditt ja
+            länken ”Ändra val för statistik” längst ned på sidorna. Har du tillåtit statistik finns
+            också knappen ”Ändra statistikval” högst upp på varje sida, så att du kan ta tillbaka
+            ditt ja utan att leta. Om du tar tillbaka ditt ja
             slutar appen skicka nya händelser. Händelser som redan har skickats finns kvar
             hos statistikverktyget under den lagringstid som beskrivs nedan.
           </p>

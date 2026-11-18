@@ -153,3 +153,41 @@
   outline-color: rgb(var(--color-on-primary));
   box-shadow: 0 0 0 6px rgb(var(--color-ink));
 }
+
+/* Snabbväg till statistikvalet (ConsentQuickButton.js) på startsidan: direkt under
+   feedbackknappen, högerjusterad med den och i samma oliv- och gräddvita stil. */
+:global(body):has(.landing) :global(.consent-fab) {
+  left: auto;
+  right: max(1.25rem, env(safe-area-inset-right));
+  top: calc(max(0.875rem, env(safe-area-inset-top)) + 32px);
+  min-height: 24px;
+  background-color: rgb(var(--color-primary));
+  border-color: rgb(var(--color-on-primary) / 0.55);
+  color: rgb(var(--color-on-primary));
+  box-shadow: none;
+}
+:global(body):has(.landing) :global(.consent-fab):hover {
+  border-color: rgb(var(--color-on-primary));
+}
+:global(body):has(.landing) :global(.consent-fab):focus-visible {
+  outline-color: rgb(var(--color-on-primary));
+  box-shadow: 0 0 0 6px rgb(var(--color-ink));
+}
+@media (min-width: 600px) {
+  :global(body):has(.landing) :global(.consent-fab) {
+    transform: none;
+    min-height: 30px;
+    top: calc(max(0.875rem, env(safe-area-inset-top)) + 42px);
+  }
+}
+@media (min-width: 768px) {
+  :global(body):has(.landing) :global(.consent-fab) {
+    right: max(2rem, calc((100vw - 75rem) / 2 + 2rem));
+    top: calc(max(1.5rem, env(safe-area-inset-top)) + 2.5rem + 6px);
+  }
+}
+@media (min-width: 1024px) {
+  :global(body):has(.landing) :global(.consent-fab) {
+    top: calc(max(1.75rem, env(safe-area-inset-top)) + 2.5rem + 6px);
+  }
+}

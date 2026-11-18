@@ -69,11 +69,9 @@ Kontrollerat:
 ## Kvar före publicering
 Underlaget står i `INTRESSEAVVAGNING.md` (version 18 november, granskad mot IMY, EDPB, LEK 9 kap. 28 § och PTS).
 
-**Verkligt hinder:**
-1. **Återkallelse av statistiksamtycket:** PTS skriver att möjligheten att återkalla ska ligga "högt upp på sidan" och inte kräva att användaren scrollar, och GDPR artikel 7.3 kräver att det ska vara lika lätt att återkalla som att ge samtycke.
-   - I dag finns "Ändra val för statistik" bara i sidfoten och på integritetssidan.
-   - Minsta rättelse: en liten "Ändra val för statistik"-kontroll i den fasta toppraden på alla sidor, bredvid "Lämna feedback". Den öppnar samma panel och visas bara när statistik är påslagen.
-   - Kräver ditt godkännande av placeringen. Se `INTRESSEAVVAGNING.md`, "Återkallelse av samtycke till statistik (PTS)".
+**Verkliga hinder:** inga kvar.
+
+**Återkallelse av statistiksamtycket (åtgärdat):** medan statistik är tillåten finns knappen "Ändra statistikval" fast högst upp på alla sidor. Den nås även när receptvyn eller Byt rätt är öppen och öppnar samma panel. Se `INTRESSEAVVAGNING.md`, "Återkallelse av samtycke till statistik (PTS)".
 
 **Rutin att etablera:**
 
@@ -90,6 +88,7 @@ Underlaget står i `INTRESSEAVVAGNING.md` (version 18 november, granskad mot IMY
    - statistikvalet utan utgångstid.
 
 **Åtgärdat 18 november:**
+- Återkallelse av statistik utan scroll: "Ändra statistikval" högst upp på alla sidor.
 - Fontshare: Satoshi serveras nu från egen domän.
 - Hjälptexten vid skafferifältet: "Skriv bara matvaror, inte hälsouppgifter eller andra personuppgifter."
 

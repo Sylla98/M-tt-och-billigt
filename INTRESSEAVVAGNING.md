@@ -143,25 +143,31 @@ PTS skriver att användaren ska kunna återkalla sitt samtycke "när som helst",
 
 PTS vägledning gäller kakor enligt LEK 9 kap. 28 §. PostHog körs utan cookies och lagring, men läser teknisk information från enheten, till exempel skärmstorlek och språk. EDPB 2/2023 räknar även sådan åtkomst till information i terminalutrustningen till artikel 5.3. Kravet bör därför antas gälla.
 
-- **Hur det fungerar i dag:**
-  - Samtycket ges i en panel som visas direkt vid första besöket.
-  - Återkallelsen görs via länken "Ändra val för statistik", som bara finns i sidfoten och i texten på integritetssidan.
-  - På mobil och på långa sidor (planen och inköpslistan) måste användaren scrolla till slutet för att hitta den.
-- **Bedömning:** det är en konkret brist mot PTS uttryckliga vägledning, inte bara en designfråga.
-- **Minsta nödvändiga rättelse:** gör "Ändra val för statistik" nåbar utan att scrolla på alla sidor, som en liten kontroll i den fasta toppraden.
-  - Lämpligast placeras den bredvid den befintliga fasta feedbackknappen och öppnar samma panel som i dag.
-  - Den visas bara när statistik är påslagen i miljön.
-  - Sidfotslänken kan finnas kvar.
-  - Inget annat i samtyckeslogiken behöver ändras.
-- **Status:** inte genomförd, eftersom den ändrar toppraden på alla sidor och behöver ditt godkännande av placeringen, särskilt på 320 px där utrymmet är litet.
+- **Före rättelsen:** samtycket gavs i en panel som visas direkt vid första besöket. Återkallelsen fanns bara som länken "Ändra val för statistik" i sidfoten och på integritetssidan, så på mobil och på långa sidor måste användaren scrolla. Det var en konkret brist mot PTS vägledning.
+- **Genomförd rättelse (minsta möjliga):**
+  - Medan statistik är tillåten visas knappen "Ändra statistikval" fast högst upp på alla sidor (`src/components/ConsentQuickButton.js`, renderas tillsammans med statistikpanelen i `src/app/providers.js`).
+  - Den öppnar samma panel med samma likvärdiga val. Ingen samtyckeslogik är ändrad.
+  - Placering:
+    - smal skärm: direkt under feedbackknappen,
+    - 600–767 px: centrerad under den,
+    - bredare: bredvid den,
+    - startsidan: under feedbackknappen i dess oliv- och gräddvita stil.
+  - Den ligger i den del av skärmen som receptvyn och Byt rätt lämnar fri och över deras bakgrund, så den nås även när de är öppna.
+  - Efter ett nej försvinner knappen. Valet kan då ändras via sidfoten eller integritetssidan.
+  - Sidfotslänken finns kvar.
+- **Kontrollerat i webbläsare (lokal produktionsserver, 320–1440 px):**
+  - synlig utan scroll på alla sidor, inget sidledsöverflöd och ingen överlappning med varumärke, "Lämna feedback", "Ny plan" eller "Till planeringen",
+  - nåbar och klickbar med receptvyn (desktop) och Byt rätt (mobil) öppna,
+  - nåbar med Tab, med synlig fokusring, och öppnar panelen med Enter; fokus återgår till knappen när panelen stängs,
+  - efter nej skickas inga nya händelser, valet består efter omladdning, och den sparade planen och avbockningarna påverkas inte.
 
 ## Verkliga hinder och dokumentationsrättningar
-**Verkligt hinder före lansering:**
-- **Återkallelsen av statistiksamtycket** är inte nåbar utan att scrolla (avsnittet ovan). Minsta rättelse: en liten "Ändra val för statistik"-kontroll i den fasta toppraden.
+**Verkliga hinder före lansering:** inga kvar i det här underlaget.
 
 **Åtgärdat:**
 - Fontshare-hindret (avsnitt 4, alternativ b genomfört).
 - Hjälptexten vid skafferifältet (avsnitt 2).
+- Återkallelsen av statistiksamtycket: "Ändra statistikval" högst upp på alla sidor.
 
 **Rutin att etablera:**
 - Påminnelse för manuell 90-dagarsradering av feedback.

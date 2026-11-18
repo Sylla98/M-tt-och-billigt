@@ -16,6 +16,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import { isAnalyticsEnabled, trackEvent } from '@/utils/analytics'
 import { getAnalyticsConsent, subscribeToAnalyticsConsent } from '@/utils/analyticsConsent'
 import AnalyticsConsentBanner from '@/components/AnalyticsConsentBanner'
+import ConsentQuickButton from '@/components/ConsentQuickButton'
 
 function PostHogPageView() {
   const pathname = usePathname()
@@ -56,6 +57,8 @@ export function PostHogProvider({ children }) {
         <PostHogPageView />
       </Suspense>
       {children}
+      {/* Fast snabbväg till statistikvalet när statistik är tillåten (återkallelse utan scroll). */}
+      <ConsentQuickButton />
       <AnalyticsConsentBanner />
     </>
   )
