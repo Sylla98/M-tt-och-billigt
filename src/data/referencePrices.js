@@ -58,7 +58,7 @@ export const REFERENCE_PRICES = [
   { key: 'bulgur',         displayName: 'Bulgur',      aliases: ['bulgur'],                                                  packageQuantity: 500,  packageUnit: 'g', estimatedPackagePrice: 22, purchaseType: 'package' },
   { key: 'havregryn',      displayName: 'Havregryn',   aliases: ['havregryn'],                                               packageQuantity: 750,  packageUnit: 'g', estimatedPackagePrice: 18, purchaseType: 'package' },
   { key: 'mjol',           displayName: 'Vetemjöl',    aliases: ['mjöl', 'vetemjöl', 'mjol'],                                packageQuantity: 2000, packageUnit: 'g', estimatedPackagePrice: 22, purchaseType: 'package' },
-  { key: 'brod',           displayName: 'Bröd',        aliases: ['bröd', 'brod', 'limpa', 'formfranska', 'tortilla', 'tortillabröd', 'pitabröd'], packageQuantity: 1, packageUnit: 'st', estimatedPackagePrice: 25, purchaseType: 'package' },
+  { key: 'brod',           displayName: 'Bröd',        aliases: ['bröd', 'brod', 'limpa', 'formfranska', 'pitabröd'], packageQuantity: 1, packageUnit: 'st', estimatedPackagePrice: 25, purchaseType: 'package' },
   { key: 'hamburgerbrod',  displayName: 'Hamburgerbröd', aliases: ['hamburgerbröd', 'hamburgerbrod', 'burgerbröd'], packageQuantity: 4, packageUnit: 'st', estimatedPackagePrice: 22, purchaseType: 'package' },
 
   // ── Grönsaker & frukt ──────────────────────────────────────────────────
@@ -126,6 +126,60 @@ export const REFERENCE_PRICES = [
   { key: 'dill',           displayName: 'Dill',        aliases: ['dill', 'färsk dill'],                              packageQuantity: 1,   packageUnit: 'st', estimatedPackagePrice: 15, purchaseType: 'package' },
   { key: 'rodcurrypasta',  displayName: 'Röd currypasta', aliases: ['röd currypasta', 'red curry paste', 'currypasta'], packageQuantity: 200, packageUnit: 'g', estimatedPackagePrice: 30, purchaseType: 'package' },
   { key: 'fisksas',        displayName: 'Fisksås',     aliases: ['fisksås', 'fisksas', 'nam pla'],                   packageQuantity: 250, packageUnit: 'ml', estimatedPackagePrice: 28, purchaseType: 'package' },
+
+  // ── Referenspriser 2026-11-19 (receptomgång: wok, köttfärslimpa, harissakyckling, nya recept) ──
+  // Ordinarie hyllpris (inte kampanj) i Willys e-handel, butik "Willys Kungsbacka Hede" (sajtens
+  // förvalda butik), läst från produktsidan 2026-11-19. Priset är avrundat till hela kronor. Det är ett
+  // butiksspecifikt referenspris, inte ett universellt butikspris. Exakt pris och produkt står i source.
+  { key: 'ostronsas',      displayName: 'Ostronsås',   aliases: ['ostronsås', 'ostronsas'], packageQuantity: 200, packageUnit: 'ml', estimatedPackagePrice: 25, purchaseType: 'package',
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101386140_ST', retrieved: '2026-11-19', note: 'Santa Maria Oyster Sauce 200 ml, 24,90 kr.' } },
+  { key: 'majsstarkelse',  displayName: 'Majsstärkelse', aliases: ['majsstärkelse', 'majsstarkelse', 'maizena'], packageQuantity: 400, packageUnit: 'g', estimatedPackagePrice: 15, purchaseType: 'package',
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/100181152_ST', retrieved: '2026-11-19', note: 'Maizena Majsstärkelse 400 g, 14,90 kr.' } },
+  { key: 'harissapasta',   displayName: 'Harissapasta', aliases: ['harissapasta'], packageQuantity: 120, packageUnit: 'g', estimatedPackagePrice: 19, purchaseType: 'package',
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101308107_ST', retrieved: '2026-11-19', note: 'Dea Harissa 120 g (Willys produktnamn "Harissa Hot Sauce"), 18,83 kr. Kryddpasta enligt ingredienslistan: rehydrerad chili 52 %, vatten, majsstärkelse, salt, vitlök, koriander, kummin.' } },
+  { key: 'kalvfond',       displayName: 'Kalvfond',    aliases: ['kalvfond'], packageQuantity: 180, packageUnit: 'ml', estimatedPackagePrice: 27, purchaseType: 'package',
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101726390_ST', retrieved: '2026-11-19', note: 'Garant Kalvfond, koncentrerad, 180 ml (räcker till 4 l), 26,90 kr.' } },
+  // Hela kycklinglår med skinn och ben. Prissätts ALDRIG som Kycklingfilé (benfritt): recept kopplar hit med
+  // priceKey. Prisunderlaget är en fryst vara; färska hela lår fanns inte i Willys e-handel och ICA:s e-handel
+  // gick inte att söka utan vald butik.
+  { key: 'kycklinglar-med-ben', displayName: 'Kycklinglår med skinn och ben', aliases: [], packageQuantity: 1000, packageUnit: 'g', estimatedPackagePrice: 40, purchaseType: 'package',
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101273580_ST', retrieved: '2026-11-19', note: 'Garant Kycklinglår fryst 1 kg, 39,90 kr. Hela lår med del av ryggben, 87 % kyckling och saltlake (svensk kyckling).' } },
+  { key: 'soltorkade-tomater', displayName: 'Soltorkade tomater', aliases: ['soltorkade tomater'], packageQuantity: 150, packageUnit: 'g', estimatedPackagePrice: 25, purchaseType: 'package',
+    packageLabel: { singular: 'burk', plural: 'burkar' },
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101705529_ST', retrieved: '2026-11-19', note: 'Monte Castello Soltorkade tomater i olja 280 g, avrunnen vikt 150 g, 24,90 kr. packageQuantity är avrunnen vikt; receptmängden anges som avrunna tomater.' } },
+  { key: 'blandsallad',    displayName: 'Blandsallad', aliases: ['blandsallad'], packageQuantity: 200, packageUnit: 'g', estimatedPackagePrice: 20, purchaseType: 'package',
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101316312_ST', retrieved: '2026-11-19', note: 'Blandsallad Klass 1 200 g (färdigsköljd: vitkål, morot, escarolesallad), 19,90 kr.' } },
+  { key: 'romansallad',    displayName: 'Romansallad', aliases: ['romansallad'], packageQuantity: 200, packageUnit: 'g', estimatedPackagePrice: 17, purchaseType: 'package',
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/100391265_ST', retrieved: '2026-11-19', note: 'Romansallad Klass 1 200 g, 16,90 kr.' } },
+  { key: 'salladslok',     displayName: 'Salladslök',  aliases: ['salladslök', 'salladslok'], packageQuantity: 100, packageUnit: 'g', estimatedPackagePrice: 15, purchaseType: 'package',
+    packageLabel: { singular: 'knippe', plural: 'knippen' },
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101361485_ST', retrieved: '2026-11-19', note: 'Salladslök knippe 100 g, ordinarie pris 14,90 kr (kampanjpris 9,90 kr används inte).' } },
+  { key: 'koriander',      displayName: 'Koriander',   aliases: ['koriander', 'färsk koriander'], packageQuantity: 25, packageUnit: 'g', estimatedPackagePrice: 14, purchaseType: 'package',
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101599943_ST', retrieved: '2026-11-19', note: 'Garant Koriander Klass 1 (färsk) 25 g, ordinarie pris 13,90 kr (kampanjpris 9,90 kr används inte).' } },
+  { key: 'salta-jordnotter', displayName: 'Salta jordnötter', aliases: ['salta jordnötter'], packageQuantity: 300, packageUnit: 'g', estimatedPackagePrice: 20, purchaseType: 'package',
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/100069195_ST', retrieved: '2026-11-19', note: 'OLW Jordnötter Salta 300 g, 19,90 kr.' } },
+  { key: 'sambal-oelek',   displayName: 'Sambal oelek', aliases: ['sambal oelek'], packageQuantity: 200, packageUnit: 'g', estimatedPackagePrice: 20, purchaseType: 'package',
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101844247_ST', retrieved: '2026-11-19', note: 'Garant Sambal Oelek 200 g, 19,90 kr.' } },
+  { key: 'mango-chutney',  displayName: 'Mango chutney', aliases: ['mango chutney'], packageQuantity: 350, packageUnit: 'g', estimatedPackagePrice: 29, purchaseType: 'package',
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/100260539_ST', retrieved: '2026-11-19', note: 'Santa Maria Mango Chutney Original 350 g, 28,90 kr.' } },
+  { key: 'lagerblad',      displayName: 'Lagerblad',   aliases: ['lagerblad'], packageQuantity: 4, packageUnit: 'g', estimatedPackagePrice: 12, purchaseType: 'package',
+    packageLabel: { singular: 'påse', plural: 'påsar' },
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101678531_ST', retrieved: '2026-11-19', note: 'Kockens Lagerblad 4 g, 12,20 kr. Recept anger lagerblad i st (annan enhetsfamilj), så en påse köps.' } },
+  { key: 'kryddpepparkorn', displayName: 'Hel kryddpeppar', aliases: ['hel kryddpeppar', 'kryddpepparkorn', 'kryddpeppar'], packageQuantity: 13, packageUnit: 'g', estimatedPackagePrice: 12, purchaseType: 'package',
+    packageLabel: { singular: 'påse', plural: 'påsar' },
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/100256429_ST', retrieved: '2026-11-19', note: 'Kockens Kryddpeppar hel påse 13 g, 12,20 kr. Recept anger hel kryddpeppar i tsk (annan enhetsfamilj än g), så en påse köps.' } },
+  { key: 'vitpeppar',      displayName: 'Vitpeppar',   aliases: ['vitpeppar', 'malen vitpeppar'], packageQuantity: 24, packageUnit: 'g', estimatedPackagePrice: 12, purchaseType: 'package',
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/100696123_ST', retrieved: '2026-11-19', note: 'Kockens Vitpeppar malen påse 24 g, 12,20 kr.' } },
+  // Tortillabröd: recepten anger antal bröd (st). Inköpslistan visar hela förpackningar med antal bröd per
+  // förpackning ("Tortillabröd – 1 förpackning (8 st)"), och kostnaden räknas på samma antal förpackningar.
+  // Ersätter aliasen 'tortilla'/'tortillabröd' på Bröd, där "1 st" i recepten betydde en hel förpackning.
+  { key: 'tortillabrod',   displayName: 'Tortillabröd', aliases: ['tortillabröd', 'tortilla'], packageQuantity: 8, packageUnit: 'st', estimatedPackagePrice: 15, purchaseType: 'package',
+    packageLabel: { singular: 'förpackning (8 st)', plural: 'förpackningar (à 8 st)' },
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101295571_ST', retrieved: '2026-11-19', note: 'Santa Maria Tortilla Original Medium 8-pack 320 g, 14,90 kr. Produktsidan: "En förpackning innehåller 8 st tortillabröd, storlek Medium".' } },
+  // Inlagda (skivade) rödbetor på burk. Skiljs från färska rödbetor (key 'rodbetor', kilopris) med priceKey.
+  { key: 'inlagda-rodbetor', displayName: 'Inlagda rödbetor', aliases: ['inlagda rödbetor'], packageQuantity: 380, packageUnit: 'g', estimatedPackagePrice: 23, purchaseType: 'package',
+    packageLabel: { singular: 'burk', plural: 'burkar' },
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101203812_ST', retrieved: '2026-11-19', note: 'Garant Rödbeta skivad 560 g, avrunnen vikt 380 g, 22,90 kr. packageQuantity är avrunnen vikt.' } },
 ]
 
 // ── Generiska kategoripriser (reservlösning för okända varor) ──────────────

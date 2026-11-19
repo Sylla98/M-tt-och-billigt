@@ -44,7 +44,6 @@ dessa filnamn (små bokstäver, bindestreck, inga å/ä/ö):
 | ☐ | Ugnsbakad lax med potatis | `ugnsbakad-lax-potatis.jpg` |
 | ☐ | Vegetarisk lasagne med spenat | `vegetarisk-lasagne-spenat.jpg` |
 | ☐ | Linsbolognese | `linsbolognese.jpg` |
-| ☐ | Krämig kikärtspasta | `kramig-kikartspasta.jpg` |
 | ☐ | Krämig broccolipasta med citron och parmesan | `kramig-broccolipasta-citron-parmesan.jpg` |
 | ☐ | Vegetarisk stroganoff | `vegetarisk-stroganoff.jpg` |
 | ☐ | Ugnsrostade grönsaker med fetaost | `ugnsrostade-gronsaker-fetaost.jpg` |
