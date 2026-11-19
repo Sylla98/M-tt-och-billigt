@@ -4,6 +4,7 @@
 // inköpslistan. Ingen AI används i detta flöde.
 
 import { RECIPES } from '@/data/recipes'
+import { HISTORICAL_RECIPES } from '@/data/historicalRecipes'
 import { resolveReferenceProduct, normalizeIngredientName, priceShoppingListWithReference } from '@/utils/referencePricing'
 import { scaleIngredient } from '@/utils/portionScaling'
 
@@ -63,6 +64,80 @@ export function filterByDiet(recipes, foodTypes) {
   return recipes
 }
 
+// ── Skafferimatchning ("Har hemma") ──────────────────────────────────────────
+// En skafferiterm matchar en ingrediens på HELA ORD i de normaliserade namnen, inte på godtyckliga
+// delsträngar. Förut räckte en delsträng, så "ris" och "pasta" tog bort Harissapasta, "salt" tog bort
+// Salta jordnötter, "majs" Majsstärkelse, "sallad" Salladslök, "ost" Ostronsås och "lök" Vitlök.
+//   - Exakt samma namn, eller termen som hela ord i namnet ("tomater" → "krossade tomater",
+//     "lök" → "gul lök"), eller namnet som hela ord i termen ("riven ost hemma" → "ost").
+//   - Ord jämförs även i singularform med samma enkla regel som prismatchningen ("tomater" = "tomat").
+//   - Sammansatta ord matchar bara via uttryckliga alias nedan: ett allmänt ord som användaren skriver
+//     om en vara man brukar ha hemma, och som täcker sammansättningar av samma vara.
+const PANTRY_ALIASES = {
+  olja: ['rapsolja', 'olivolja'],
+  socker: ['strösocker'],
+  mjöl: ['vetemjöl'],
+  soja: ['sojasås'],
+  senap: ['dijonsenap'],
+  vinäger: ['balsamvinäger'],
+  ost: ['parmesanost', 'fetaost'],
+  parmesan: ['parmesanost'],
+  buljong: ['grönsaksbuljong', 'kycklingbuljong', 'köttbuljong'],
+  grädde: ['matlagningsgrädde', 'vispgrädde'],
+  peppar: ['svartpeppar', 'vitpeppar'],
+  chili: ['chilipulver', 'chiliflakes'],
+  harissa: ['harissapasta'],
+  maizena: ['majsstärkelse'],
+  sallad: ['grönsallad', 'romansallad'],
+  bönor: ['kidneybönor'],
+  morot: ['morötter'],
+  fond: ['kalvfond'],
+  // Specifik vara hemma → receptets allmänna namn (samma produkt i inköpslistan).
+  parmesanost: ['parmesan'],
+  mozzarellaost: ['mozzarella'],
+  feta: ['fetaost'],
+  strösocker: ['socker'],
+  dijon: ['dijonsenap'],
+  tortilla: ['tortillabröd'],
+  tortillas: ['tortillabröd'],
+  lättmjölk: ['mjölk'],
+  mellanmjölk: ['mjölk'],
+  standardmjölk: ['mjölk'],
+  jasminris: ['ris'],
+  basmatiris: ['ris'],
+  havssalt: ['salt'],
+  flingsalt: ['salt'],
+  äpplen: ['äpple'],
+  babyspenat: ['spenat'],
+  vitvinsvinäger: ['vinäger'],
+}
+
+function pantryWordStem(word) {
+  if (word.length >= 6 && (word.endsWith('arna') || word.endsWith('erna'))) return word.slice(0, -4)
+  if (word.length >= 5 && (word.endsWith('ar') || word.endsWith('er') || word.endsWith('or'))) return word.slice(0, -2)
+  return word
+}
+
+function containsWordSequence(hay, needle) {
+  if (needle.length === 0 || needle.length > hay.length) return false
+  for (let i = 0; i + needle.length <= hay.length; i++) {
+    if (needle.every((w, j) => w === hay[i + j] || pantryWordStem(w) === pantryWordStem(hay[i + j]))) return true
+  }
+  return false
+}
+
+// Ord = följder av bokstäver. Skiljetecken och siffror skiljer ord åt, så "pasta." och "ris/pasta" fungerar.
+const pantryWords = (s) => (s || '').toLowerCase().split(/[^\p{L}]+/u).filter(Boolean)
+
+/** Matchar skafferitermen (normaliserad) ingrediensnamnet (normaliserat)? Se regeln ovan. */
+export function pantryTermMatches(term, normName) {
+  const termWords = pantryWords(term)
+  const nameWords = pantryWords(normName)
+  if (termWords.length === 0 || nameWords.length === 0) return false
+  if (containsWordSequence(nameWords, termWords) || containsWordSequence(termWords, nameWords)) return true
+  return (PANTRY_ALIASES[termWords.join(' ')] || []).includes(nameWords.join(' '))
+}
+
 // ── Poängsättning ────────────────────────────────────────────────────────────
 export function scoreRecipe(recipe, { foodTypes, pantryTerms, budgetPerServing }) {
   let score = 50
@@ -79,7 +154,7 @@ export function scoreRecipe(recipe, { foodTypes, pantryTerms, budgetPerServing }
   // Skafferivaror: recept som använder det användaren redan har får bonus
   let pantryMatches = 0
   for (const term of pantryTerms) {
-    if (recipe.ingredients.some((ing) => normalizeIngredientName(ing.name).includes(term))) {
+    if (recipe.ingredients.some((ing) => pantryTermMatches(term, normalizeIngredientName(ing.name)))) {
       pantryMatches++
     }
   }
@@ -202,7 +277,7 @@ export function buildShoppingItems(scaledRecipes, pantryText) {
       // En term utan färsk/torkad-angivelse ("basilika") gäller som förut båda.
       const ingQualifier = ing.priceKey ? qualifierOf(ing.name) : null
       const inPantry = pantryTerms.some(
-        (t) => (normName.includes(t.term) || t.term.includes(normName)) && !(ing.priceKey && t.qualifier && t.qualifier !== ingQualifier)
+        (t) => pantryTermMatches(t.term, normName) && !(ing.priceKey && t.qualifier && t.qualifier !== ingQualifier)
       )
       if (inPantry) continue
 
@@ -495,6 +570,15 @@ export function calculateSwapCostDelta({ occurrences, replacedBaseId, newRecipeI
 }
 
 /**
+ * Receptet för en receptplats i en BEFINTLIG plan: det aktiva biblioteket först, därefter historiska
+ * recept (borttagna ur biblioteket, se src/data/historicalRecipes.js) så att en sparad plan kan
+ * återställas. Används aldrig för att välja recept till nya planer eller Byt rätt-alternativ.
+ */
+export function findPlanRecipe(id) {
+  return RECIPES.find((r) => r.id === id) || HISTORICAL_RECIPES.find((r) => r.id === id) || null
+}
+
+/**
  * Bygger om den skalade receptlistan, inköpslistan och priserna för HELA
  * planen utifrån en lista av (baseId, servings)-par – det enda en
  * receptplats behöver beskrivas av. Samma pipeline som route.js använder
@@ -504,7 +588,7 @@ export function calculateSwapCostDelta({ occurrences, replacedBaseId, newRecipeI
  */
 export function rebuildPlanData(occurrenceSpecs, pantryText, budget) {
   const scaled = occurrenceSpecs.map(({ baseId, servings }) => {
-    const recipe = RECIPES.find((r) => r.id === baseId)
+    const recipe = findPlanRecipe(baseId)
     return scaleRecipe(recipe, servings)
   })
 

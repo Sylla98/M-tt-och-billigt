@@ -39,7 +39,7 @@ function expectedSums(recipes, pantryTerms = []) {
   for (const r of recipes) {
     for (const ing of r.ingredients) {
       const n = norm(ing.name)
-      if (pantryTerms.some((t) => n.includes(t) || t.includes(n))) continue
+      if (pantryTerms.some((t) => sel.pantryTermMatches(t, n))) continue // samma regel som appen (hela ord + alias), se pantry-matching.test.mjs
       const key = `${n}|${familyOf(ing.unit)}`
       m.set(key, (m.get(key) || 0) + amount(ing.quantity, ing.unit))
     }

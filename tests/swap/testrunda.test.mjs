@@ -110,13 +110,58 @@ describe('sparad plan: planen och inköpslistan finns kvar när besökaren komme
     assert.equal(globalThis.window.localStorage.getItem(saved.STORAGE_KEY), null, 'rensad')
   })
 
-  test('plan som hänvisar till ett recept som inte finns längre kastas', async () => {
+  test('plan med ett borttaget (historiskt) recept återställs med samma tillfällen och avbockningar', async () => {
+    const plan = await makePlan()
+    const old = JSON.parse(JSON.stringify(plan))
+    // Gör om första receptplatsen (alla dess tillfällen) till ett recept som tagits bort ur biblioteket.
+    const slot = sel.getBaseRecipeId(old.recipes[0].id)
+    old.recipes = old.recipes.map((r) => (sel.getBaseRecipeId(r.id) === slot ? { ...r, id: r.id.replace(slot, 'skagen-rakpasta') } : r))
+    saved.savePlan(old, 1)
+    saved.saveChecked(['Kött & chark::Räkor', 'Skafferi::Salt'])
+    const back = saved.loadSavedPlan(2)
+    assert.ok(back && back.plan, 'planen återställs')
+    assert.deepEqual(back.plan.recipes.map((r) => [r.id, r.servings]), old.recipes.map((r) => [r.id, r.servings]))
+    assert.equal(back.plan.recipes.find((r) => r.id === 'skagen-rakpasta').title, 'Skagen-räkpasta')
+    assert.deepEqual(saved.loadChecked(), ['Kött & chark::Räkor', 'Skafferi::Salt'], 'avbockningarna finns kvar')
+    assert.ok(globalThis.window.localStorage.getItem(saved.STORAGE_KEY), 'lagringen finns kvar')
+    assert.equal(rowSum(back.plan), back.plan.pricing.estimatedTotalCost)
+    const names = Object.values(back.plan.shoppingList).flatMap((c) => c.items).map((i) => i.displayName)
+    assert.ok(names.includes('Räkor') && names.includes('Dill'), 'det historiska receptets varor finns i inköpslistan')
+    // Det historiska receptet går att byta ut, men erbjuds aldrig som alternativ.
+    const alternatives = sel.selectSwapAlternatives({ foodTypes: [], excludeIds: [], pantryTerms: [], referenceRecipe: sel.findPlanRecipe('skagen-rakpasta') })
+    assert.ok(alternatives.length > 0)
+    for (const id of ['kramig-kikartspasta', 'kycklinggryta-dijonsenap-purjolok', 'skagen-rakpasta']) {
+      assert.ok(!alternatives.some((a) => a.recipe.id === id), `${id} erbjuds inte i Byt rätt`)
+      assert.ok(!RECIPES.some((r) => r.id === id), `${id} finns inte i det aktiva biblioteket`)
+    }
+    const next = alternatives.find((a) => !back.plan.recipes.some((r) => sel.getBaseRecipeId(r.id) === a.recipe.id)).recipe.id
+    const delta = sel.calculateSwapCostDelta({ occurrences: back.plan.recipes, replacedBaseId: 'skagen-rakpasta', newRecipeId: next, pantryText: back.plan.pantry, budget: back.plan.pricing.budget, currentTotalCost: back.plan.pricing.estimatedTotalCost })
+    const swapped = sel.rebuildPlanData(sel.buildSwapOccurrenceSpecs(back.plan.recipes, 'skagen-rakpasta', next), back.plan.pantry, back.plan.pricing.budget)
+    assert.equal(delta, rowSum(swapped) - rowSum(back.plan))
+  })
+
+  test('trasiga tillfällen (null, saknat eller tomt id) räknas som trasig plan och rensas, inte som okänt recept', async () => {
+    const plan = await makePlan()
+    for (const broken of [null, {}, { id: '' }, { id: 7, servings: 7 }]) {
+      const p = JSON.parse(JSON.stringify(plan))
+      p.recipes[0] = broken
+      saved.savePlan(p, 1)
+      assert.equal(saved.loadSavedPlan(2), null, JSON.stringify(broken))
+      assert.equal(globalThis.window.localStorage.getItem(saved.STORAGE_KEY), null)
+    }
+  })
+
+  test('plan med ett recept som varken finns i biblioteket eller bland historiska recept: tydligt besked, ingen tyst rensning', async () => {
     const plan = await makePlan()
     const broken = JSON.parse(JSON.stringify(plan))
     broken.recipes[0].id = 'recept-som-inte-finns'
     saved.savePlan(broken, 1)
-    assert.equal(saved.loadSavedPlan(2), null)
-    assert.equal(globalThis.window.localStorage.getItem(saved.STORAGE_KEY), null)
+    saved.saveChecked(['Skafferi::Salt'])
+    const raw = globalThis.window.localStorage.getItem(saved.STORAGE_KEY)
+    assert.deepEqual(saved.loadSavedPlan(2), { unavailable: true, savedAt: 1 })
+    assert.equal(globalThis.window.localStorage.getItem(saved.STORAGE_KEY), raw, 'lagringen lämnas orörd')
+    saved.savePlan(plan, 3)
+    assert.ok(saved.loadSavedPlan(4).plan, 'en ny plan ersätter den')
   })
 
   test('trasig eller okänd lagring ger null utan fel: ogiltig JSON, fel version, saknade fält, ogiltiga portioner', async () => {

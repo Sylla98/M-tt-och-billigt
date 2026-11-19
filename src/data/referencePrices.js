@@ -147,8 +147,11 @@ export const REFERENCE_PRICES = [
   { key: 'soltorkade-tomater', displayName: 'Soltorkade tomater', aliases: ['soltorkade tomater'], packageQuantity: 150, packageUnit: 'g', estimatedPackagePrice: 25, purchaseType: 'package',
     packageLabel: { singular: 'burk', plural: 'burkar' },
     source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101705529_ST', retrieved: '2026-11-19', note: 'Monte Castello Soltorkade tomater i olja 280 g, avrunnen vikt 150 g, 24,90 kr. packageQuantity är avrunnen vikt; receptmängden anges som avrunna tomater.' } },
-  { key: 'blandsallad',    displayName: 'Blandsallad', aliases: ['blandsallad'], packageQuantity: 200, packageUnit: 'g', estimatedPackagePrice: 20, purchaseType: 'package',
-    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/101316312_ST', retrieved: '2026-11-19', note: 'Blandsallad Klass 1 200 g (färdigsköljd: vitkål, morot, escarolesallad), 19,90 kr.' } },
+  // Vanlig grönsallad (plocksallad i kruka) som tillbehör. Ersätter 2026-11-19 en "Blandsallad" med vitkål,
+  // morot och escarole, som inte motsvarade receptets grönsallad.
+  { key: 'gronsallad',     displayName: 'Grönsallad',  aliases: ['grönsallad', 'gronsallad', 'kruksallad', 'kruksallat'], packageQuantity: 200, packageUnit: 'g', estimatedPackagePrice: 17, purchaseType: 'package',
+    packageLabel: { singular: 'kruka', plural: 'krukor' },
+    source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/100297064_ST', retrieved: '2026-11-19', note: 'Kruksallat Klass 1 ("En plocksallad i kruka"), ca 200 g, 16,90 kr. Vikten är ungefärlig enligt produktsidan, och om den avser hela plantan eller bara bladen anges inte.' } },
   { key: 'romansallad',    displayName: 'Romansallad', aliases: ['romansallad'], packageQuantity: 200, packageUnit: 'g', estimatedPackagePrice: 17, purchaseType: 'package',
     source: { store: 'Willys (e-handel, Willys Kungsbacka Hede)', url: 'https://www.willys.se/produkt/100391265_ST', retrieved: '2026-11-19', note: 'Romansallad Klass 1 200 g, 16,90 kr.' } },
   { key: 'salladslok',     displayName: 'Salladslök',  aliases: ['salladslök', 'salladslok'], packageQuantity: 100, packageUnit: 'g', estimatedPackagePrice: 15, purchaseType: 'package',
