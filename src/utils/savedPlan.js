@@ -10,11 +10,14 @@
 // Konsistens: den sparade planen är en ögonblicksbild. Vid inläsning byggs recepten,
 // inköpslistan och priserna om med appens nuvarande data (samma rebuildPlanData som "Byt rätt"
 // använder), så att summor och kostnadsskillnader alltid stämmer med den version som körs.
-// Hänvisar planen till ett recept som inte längre finns, eller är den för gammal eller trasig,
-// kastas den och besökaren får skapa en ny.
+// Recept som tagits bort ur biblioteket finns kvar som historiska recept (src/data/historicalRecipes.js),
+// så en plan som innehåller dem återställs med samma tillfällen och avbockningar.
+// Hänvisar planen ändå till ett recept som varken finns i biblioteket eller bland de historiska, kan den
+// inte visas: då returneras { unavailable: true } och den lagrade planen lämnas orörd (ingen tyst
+// rensning); den ersätts först när besökaren skapar en ny plan. Är planen för gammal eller trasig
+// kastas den.
 
-import { RECIPES } from '@/data/recipes'
-import { rebuildPlanData, getBaseRecipeId } from '@/utils/selectRecipes'
+import { rebuildPlanData, getBaseRecipeId, findPlanRecipe } from '@/utils/selectRecipes'
 
 export const STORAGE_KEY = 'mb_saved_plan_v1'
 export const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000 // 30 dagar
@@ -94,7 +97,8 @@ export function loadChecked() {
 
 /**
  * Läser in den sparade planen och bygger om den med appens nuvarande data.
- * Returnerar { plan, savedAt } eller null (och rensar då det som inte går att använda).
+ * Returnerar { plan, savedAt }, { unavailable: true, savedAt } (okänt recept, lagringen lämnas orörd)
+ * eller null (och rensar då det som inte går att använda).
  */
 export function loadSavedPlan(now = Date.now()) {
   const entry = readEntry()
@@ -104,10 +108,12 @@ export function loadSavedPlan(now = Date.now()) {
     const plan = entry.plan
     const occurrences = plan.recipes
     if (!Array.isArray(occurrences) || occurrences.length === 0) throw new Error('inga recept')
-    const known = new Set(RECIPES.map((r) => r.id))
+    if (occurrences.some((r) => !r || typeof r !== 'object' || typeof r.id !== 'string' || !r.id)) throw new Error('trasigt tillfälle')
+    if (occurrences.some((r) => !findPlanRecipe(getBaseRecipeId(r.id)))) {
+      return { unavailable: true, savedAt: entry.savedAt }
+    }
     const specs = occurrences.map((r) => {
       const baseId = getBaseRecipeId(r.id)
-      if (!known.has(baseId)) throw new Error(`okänt recept ${baseId}`)
       if (!Number.isFinite(r.servings) || r.servings <= 0) throw new Error('ogiltiga portioner')
       return { baseId, servings: r.servings }
     })

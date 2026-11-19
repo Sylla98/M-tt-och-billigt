@@ -4,8 +4,7 @@ import RecipeCard from './RecipeCard'
 import ShoppingList from './ShoppingList'
 import RecipeSwapSheet from './RecipeSwapSheet'
 import RecipeDetailModal from './RecipeDetailModal'
-import { RECIPES } from '@/data/recipes'
-import { rebuildPlanData, getBaseRecipeId, buildSwapOccurrenceSpecs, calculateSwapCostDelta } from '@/utils/selectRecipes'
+import { rebuildPlanData, getBaseRecipeId, buildSwapOccurrenceSpecs, calculateSwapCostDelta, findPlanRecipe } from '@/utils/selectRecipes'
 import { trackEvent } from '@/utils/analytics'
 import { FEEDBACK_FORM_URL, FEEDBACK_FORM_NOTE } from '@/utils/feedbackLink'
 
@@ -122,7 +121,7 @@ export default function ResultView({ data, onReset, onUpdateResult, restoredAt =
 
   const planRecipeIds = uniqueRecipes.map((r) => r.id)
   const budgetPerServing = pricing && totalServings > 0 ? pricing.budget / totalServings : null
-  const swapReferenceRecipe = swapTarget ? RECIPES.find((r) => r.id === swapTarget.id) : null
+  const swapReferenceRecipe = swapTarget ? findPlanRecipe(swapTarget.id) : null
 
   // Hur planens uppskattade inköpskostnad ändras om användaren väljer
   // `newRecipeId`, i hela kronor (negativt = billigare). Visas i byt-vyn

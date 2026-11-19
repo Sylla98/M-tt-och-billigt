@@ -20,9 +20,14 @@ export default function PlaneraPage() {
   // att formuläret inte blinkar förbi.
   const [ready, setReady] = useState(false)
   const [restoredAt, setRestoredAt] = useState(null)
+  // En sparad plan som hänvisar till ett recept som appen inte längre känner till kan inte visas.
+  // Den lämnas kvar i webbläsaren (ingen tyst rensning) och besökaren får ett tydligt besked.
+  const [unavailableSavedAt, setUnavailableSavedAt] = useState(null)
   useEffect(() => {
     const saved = loadSavedPlan()
-    if (saved) {
+    if (saved?.unavailable) {
+      setUnavailableSavedAt(saved.savedAt)
+    } else if (saved) {
       setResult(saved.plan)
       setRestoredAt(saved.savedAt)
       setState('done')
@@ -70,6 +75,7 @@ export default function PlaneraPage() {
 
       setResult(data)
       setRestoredAt(null)
+      setUnavailableSavedAt(null)
       savePlan(data)
       setState('done')
       // Skickas HÄR – efter bekräftat lyckat svar (res.ok) – aldrig vid
@@ -96,6 +102,7 @@ export default function PlaneraPage() {
     setConfirmingReset(false)
     clearSavedPlan()
     setRestoredAt(null)
+    setUnavailableSavedAt(null)
     setResult(null)
     setState('idle')
     setErrorMessage('')
@@ -158,7 +165,18 @@ export default function PlaneraPage() {
       {/* Innehåll */}
       <div className={`flex-1 px-4 pt-6 pb-12 ${ready ? '' : 'invisible'}`}>
         {state === 'idle' || state === 'loading' ? (
-          <InputForm onSubmit={handleSubmit} loading={state === 'loading'} onInteraction={trackPlanningStarted} />
+          <>
+            {unavailableSavedAt != null && (
+              <div role="status" className="w-full max-w-[660px] mx-auto mb-4 bg-surface rounded-xl border border-line p-4">
+                <p className="text-sm text-ink leading-relaxed">
+                  Din sparade plan från {new Date(unavailableSavedAt).toLocaleDateString('sv-SE', { day: 'numeric', month: 'long' })} kan inte visas,
+                  eftersom den innehåller ett recept som inte längre finns i appen. Planen och inköpslistan går inte att återskapa.
+                  Skapa en ny plan nedan.
+                </p>
+              </div>
+            )}
+            <InputForm onSubmit={handleSubmit} loading={state === 'loading'} onInteraction={trackPlanningStarted} />
+          </>
         ) : state === 'error' ? (
           <div className="w-full max-w-[660px] mx-auto">
             <div className="bg-surface rounded-xl border border-line p-6">

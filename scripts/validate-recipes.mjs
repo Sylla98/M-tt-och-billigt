@@ -191,8 +191,10 @@ if (familyFriendlyPct < 80)
 
 const quickCount = RECIPES.filter((r) => r.activeTimeMinutes <= 25 && r.totalTimeMinutes <= 40).length
 const quickPct = (quickCount / total) * 100
-if (quickPct < 75)
-  errors.push(`Endast ${quickPct.toFixed(0)}% snabba recept (kräver minst 75%)`)
+// Elis beslut 2026-11-19: sänkt från 75 % till 73 % när tre snabba recept ersattes av tre
+// långkok/ugnsrätter med ärliga tider (kalops, kycklinglår i ugn, currykyckling). 44 av 60 = 73,3 %.
+if (quickPct < 73)
+  errors.push(`Endast ${quickPct.toFixed(0)}% snabba recept (kräver minst 73%)`)
 
 // ── Rimlighetsgränser per vuxenportion (VARNAR, stoppar inte bygget) ────────
 // Ungefärliga riktvärden, inte absoluta kulinariska sanningar – se uppgift 4.
