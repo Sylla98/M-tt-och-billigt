@@ -81,15 +81,15 @@ describe('Byt rätt visar hela det aktiva utbudet utom recept som redan ingår i
     for (const r of nonFamily) assert.ok(ids(alts).includes(r.id), `${r.id} saknas`)
     assert.equal(alts[0].recipe.familyFriendly, true, 'ett familjevänligt recept ligger först')
     const firstNonFamily = alts.findIndex((a) => !a.recipe.familyFriendly)
-    const lastFamily = alts.map((a) => a.recipe.familyFriendly).lastIndexOf(true)
     assert.ok(firstNonFamily > 0, 'familjevänliga ligger före minst ett icke-familjevänligt')
-    assert.ok(lastFamily >= 0)
   })
 
   test('vegetariskt + familjevänligt: icke-familjevänliga vegetariska finns med', () => {
     const alts = selectSwapAlternatives({ foodTypes: ['vegetariskt', 'familjevanligt'], excludeIds: [] })
     assert.equal(alts.length, RECIPES.filter(isVeg).length)
-    assert.ok(alts.some((a) => !a.recipe.familyFriendly) === RECIPES.filter(isVeg).some((r) => !r.familyFriendly))
+    const nonFamilyVeg = RECIPES.filter((r) => isVeg(r) && !r.familyFriendly).map((r) => r.id)
+    assert.ok(nonFamilyVeg.length > 0, 'underlaget har icke-familjevänliga vegetariska recept')
+    for (const id of nonFamilyVeg) assert.ok(ids(alts).includes(id), `${id} saknas`)
   })
 
   test('kött & grönt döljer inget: vegetariska recept finns med men rangordnas efter kött och fisk', () => {
@@ -113,8 +113,11 @@ describe('Byt rätt visar hela det aktiva utbudet utom recept som redan ingår i
       assert.deepEqual([...alts].sort(), [...base].sort(), JSON.stringify(v))
     }
     // En låg budget per portion sorterar billiga recept före dyra (ordningen påverkas).
-    const cheap = ids(selectSwapAlternatives({ foodTypes: [], excludeIds: [], budgetPerServing: 5 }))
-    assert.notDeepEqual(cheap, base.concat([]))
+    const lowBudget = ids(selectSwapAlternatives({ foodTypes: [], excludeIds: ['linsbolognese'], budgetPerServing: 5 }))
+    const highBudget = ids(selectSwapAlternatives({ foodTypes: [], excludeIds: ['linsbolognese'], budgetPerServing: 4000 }))
+    assert.notDeepEqual(lowBudget, highBudget, 'ordningen ändras av budgeten')
+    const cost = (id) => sel.estimateRecipeCostPerServing(RECIPES.find((r) => r.id === id))
+    assert.ok(cost(lowBudget[0]) < cost(highBudget[0]), 'låg budget sätter ett billigare recept först')
   })
 })
 
