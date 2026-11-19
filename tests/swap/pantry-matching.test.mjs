@@ -86,3 +86,53 @@ describe('"Har hemma": varan tas bort när användaren anger rätt vara', () => 
     assert.equal(sel.pantryTermMatches(normalizeIngredientName('pasta'), normalizeIngredientName('Harissapasta')), false)
   })
 })
+
+// Fynd 2026-11-19: "tomat"/"tomater" tog bort Soltorkade tomater, eftersom orden "tomater" ingår i båda
+// namnen. Soltorkade tomater är en annan vara (annat pris, annan användning) än färska och krossade.
+describe('"Har hemma": tomater och soltorkade tomater är olika varor', () => {
+  test('"tomat"/"tomater" tar inte bort Soltorkade tomater', () => {
+    // kycklinglar-i-ugn har Soltorkade tomater men varken färska eller krossade tomater
+    check('kycklinglar-i-ugn', 'tomat', [])
+    check('kycklinglar-i-ugn', 'tomater', [])
+    check('kycklinglar-i-ugn', 'färska tomater', [])
+    check('kycklinglar-i-ugn', 'tomater, ris, smör', ['Ris', 'Smör'])
+  })
+  test('uttryckligt "soltorkade tomater" tar bort rätt vara, även singular och med versaler/skiljetecken', () => {
+    check('kycklinglar-i-ugn', 'soltorkade tomater', ['Soltorkade tomater'])
+    check('kycklinglar-i-ugn', 'soltorkad tomat', ['Soltorkade tomater'])
+    check('kycklinglar-i-ugn', 'Soltorkade Tomater.', ['Soltorkade tomater'])
+    check('kycklinglar-i-ugn', 'ris, soltorkade tomater, olja', ['Soltorkade tomater', 'Ris'])
+  })
+  test('färska och krossade tomater matchas fortfarande, och "soltorkade tomater" tar inte bort dem', () => {
+    check('kycklingshawarma-bulgur-yoghurtsas', 'tomat', ['Tomat'])
+    check('kycklingshawarma-bulgur-yoghurtsas', 'tomater', ['Tomat'])
+    check('kycklingshawarma-bulgur-yoghurtsas', 'färska tomater', ['Tomat'])
+    check('kycklingshawarma-bulgur-yoghurtsas', 'soltorkade tomater', [])
+    check('linsbolognese', 'tomater', ['Krossade tomater'])
+    check('linsbolognese', 'soltorkade tomater', [])
+    check('linsbolognese', 'krossade tomater', ['Krossade tomater'])
+  })
+  test('i en plan med både färska, krossade och soltorkade tomater tas bara rätt rad bort, och totalsumman följer', () => {
+    const specs = [
+      { baseId: 'kycklinglar-i-ugn', servings: 7 },
+      { baseId: 'kycklingshawarma-bulgur-yoghurtsas', servings: 7 },
+      { baseId: 'linsbolognese', servings: 7 },
+    ]
+    const removedBy = (pantry) => {
+      const without = sel.rebuildPlanData(specs, '', 100000)
+      const withPantry = sel.rebuildPlanData(specs, pantry, 100000)
+      assert.equal(withPantry.pricing.estimatedTotalCost, rowSum(withPantry))
+      assert.ok(withPantry.pricing.estimatedTotalCost <= without.pricing.estimatedTotalCost)
+      return names(without).filter((n) => !names(withPantry).includes(n)).sort()
+    }
+    assert.deepEqual(removedBy('tomater'), ['Krossade tomater', 'Tomat'])
+    assert.deepEqual(removedBy('soltorkade tomater'), ['Soltorkade tomater'])
+    assert.deepEqual(removedBy('tomater, soltorkade tomater'), ['Krossade tomater', 'Soltorkade tomater', 'Tomat'])
+  })
+  test('poängsättningen använder samma matchning', () => {
+    const dried = sel.findPlanRecipe('kycklinglar-i-ugn')
+    const score = (term) => sel.scoreRecipe(dried, { foodTypes: [], pantryTerms: [normalizeIngredientName(term)], budgetPerServing: null })
+    assert.equal(score('tomater'), score('zzz-finns-inte'))
+    assert.ok(score('soltorkade tomater') > score('zzz-finns-inte'))
+  })
+})

@@ -71,6 +71,9 @@ export function filterByDiet(recipes, foodTypes) {
 //   - Exakt samma namn, eller termen som hela ord i namnet ("tomater" → "krossade tomater",
 //     "lök" → "gul lök"), eller namnet som hela ord i termen ("riven ost hemma" → "ost").
 //   - Ord jämförs även i singularform med samma enkla regel som prismatchningen ("tomater" = "tomat").
+//   - Ord som gör varan till en annan produkt (PRODUCT_VARIANT_WORDS, t.ex. "soltorkade") måste finnas på båda
+//     sidor eller ingen: "tomater" tar inte bort Soltorkade tomater och "soltorkade tomater" tar inte bort
+//     färska eller krossade tomater. "soltorkad tomat" och "soltorkade tomater" är samma vara.
 //   - Sammansatta ord matchar bara via uttryckliga alias nedan: ett allmänt ord som användaren skriver
 //     om en vara man brukar ha hemma, och som täcker sammansättningar av samma vara.
 const PANTRY_ALIASES = {
@@ -112,6 +115,10 @@ const PANTRY_ALIASES = {
   vitvinsvinäger: ['vinäger'],
 }
 
+// Ord som gör en vara till en annan produkt, med sin grundform (böjningsformer slås ihop i pantryWords).
+// Soltorkade tomater är en annan vara än färska och krossade tomater: de säljs, prissätts och används olika.
+const PRODUCT_VARIANT_WORDS = { soltorkade: 'soltorkad', soltorkad: 'soltorkad' }
+
 function pantryWordStem(word) {
   if (word.length >= 6 && (word.endsWith('arna') || word.endsWith('erna'))) return word.slice(0, -4)
   if (word.length >= 5 && (word.endsWith('ar') || word.endsWith('er') || word.endsWith('or'))) return word.slice(0, -2)
@@ -127,13 +134,17 @@ function containsWordSequence(hay, needle) {
 }
 
 // Ord = följder av bokstäver. Skiljetecken och siffror skiljer ord åt, så "pasta." och "ris/pasta" fungerar.
-const pantryWords = (s) => (s || '').toLowerCase().split(/[^\p{L}]+/u).filter(Boolean)
+const pantryWords = (s) =>
+  (s || '').toLowerCase().split(/[^\p{L}]+/u).filter(Boolean).map((w) => PRODUCT_VARIANT_WORDS[w] || w)
+
+const variantWordsOf = (words) => [...new Set(words.filter((w) => Object.values(PRODUCT_VARIANT_WORDS).includes(w)))].sort().join(' ')
 
 /** Matchar skafferitermen (normaliserad) ingrediensnamnet (normaliserat)? Se regeln ovan. */
 export function pantryTermMatches(term, normName) {
   const termWords = pantryWords(term)
   const nameWords = pantryWords(normName)
   if (termWords.length === 0 || nameWords.length === 0) return false
+  if (variantWordsOf(termWords) !== variantWordsOf(nameWords)) return false
   if (containsWordSequence(nameWords, termWords) || containsWordSequence(termWords, nameWords)) return true
   return (PANTRY_ALIASES[termWords.join(' ')] || []).includes(nameWords.join(' '))
 }
@@ -494,28 +505,30 @@ export function buildRecipeOccurrences(scaledRecipes) {
 // ingen logik dupliceras, bara en tunn koppling specifik för bytesflödet.
 
 /**
- * Väljer alternativa recept för en receptplats som ska bytas ut. Samma
- * kosttyp-/familjevänligt-filter som den vanliga planeringen (hårt filter),
- * men rangordnar ALLA giltiga kandidater (istället för att bara plocka ut
- * några) så att anroparen kan "bläddra" vidare i en stabil, redan beräknad
- * lista – se RecipeSwapSheet.js för hur "Visa andra förslag" använder
- * detta utan att redan visade förslag kan komma tillbaka.
+ * Väljer alternativa recept för en receptplats som ska bytas ut. Kandidaterna är HELA det aktiva
+ * receptutbudet (RECIPES) utom recept som redan ingår i planen (`excludeIds`, vilket också är receptet
+ * som byts ut). Det enda som får dölja ett recept är att planen är vegetarisk: då visas bara
+ * vegetariska recept (samma regel som filterByDiet vid planering).
  *
- * Pris och tid är MEDVETET sekundära signaler (litet, begränsat avdrag) –
- * kostval/familjevänligt/skafferi väger betydligt tyngre via scoreRecipe.
+ * Allt annat är rangordning, inte filtrering: familjevänligt, skafferi, budget (poängen i scoreRecipe),
+ * kött & grönt (icke-vegetariska först), samt litet avdrag för skillnad i pris och tid mot receptet som
+ * byts. Alla giltiga kandidater rangordnas (istället för att bara plocka ut några) så att anroparen kan
+ * "bläddra" vidare i en stabil, redan beräknad lista – se RecipeSwapSheet.js för hur "Visa andra
+ * förslag" använder detta utan att redan visade förslag kan komma tillbaka.
+ *
+ * Urvalet när planen först skapas (selectRecipes) påverkas inte av detta.
  */
 export function selectSwapAlternatives({ foodTypes, excludeIds = [], budgetPerServing = null, pantryTerms = [], referenceRecipe = null }) {
-  let pool = filterByDiet(RECIPES, foodTypes || [])
-
-  if ((foodTypes || []).includes('familjevanligt')) {
-    const familyFriendlyPool = pool.filter((r) => r.familyFriendly)
-    if (familyFriendlyPool.length > 0) pool = familyFriendlyPool
-  }
-
+  const types = foodTypes || []
+  let pool = RECIPES
+  if (types.includes('vegetariskt')) pool = pool.filter((r) => r.dietTypes.includes('vegetarisk'))
   pool = pool.filter((r) => !excludeIds.includes(r.id))
 
   const scored = pool.map((recipe) => {
-    let score = scoreRecipe(recipe, { foodTypes: foodTypes || [], pantryTerms, budgetPerServing })
+    let score = scoreRecipe(recipe, { foodTypes: types, pantryTerms, budgetPerServing })
+
+    // "Kött & grönt" styr bara ordningen här (vid planering är det ett filter): kött- och fiskrecept först.
+    if (types.includes('kott-gront') && recipe.proteinType !== 'vegetariskt') score += 15
 
     if (referenceRecipe) {
       const costDiff = Math.abs(estimateRecipeCostPerServing(recipe) - estimateRecipeCostPerServing(referenceRecipe))
